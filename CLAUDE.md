@@ -19,6 +19,13 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 | N2T | Nand2Tetris |
 | COD | Computer Organization and Design (ARM Edition) |
 | DBI | Database Internals |
+| CC | Clean Code |
+| TPP | The Pragmatic Programmer |
+| MMM | The Mythical Man-Month |
+| REF | Refactoring |
+| SAHP | Software Architecture: The Hard Parts |
+| WPF | Why Programs Fail |
+| WELC | Working Effectively with Legacy Code |
 
 ## Usage Patterns
 
