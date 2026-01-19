@@ -26,6 +26,7 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 | SAHP | Software Architecture: The Hard Parts |
 | WPF | Why Programs Fail |
 | WELC | Working Effectively with Legacy Code |
+| LDDD | Learning Domain-Driven Design |
 
 ## Usage Patterns
 
