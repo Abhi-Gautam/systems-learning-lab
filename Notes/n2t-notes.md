@@ -779,3 +779,66 @@ This is why faster chips need:
 The clock doesn't "push" data through the circuit—it just guarantees that by the time it ticks, all combinational logic has settled to valid values.
 
 ---
+
+## [2026-01-20] Chapter 3 - Future Exercise: Build Sequential Chips in Rust
+
+### Goal
+Implement all Chapter 3 chips (DFF → Bit → Register → RAM → PC) in Rust to solidify understanding of sequential logic and clock behavior.
+
+### Chips to Build
+
+| Chip | What it does | Built from |
+|------|--------------|------------|
+| DFF | 1-bit memory primitive | (simulated with state + tick) |
+| Bit | 1-bit register with load | DFF + Mux |
+| Register | 16-bit register | 16 Bits |
+| RAM8 | 8 registers, addressable | 8 Registers + Mux8Way16 + DMux8Way |
+| RAM64 | 64 registers | 8 RAM8s |
+| RAM512 | 512 registers | 8 RAM64s |
+| RAM4K | 4096 registers | 8 RAM512s |
+| RAM16K | 16384 registers | 4 RAM4Ks |
+| PC | Program Counter | Register + Inc16 + Mux16s |
+
+### Key Rust Pattern: Simulating Clock
+
+```rust
+struct DFF {
+    state: bool,      // current output (what you read)
+    next_state: bool, // staged input (waiting for tick)
+}
+
+impl DFF {
+    fn set(&mut self, input: bool) {
+        self.next_state = input;  // stage the input
+    }
+
+    fn get(&self) -> bool {
+        self.state  // return current state
+    }
+
+    fn tick(&mut self) {
+        self.state = self.next_state;  // commit on clock edge
+    }
+}
+```
+
+### The Pattern for All Sequential Chips
+
+```
+1. set() - configure inputs (combinational logic settles)
+2. tick() - clock edge commits state changes
+3. get() - read outputs (reflects new state)
+```
+
+### Why This Exercise Matters
+
+- Forces understanding of t vs t-1 timing
+- Makes clock edge behavior tangible
+- Builds intuition for how RAM addressing works
+- Prepares for CPU implementation in Chapter 5
+
+### Status: PENDING
+
+Complete after finishing Chapter 3 reading.
+
+---
