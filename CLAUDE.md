@@ -11,22 +11,25 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 
 ## Book Aliases
 
-| Alias | Book |
-|-------|------|
-| DDIA | Designing Data-Intensive Applications |
-| OSTEP | Operating Systems: Three Easy Pieces |
-| CUDA | CUDA Programming Book |
-| N2T | Nand2Tetris |
-| COD | Computer Organization and Design (ARM Edition) |
-| DBI | Database Internals |
-| CC | Clean Code |
-| TPP | The Pragmatic Programmer |
-| MMM | The Mythical Man-Month |
-| REF | Refactoring |
-| SAHP | Software Architecture: The Hard Parts |
-| WPF | Why Programs Fail |
-| WELC | Working Effectively with Legacy Code |
-| LDDD | Learning Domain-Driven Design |
+| Alias | Book | Category |
+|-------|------|----------|
+| DDIA | Designing Data-Intensive Applications | Systems |
+| OSTEP | Operating Systems: Three Easy Pieces | Systems |
+| CUDA | CUDA Programming Book | Systems |
+| N2T | Nand2Tetris | Hardware/Architecture |
+| COD | Computer Organization and Design (ARM Edition) | Hardware/Architecture |
+| DBI | Database Internals | Databases |
+| CC | Clean Code | Software Engineering |
+| TPP | The Pragmatic Programmer | Software Engineering |
+| MMM | The Mythical Man-Month | Software Engineering |
+| REF | Refactoring | Software Engineering |
+| SAHP | Software Architecture: The Hard Parts | Architecture |
+| WPF | Why Programs Fail | Debugging |
+| WELC | Working Effectively with Legacy Code | Software Engineering |
+| LDDD | Learning Domain-Driven Design | Architecture |
+
+## Book PDFs
+All book PDFs are stored in the root directory with their alias as filename (e.g., `DDIA.pdf`, `N2T.pdf`).
 
 ## Usage Patterns
 
@@ -83,7 +86,23 @@ Claude will:
 - **Mermaid**: For complex flowcharts, sequence diagrams, state machines
 
 ## Files
-- Notes: `Notes/{alias}-notes.md`
-- Doubts: `Notes/{alias}-doubts.md`
+- Notes: `Notes/{alias}-notes.md` (lowercase alias)
+- Doubts: `Notes/{alias}-doubts.md` (lowercase alias)
+- PDFs: `{ALIAS}.pdf` (uppercase alias)
 
-All files are append-only. Never modify existing entries.
+All note/doubt files are **append-only**. Never modify existing entries.
+
+## Date Format
+Use ISO format: `[YYYY-MM-DD]` for all dated entries.
+
+## Cross-Referencing
+When a concept in one book relates to another, add a cross-reference:
+```markdown
+**See also:** N2T Chapter 3 (DFF timing relates to OSTEP process scheduling)
+```
+
+## "Move to Notes" Workflow
+When user says "move to notes" after a doubt is resolved:
+1. Copy the doubt entry's explanation to the corresponding notes file
+2. Update the doubt's status to "Moved to Notes"
+3. Keep the original doubt entry intact
