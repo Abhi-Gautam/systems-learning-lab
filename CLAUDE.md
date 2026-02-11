@@ -27,6 +27,8 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 | WPF | Why Programs Fail | Debugging |
 | WELC | Working Effectively with Legacy Code | Software Engineering |
 | LDDD | Learning Domain-Driven Design | Architecture |
+| DSG | Distributed Services with Go | Go/Distributed Systems |
+| LGO | Learning Go: An Idiomatic Approach | Go |
 
 ## Book PDFs
 All book PDFs are stored in the root directory with their alias as filename (e.g., `DDIA.pdf`, `N2T.pdf`).

@@ -1,0 +1,2 @@
+# Learning Go - Notes
+
