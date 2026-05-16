@@ -1,0 +1,2906 @@
+{
+  "alias": "COD",
+  "pdf_pages": 1074,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Front Cover",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "title": "Computer Organization and Design",
+      "page": 6
+    },
+    {
+      "level": 1,
+      "title": "Copyright Page",
+      "page": 7
+    },
+    {
+      "level": 1,
+      "title": "Acknowledgments",
+      "page": 9
+    },
+    {
+      "level": 1,
+      "title": "Contents",
+      "page": 10
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 16
+    },
+    {
+      "level": 1,
+      "title": "1 Computer Abstractions and Technology",
+      "page": 27
+    },
+    {
+      "level": 2,
+      "title": "1.1 Introduction",
+      "page": 28
+    },
+    {
+      "level": 3,
+      "title": "Traditional Classes of Computing Applications and Their Characteristics",
+      "page": 30
+    },
+    {
+      "level": 3,
+      "title": "Welcome to the Post-PC Era",
+      "page": 31
+    },
+    {
+      "level": 3,
+      "title": "What You Can Learn in This Book",
+      "page": 32
+    },
+    {
+      "level": 2,
+      "title": "1.2 Eight Great Ideas in Computer Architecture",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Design for Moore’s Law",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Use Abstraction to Simplify Design",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Make the Common Case Fast",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Performance via Parallelism",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Performance via Pipelining",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Performance via Prediction",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Hierarchy of Memories",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Dependability via Redundancy",
+      "page": 37
+    },
+    {
+      "level": 2,
+      "title": "1.3 Below Your Program",
+      "page": 38
+    },
+    {
+      "level": 3,
+      "title": "From a High-Level Language to the Language of Hardware",
+      "page": 39
+    },
+    {
+      "level": 2,
+      "title": "1.4 Under the Covers",
+      "page": 41
+    },
+    {
+      "level": 3,
+      "title": "Through the Looking Glass",
+      "page": 43
+    },
+    {
+      "level": 3,
+      "title": "Touchscreen",
+      "page": 44
+    },
+    {
+      "level": 3,
+      "title": "Opening the Box",
+      "page": 44
+    },
+    {
+      "level": 3,
+      "title": "A Safe Place for Data",
+      "page": 47
+    },
+    {
+      "level": 3,
+      "title": "Communicating with Other Computers",
+      "page": 48
+    },
+    {
+      "level": 2,
+      "title": "1.5 Technologies for Building Processors and Memory",
+      "page": 49
+    },
+    {
+      "level": 2,
+      "title": "1.6 Performance",
+      "page": 53
+    },
+    {
+      "level": 3,
+      "title": "Defining Performance",
+      "page": 54
+    },
+    {
+      "level": 3,
+      "title": "Measuring Performance",
+      "page": 57
+    },
+    {
+      "level": 3,
+      "title": "CPU Performance and Its Factors",
+      "page": 58
+    },
+    {
+      "level": 3,
+      "title": "Instruction Performance",
+      "page": 60
+    },
+    {
+      "level": 3,
+      "title": "The Classic CPU Performance Equation",
+      "page": 61
+    },
+    {
+      "level": 2,
+      "title": "1.7 The Power Wall",
+      "page": 65
+    },
+    {
+      "level": 2,
+      "title": "1.8 The Sea Change: The Switch from Uniprocessors to Multiprocessors",
+      "page": 68
+    },
+    {
+      "level": 2,
+      "title": "1.9 Real Stuff: Benchmarking the Intel Core i7",
+      "page": 71
+    },
+    {
+      "level": 3,
+      "title": "SPEC CPU Benchmark",
+      "page": 71
+    },
+    {
+      "level": 3,
+      "title": "SPEC Power Benchmark",
+      "page": 73
+    },
+    {
+      "level": 2,
+      "title": "1.10 Fallacies and Pitfalls",
+      "page": 74
+    },
+    {
+      "level": 2,
+      "title": "1.11 Concluding Remarks",
+      "page": 77
+    },
+    {
+      "level": 3,
+      "title": "Road Map for This Book",
+      "page": 78
+    },
+    {
+      "level": 2,
+      "title": "1.12 Historical Perspective and Further Reading",
+      "page": 79
+    },
+    {
+      "level": 3,
+      "title": "The First Electronic Computers",
+      "page": 80
+    },
+    {
+      "level": 3,
+      "title": "Commercial Developments",
+      "page": 82
+    },
+    {
+      "level": 3,
+      "title": "Measuring Performance",
+      "page": 88
+    },
+    {
+      "level": 3,
+      "title": "The Quest for an Average Program",
+      "page": 88
+    },
+    {
+      "level": 3,
+      "title": "SPECulating about Performance",
+      "page": 89
+    },
+    {
+      "level": 3,
+      "title": "The Growth of Embedded Computing",
+      "page": 90
+    },
+    {
+      "level": 3,
+      "title": "A Half-Century of Progress",
+      "page": 91
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 92
+    },
+    {
+      "level": 2,
+      "title": "1.13 Exercises",
+      "page": 79
+    },
+    {
+      "level": 1,
+      "title": "2 Instructions: Language of the Computer",
+      "page": 99
+    },
+    {
+      "level": 2,
+      "title": "2.1 Introduction",
+      "page": 101
+    },
+    {
+      "level": 2,
+      "title": "2.2 Operations of the Computer Hardware",
+      "page": 102
+    },
+    {
+      "level": 2,
+      "title": "2.3 Operands of the Computer Hardware",
+      "page": 106
+    },
+    {
+      "level": 3,
+      "title": "Memory Operands",
+      "page": 107
+    },
+    {
+      "level": 3,
+      "title": "Constant or Immediate Operands",
+      "page": 112
+    },
+    {
+      "level": 2,
+      "title": "2.4 Signed and Unsigned Numbers",
+      "page": 114
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 120
+    },
+    {
+      "level": 2,
+      "title": "2.5 Representing Instructions in the Computer",
+      "page": 121
+    },
+    {
+      "level": 3,
+      "title": "LEGv8 Fields",
+      "page": 123
+    },
+    {
+      "level": 2,
+      "title": "2.6 Logical Operations",
+      "page": 129
+    },
+    {
+      "level": 2,
+      "title": "2.7 Instructions for Making Decisions",
+      "page": 132
+    },
+    {
+      "level": 3,
+      "title": "Loops",
+      "page": 134
+    },
+    {
+      "level": 3,
+      "title": "Bounds Check Shortcut",
+      "page": 137
+    },
+    {
+      "level": 3,
+      "title": "Case/Switch Statement",
+      "page": 138
+    },
+    {
+      "level": 2,
+      "title": "2.8 Supporting Procedures in Computer Hardware",
+      "page": 139
+    },
+    {
+      "level": 3,
+      "title": "Using More Registers",
+      "page": 140
+    },
+    {
+      "level": 3,
+      "title": "Nested Procedures",
+      "page": 143
+    },
+    {
+      "level": 3,
+      "title": "Allocating Space for New Data on the Stack",
+      "page": 145
+    },
+    {
+      "level": 3,
+      "title": "Allocating Space for New Data on the Heap",
+      "page": 146
+    },
+    {
+      "level": 2,
+      "title": "2.9 Communicating with People",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Characters and Strings in Java",
+      "page": 152
+    },
+    {
+      "level": 2,
+      "title": "2.10 LEGv8 Addressing for Wide Immediates and Addresses",
+      "page": 154
+    },
+    {
+      "level": 3,
+      "title": "Wide Immediate Operands",
+      "page": 154
+    },
+    {
+      "level": 3,
+      "title": "Addressing in Branches",
+      "page": 156
+    },
+    {
+      "level": 3,
+      "title": "LEGv8 Addressing Mode Summary",
+      "page": 159
+    },
+    {
+      "level": 3,
+      "title": "Decoding Machine Language",
+      "page": 160
+    },
+    {
+      "level": 2,
+      "title": "2.11 Parallelism and Instructions: Synchronization",
+      "page": 164
+    },
+    {
+      "level": 2,
+      "title": "2.12 Translating and Starting a Program",
+      "page": 167
+    },
+    {
+      "level": 3,
+      "title": "Compiler",
+      "page": 168
+    },
+    {
+      "level": 3,
+      "title": "Assembler",
+      "page": 168
+    },
+    {
+      "level": 3,
+      "title": "Linker",
+      "page": 170
+    },
+    {
+      "level": 3,
+      "title": "Loader",
+      "page": 173
+    },
+    {
+      "level": 3,
+      "title": "Dynamically Linked Libraries",
+      "page": 173
+    },
+    {
+      "level": 3,
+      "title": "Starting a Java Program",
+      "page": 176
+    },
+    {
+      "level": 2,
+      "title": "2.13 A C Sort Example to Put it All Together",
+      "page": 176
+    },
+    {
+      "level": 3,
+      "title": "The Procedure swap",
+      "page": 177
+    },
+    {
+      "level": 4,
+      "title": "Register Allocation for swap",
+      "page": 177
+    },
+    {
+      "level": 4,
+      "title": "Code for the Body of the Procedure swap",
+      "page": 177
+    },
+    {
+      "level": 4,
+      "title": "The Full swap Procedure",
+      "page": 178
+    },
+    {
+      "level": 3,
+      "title": "The Procedure sort",
+      "page": 179
+    },
+    {
+      "level": 4,
+      "title": "Register Allocation for sort",
+      "page": 179
+    },
+    {
+      "level": 4,
+      "title": "Code for the Body of the Procedure sort",
+      "page": 179
+    },
+    {
+      "level": 4,
+      "title": "The Procedure Call in sort",
+      "page": 182
+    },
+    {
+      "level": 4,
+      "title": "Passing Parameters in sort",
+      "page": 182
+    },
+    {
+      "level": 4,
+      "title": "Preserving Registers in sort",
+      "page": 182
+    },
+    {
+      "level": 4,
+      "title": "The Full Procedure sort",
+      "page": 182
+    },
+    {
+      "level": 2,
+      "title": "2.14 Arrays versus Pointers",
+      "page": 185
+    },
+    {
+      "level": 3,
+      "title": "Array Version of Clear",
+      "page": 185
+    },
+    {
+      "level": 3,
+      "title": "Pointer Version of Clear",
+      "page": 187
+    },
+    {
+      "level": 3,
+      "title": "Comparing the Two Versions of Clear",
+      "page": 188
+    },
+    {
+      "level": 2,
+      "title": "2.15 Advanced Material: Compiling C and Interpreting Java",
+      "page": 189
+    },
+    {
+      "level": 3,
+      "title": "Compiling C",
+      "page": 190
+    },
+    {
+      "level": 3,
+      "title": "The Front End",
+      "page": 191
+    },
+    {
+      "level": 3,
+      "title": "High-Level Optimizations",
+      "page": 192
+    },
+    {
+      "level": 3,
+      "title": "Local and Global Optimizations",
+      "page": 193
+    },
+    {
+      "level": 4,
+      "title": "Global Code Optimizations",
+      "page": 195
+    },
+    {
+      "level": 4,
+      "title": "Implementing Local Optimizations",
+      "page": 196
+    },
+    {
+      "level": 4,
+      "title": "Implementing Global Optimizations",
+      "page": 196
+    },
+    {
+      "level": 3,
+      "title": "Register Allocation",
+      "page": 199
+    },
+    {
+      "level": 3,
+      "title": "Code Generation",
+      "page": 201
+    },
+    {
+      "level": 3,
+      "title": "Optimization Summary",
+      "page": 201
+    },
+    {
+      "level": 3,
+      "title": "Interpreting Java",
+      "page": 203
+    },
+    {
+      "level": 3,
+      "title": "Interpretation",
+      "page": 204
+    },
+    {
+      "level": 3,
+      "title": "Compiling for Java",
+      "page": 207
+    },
+    {
+      "level": 3,
+      "title": "Invoking Methods in Java",
+      "page": 208
+    },
+    {
+      "level": 3,
+      "title": "A Sort Example in Java",
+      "page": 209
+    },
+    {
+      "level": 2,
+      "title": "2.16 Real Stuff: MIPS Instructions",
+      "page": 189
+    },
+    {
+      "level": 2,
+      "title": "2.17 Real Stuff: ARMv7 (32-bit) Instructions",
+      "page": 217
+    },
+    {
+      "level": 2,
+      "title": "2.18 Real Stuff: x86 Instructions",
+      "page": 219
+    },
+    {
+      "level": 3,
+      "title": "Evolution of the Intel x86",
+      "page": 219
+    },
+    {
+      "level": 3,
+      "title": "x86 Registers and Data Addressing Modes",
+      "page": 222
+    },
+    {
+      "level": 3,
+      "title": "x86 Integer Operations",
+      "page": 223
+    },
+    {
+      "level": 3,
+      "title": "x86 Instruction Encoding",
+      "page": 226
+    },
+    {
+      "level": 3,
+      "title": "x86 Conclusion",
+      "page": 227
+    },
+    {
+      "level": 2,
+      "title": "2.19 Real Stuff: The Rest of the ARMv8 Instruction set",
+      "page": 228
+    },
+    {
+      "level": 3,
+      "title": "Full ARMv8 Integer Arithmetic Logic Instructions",
+      "page": 229
+    },
+    {
+      "level": 3,
+      "title": "Full ARMv8 Integer Data Transfer Instructions",
+      "page": 231
+    },
+    {
+      "level": 3,
+      "title": "Full ARMv8 Branch Instructions",
+      "page": 233
+    },
+    {
+      "level": 2,
+      "title": "2.20 Fallacies and Pitfalls",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "2.21 Concluding Remarks",
+      "page": 236
+    },
+    {
+      "level": 2,
+      "title": "2.22 Historical Perspective and Further Reading",
+      "page": 238
+    },
+    {
+      "level": 3,
+      "title": "Accumulator Architectures",
+      "page": 239
+    },
+    {
+      "level": 3,
+      "title": "General-Purpose Register Architectures",
+      "page": 240
+    },
+    {
+      "level": 3,
+      "title": "Compact Code and Stack Architectures",
+      "page": 241
+    },
+    {
+      "level": 3,
+      "title": "High-Level-Language Computer Architectures",
+      "page": 242
+    },
+    {
+      "level": 3,
+      "title": "Reduced Instruction Set Computer Architectures",
+      "page": 242
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of the ARMv7",
+      "page": 242
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of the x86",
+      "page": 243
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of Programming Languages",
+      "page": 244
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of Compilers",
+      "page": 245
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 246
+    },
+    {
+      "level": 2,
+      "title": "2.23 Exercises",
+      "page": 248
+    },
+    {
+      "level": 1,
+      "title": "3 Arithmetic for Computers",
+      "page": 260
+    },
+    {
+      "level": 2,
+      "title": "3.1 Introduction",
+      "page": 262
+    },
+    {
+      "level": 2,
+      "title": "3.2 Addition and Subtraction",
+      "page": 262
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 264
+    },
+    {
+      "level": 2,
+      "title": "3.3 Multiplication",
+      "page": 265
+    },
+    {
+      "level": 3,
+      "title": "Sequential Version of the Multiplication Algorithm and Hardware",
+      "page": 266
+    },
+    {
+      "level": 3,
+      "title": "Signed Multiplication",
+      "page": 270
+    },
+    {
+      "level": 3,
+      "title": "Faster Multiplication",
+      "page": 270
+    },
+    {
+      "level": 3,
+      "title": "Multiply in LEGv8",
+      "page": 271
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 271
+    },
+    {
+      "level": 2,
+      "title": "3.4 Division",
+      "page": 271
+    },
+    {
+      "level": 3,
+      "title": "A Division Algorithm and Hardware",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "Signed Division",
+      "page": 275
+    },
+    {
+      "level": 3,
+      "title": "Faster Division",
+      "page": 277
+    },
+    {
+      "level": 3,
+      "title": "Divide in LEGv8",
+      "page": 277
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 277
+    },
+    {
+      "level": 2,
+      "title": "3.5 Floating Point",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Floating-Point Representation",
+      "page": 280
+    },
+    {
+      "level": 3,
+      "title": "Exceptions and Interrupts",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "IEEE 754 Floating-Point Standard",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "Floating-Point Addition",
+      "page": 286
+    },
+    {
+      "level": 3,
+      "title": "Floating-Point Multiplication",
+      "page": 289
+    },
+    {
+      "level": 3,
+      "title": "Floating-Point Instructions in LEGv8",
+      "page": 294
+    },
+    {
+      "level": 3,
+      "title": "Accurate Arithmetic",
+      "page": 300
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 302
+    },
+    {
+      "level": 2,
+      "title": "3.6 Parallelism and Computer Arithmetic: Subword Parallelism",
+      "page": 304
+    },
+    {
+      "level": 2,
+      "title": "3.7 Real Stuff: Streaming SIMD Extensions and Advanced Vector Extensions in x86",
+      "page": 306
+    },
+    {
+      "level": 2,
+      "title": "3.8 Real Stuff: The Rest of the ARMv8 Arithmetic Instructions",
+      "page": 308
+    },
+    {
+      "level": 3,
+      "title": "Full ARMv8 Integer and Floating-point Arithmetic Instructions",
+      "page": 308
+    },
+    {
+      "level": 3,
+      "title": "Full ARMv8 SIMD Instructions",
+      "page": 310
+    },
+    {
+      "level": 2,
+      "title": "3.9 Going Faster: Subword Parallelism and Matrix Multiply",
+      "page": 312
+    },
+    {
+      "level": 2,
+      "title": "3.10 Fallacies and Pitfalls",
+      "page": 316
+    },
+    {
+      "level": 2,
+      "title": "3.11 Concluding Remarks",
+      "page": 319
+    },
+    {
+      "level": 2,
+      "title": "3.12 Historical Perspective and Further Reading",
+      "page": 322
+    },
+    {
+      "level": 3,
+      "title": "The First Dispute",
+      "page": 323
+    },
+    {
+      "level": 3,
+      "title": "Diversity versus Portability",
+      "page": 324
+    },
+    {
+      "level": 3,
+      "title": "A Backward Step",
+      "page": 325
+    },
+    {
+      "level": 3,
+      "title": "The People Who Built the Bombs",
+      "page": 326
+    },
+    {
+      "level": 3,
+      "title": "Making the World Safe for Floating Point, or Vice Versa",
+      "page": 327
+    },
+    {
+      "level": 3,
+      "title": "The First IEEE 754 Chips",
+      "page": 329
+    },
+    {
+      "level": 3,
+      "title": "IEEE 754 Today",
+      "page": 331
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 332
+    },
+    {
+      "level": 2,
+      "title": "3.13 Exercises",
+      "page": 333
+    },
+    {
+      "level": 1,
+      "title": "4 The Processor",
+      "page": 338
+    },
+    {
+      "level": 2,
+      "title": "4.1 Introduction",
+      "page": 340
+    },
+    {
+      "level": 3,
+      "title": "A Basic LEGv8 Implementation",
+      "page": 340
+    },
+    {
+      "level": 3,
+      "title": "An Overview of the Implementation",
+      "page": 341
+    },
+    {
+      "level": 2,
+      "title": "4.2 Logic Design Conventions",
+      "page": 344
+    },
+    {
+      "level": 3,
+      "title": "Clocking Methodology",
+      "page": 345
+    },
+    {
+      "level": 2,
+      "title": "4.3 Building a Datapath",
+      "page": 347
+    },
+    {
+      "level": 3,
+      "title": "Creating a Single Datapath",
+      "page": 351
+    },
+    {
+      "level": 2,
+      "title": "4.4 A Simple Implementation Scheme",
+      "page": 355
+    },
+    {
+      "level": 3,
+      "title": "The ALU Control",
+      "page": 355
+    },
+    {
+      "level": 3,
+      "title": "Designing the Main Control Unit",
+      "page": 357
+    },
+    {
+      "level": 3,
+      "title": "Operation of the Datapath",
+      "page": 360
+    },
+    {
+      "level": 3,
+      "title": "Finalizing Control",
+      "page": 365
+    },
+    {
+      "level": 3,
+      "title": "Why a Single-Cycle Implementation is not Used Today",
+      "page": 367
+    },
+    {
+      "level": 2,
+      "title": "4.5 An Overview of Pipelining",
+      "page": 367
+    },
+    {
+      "level": 3,
+      "title": "Designing Instruction Sets for Pipelining",
+      "page": 372
+    },
+    {
+      "level": 3,
+      "title": "Pipeline Hazards",
+      "page": 372
+    },
+    {
+      "level": 4,
+      "title": "Structural Hazard",
+      "page": 372
+    },
+    {
+      "level": 4,
+      "title": "Data Hazards",
+      "page": 373
+    },
+    {
+      "level": 3,
+      "title": "Control Hazards",
+      "page": 376
+    },
+    {
+      "level": 3,
+      "title": "Pipeline Overview Summary",
+      "page": 381
+    },
+    {
+      "level": 2,
+      "title": "4.6 Pipelined Datapath and Control",
+      "page": 381
+    },
+    {
+      "level": 3,
+      "title": "Graphically Representing Pipelines",
+      "page": 391
+    },
+    {
+      "level": 3,
+      "title": "Pipelined Control",
+      "page": 395
+    },
+    {
+      "level": 2,
+      "title": "4.7 Data Hazards: Forwarding versus Stalling",
+      "page": 400
+    },
+    {
+      "level": 3,
+      "title": "Data Hazards and Stalls",
+      "page": 408
+    },
+    {
+      "level": 2,
+      "title": "4.8 Control Hazards",
+      "page": 412
+    },
+    {
+      "level": 3,
+      "title": "Assume Branch Not Taken",
+      "page": 412
+    },
+    {
+      "level": 3,
+      "title": "Reducing the Delay of Branches",
+      "page": 414
+    },
+    {
+      "level": 3,
+      "title": "Dynamic Branch Prediction",
+      "page": 415
+    },
+    {
+      "level": 3,
+      "title": "Pipeline Summary",
+      "page": 419
+    },
+    {
+      "level": 2,
+      "title": "4.9 Exceptions",
+      "page": 420
+    },
+    {
+      "level": 3,
+      "title": "How Exceptions are Handled in the LEGv8 Architecture",
+      "page": 421
+    },
+    {
+      "level": 3,
+      "title": "Exceptions in a Pipelined Implementation",
+      "page": 422
+    },
+    {
+      "level": 2,
+      "title": "4.10 Parallelism via Instructions",
+      "page": 426
+    },
+    {
+      "level": 3,
+      "title": "The Concept of Speculation",
+      "page": 428
+    },
+    {
+      "level": 3,
+      "title": "Static Multiple Issue",
+      "page": 429
+    },
+    {
+      "level": 4,
+      "title": "An Example: Static Multiple Issue with the LEGv8 ISA",
+      "page": 429
+    },
+    {
+      "level": 3,
+      "title": "Dynamic Multiple-Issue Processors",
+      "page": 433
+    },
+    {
+      "level": 4,
+      "title": "Dynamic Pipeline Scheduling",
+      "page": 434
+    },
+    {
+      "level": 3,
+      "title": "Energy Efficiency and Advanced Pipelining",
+      "page": 438
+    },
+    {
+      "level": 2,
+      "title": "4.11 Real Stuff: The ARM Cortex-A53 and Intel Core i7 Pipelines",
+      "page": 439
+    },
+    {
+      "level": 3,
+      "title": "The ARM Cortex-A53",
+      "page": 439
+    },
+    {
+      "level": 3,
+      "title": "The Intel Core i7 920",
+      "page": 442
+    },
+    {
+      "level": 3,
+      "title": "Performance of the Intel Core i7 920",
+      "page": 445
+    },
+    {
+      "level": 2,
+      "title": "4.12 Going Faster: Instruction-Level Parallelism and Matrix Multiply",
+      "page": 447
+    },
+    {
+      "level": 2,
+      "title": "4.13 Advanced Topic: An Introduction to Digital Design Using a Hardware Design Language to Describe and Model a Pipeline and Mo ...",
+      "page": 450
+    },
+    {
+      "level": 3,
+      "title": "Using Verilog for Behavioral Specification with Simulation for the Five-Stage Pipeline",
+      "page": 451
+    },
+    {
+      "level": 3,
+      "title": "Implementing Forwarding in Verilog",
+      "page": 453
+    },
+    {
+      "level": 3,
+      "title": "The Behavioral Verilog with Stall Detection",
+      "page": 455
+    },
+    {
+      "level": 4,
+      "title": "Implementing the Branch Hazard Logic in Verilog",
+      "page": 457
+    },
+    {
+      "level": 3,
+      "title": "Using Verilog for Behavioral Specification with Synthesis",
+      "page": 460
+    },
+    {
+      "level": 3,
+      "title": "More Illustrations of Instruction Execution on the Hardware",
+      "page": 466
+    },
+    {
+      "level": 4,
+      "title": "No Hazard Illustrations",
+      "page": 466
+    },
+    {
+      "level": 4,
+      "title": "More Examples",
+      "page": 474
+    },
+    {
+      "level": 4,
+      "title": "Forwarding Illustrations",
+      "page": 475
+    },
+    {
+      "level": 4,
+      "title": "Illustrating Pipelines with Stalls and Forwarding",
+      "page": 475
+    },
+    {
+      "level": 2,
+      "title": "4.14 Fallacies and Pitfalls",
+      "page": 450
+    },
+    {
+      "level": 2,
+      "title": "4.15 Concluding Remarks",
+      "page": 481
+    },
+    {
+      "level": 2,
+      "title": "4.16 Historical Perspective and Further Reading",
+      "page": 482
+    },
+    {
+      "level": 3,
+      "title": "Improving Pipelining Effectiveness and Adding Multiple Issue",
+      "page": 485
+    },
+    {
+      "level": 3,
+      "title": "Compiler Technology for Exploiting ILP",
+      "page": 486
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 487
+    },
+    {
+      "level": 2,
+      "title": "4.17 Exercises",
+      "page": 482
+    },
+    {
+      "level": 1,
+      "title": "5 Large and Fast: Exploiting Memory Hierarchy",
+      "page": 506
+    },
+    {
+      "level": 2,
+      "title": "5.1 Introduction",
+      "page": 508
+    },
+    {
+      "level": 2,
+      "title": "5.2 Memory Technologies",
+      "page": 512
+    },
+    {
+      "level": 3,
+      "title": "SRAM Technology",
+      "page": 513
+    },
+    {
+      "level": 3,
+      "title": "DRAM Technology",
+      "page": 513
+    },
+    {
+      "level": 3,
+      "title": "Flash Memory",
+      "page": 515
+    },
+    {
+      "level": 3,
+      "title": "Disk Memory",
+      "page": 515
+    },
+    {
+      "level": 2,
+      "title": "5.3 The Basics of Caches",
+      "page": 517
+    },
+    {
+      "level": 3,
+      "title": "Accessing a Cache",
+      "page": 520
+    },
+    {
+      "level": 3,
+      "title": "Handling Cache Misses",
+      "page": 526
+    },
+    {
+      "level": 3,
+      "title": "Handling Writes",
+      "page": 527
+    },
+    {
+      "level": 3,
+      "title": "An Example Cache: The Intrinsity FastMATH Processor",
+      "page": 529
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 531
+    },
+    {
+      "level": 2,
+      "title": "5.4 Measuring and Improving Cache Performance",
+      "page": 532
+    },
+    {
+      "level": 3,
+      "title": "Reducing Cache Misses by More Flexible Placement of Blocks",
+      "page": 536
+    },
+    {
+      "level": 3,
+      "title": "Locating a Block in the Cache",
+      "page": 541
+    },
+    {
+      "level": 3,
+      "title": "Choosing Which Block to Replace",
+      "page": 543
+    },
+    {
+      "level": 3,
+      "title": "Reducing the Miss Penalty Using Multilevel Caches",
+      "page": 544
+    },
+    {
+      "level": 3,
+      "title": "Software Optimization via Blocking",
+      "page": 547
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 551
+    },
+    {
+      "level": 2,
+      "title": "5.5 Dependable Memory Hierarchy",
+      "page": 552
+    },
+    {
+      "level": 3,
+      "title": "Defining Failure",
+      "page": 552
+    },
+    {
+      "level": 3,
+      "title": "The Hamming Single Error Correcting, Double Error Detecting Code (SEC/DED)",
+      "page": 554
+    },
+    {
+      "level": 2,
+      "title": "5.6 Virtual Machines",
+      "page": 558
+    },
+    {
+      "level": 3,
+      "title": "Requirements of a Virtual Machine Monitor",
+      "page": 560
+    },
+    {
+      "level": 3,
+      "title": "(Lack of) Instruction Set Architecture Support for Virtual Machines",
+      "page": 560
+    },
+    {
+      "level": 3,
+      "title": "Protection and Instruction Set Architecture",
+      "page": 561
+    },
+    {
+      "level": 2,
+      "title": "5.7 Virtual Memory",
+      "page": 561
+    },
+    {
+      "level": 3,
+      "title": "Placing a Page and Finding It Again",
+      "page": 566
+    },
+    {
+      "level": 3,
+      "title": "Page Faults",
+      "page": 568
+    },
+    {
+      "level": 3,
+      "title": "Virtual Memory for Large Virtual Addresses",
+      "page": 570
+    },
+    {
+      "level": 3,
+      "title": "What about Writes?",
+      "page": 572
+    },
+    {
+      "level": 3,
+      "title": "Making Address Translation Fast: the TLB",
+      "page": 572
+    },
+    {
+      "level": 3,
+      "title": "The Intrinsity FastMATH TLB",
+      "page": 574
+    },
+    {
+      "level": 3,
+      "title": "Integrating Virtual Memory, TLBs, and Caches",
+      "page": 577
+    },
+    {
+      "level": 3,
+      "title": "Implementing Protection with Virtual Memory",
+      "page": 579
+    },
+    {
+      "level": 3,
+      "title": "Handling TLB Misses and Page Faults",
+      "page": 581
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 583
+    },
+    {
+      "level": 2,
+      "title": "5.8 A Common Framework for Memory Hierarchy",
+      "page": 585
+    },
+    {
+      "level": 3,
+      "title": "Question 1: Where Can a Block Be Placed?",
+      "page": 586
+    },
+    {
+      "level": 3,
+      "title": "Question 2: How Is a Block Found?",
+      "page": 587
+    },
+    {
+      "level": 3,
+      "title": "Question 3: Which Block Should Be Replaced on a Cache Miss?",
+      "page": 588
+    },
+    {
+      "level": 3,
+      "title": "Question 4: What Happens on a Write?",
+      "page": 589
+    },
+    {
+      "level": 3,
+      "title": "The Three Cs: An Intuitive Model for Understanding the Behavior of Memory Hierarchies",
+      "page": 590
+    },
+    {
+      "level": 2,
+      "title": "5.9 Using a Finite-State Machine to Control a Simple Cache",
+      "page": 592
+    },
+    {
+      "level": 3,
+      "title": "A Simple Cache",
+      "page": 593
+    },
+    {
+      "level": 3,
+      "title": "Finite-State Machines",
+      "page": 594
+    },
+    {
+      "level": 3,
+      "title": "FSM for a Simple Cache Controller",
+      "page": 596
+    },
+    {
+      "level": 2,
+      "title": "5.10 Parallelism and Memory Hierarchy: Cache Coherence",
+      "page": 597
+    },
+    {
+      "level": 3,
+      "title": "Basic Schemes for Enforcing Coherence",
+      "page": 599
+    },
+    {
+      "level": 3,
+      "title": "Snooping Protocols",
+      "page": 599
+    },
+    {
+      "level": 2,
+      "title": "5.11 Parallelism and Memory Hierarchy: Redundant Arrays of Inexpensive Disks",
+      "page": 601
+    },
+    {
+      "level": 3,
+      "title": "No Redundancy (RAID 0)",
+      "page": 604
+    },
+    {
+      "level": 3,
+      "title": "Mirroring (RAID 1)",
+      "page": 605
+    },
+    {
+      "level": 3,
+      "title": "Error Detecting and Correcting Code (RAID 2)",
+      "page": 605
+    },
+    {
+      "level": 3,
+      "title": "Bit-Interleaved Parity (RAID 3)",
+      "page": 605
+    },
+    {
+      "level": 3,
+      "title": "Block-Interleaved Parity (RAID 4)",
+      "page": 605
+    },
+    {
+      "level": 3,
+      "title": "Distributed Block-Interleaved Parity (RAID 5)",
+      "page": 606
+    },
+    {
+      "level": 3,
+      "title": "P + Q Redundancy (RAID 6)",
+      "page": 607
+    },
+    {
+      "level": 3,
+      "title": "RAID Summary",
+      "page": 607
+    },
+    {
+      "level": 2,
+      "title": "5.12 Advanced Material: Implementing Cache Controllers",
+      "page": 609
+    },
+    {
+      "level": 3,
+      "title": "SystemVerilog of a Simple Cache Controller",
+      "page": 610
+    },
+    {
+      "level": 3,
+      "title": "Basic Coherent Cache Implementation Techniques",
+      "page": 619
+    },
+    {
+      "level": 3,
+      "title": "An Example Cache Coherency Protocol",
+      "page": 620
+    },
+    {
+      "level": 3,
+      "title": "Implementing Snoopy Cache Coherence",
+      "page": 625
+    },
+    {
+      "level": 2,
+      "title": "5.13 Real Stuff: The ARM Cortex-A53 and Intel Core i7 Memory Hierarchies",
+      "page": 609
+    },
+    {
+      "level": 3,
+      "title": "Performance of the Cortex-A53 and Core i7 Memory Hierarchies",
+      "page": 628
+    },
+    {
+      "level": 2,
+      "title": "5.14 Real Stuff: The Rest of the ARMv8 System and Special Instructions",
+      "page": 630
+    },
+    {
+      "level": 2,
+      "title": "5.15 Going Faster: Cache Blocking and Matrix Multiply",
+      "page": 631
+    },
+    {
+      "level": 2,
+      "title": "5.16 Fallacies and Pitfalls",
+      "page": 634
+    },
+    {
+      "level": 2,
+      "title": "5.17 Concluding Remarks",
+      "page": 639
+    },
+    {
+      "level": 2,
+      "title": "5.18 Historical Perspective and Further Reading",
+      "page": 640
+    },
+    {
+      "level": 3,
+      "title": "The Development of Memory Hierarchies",
+      "page": 645
+    },
+    {
+      "level": 3,
+      "title": "Disk Storage",
+      "page": 647
+    },
+    {
+      "level": 3,
+      "title": "A Very Brief History of Flash Memory",
+      "page": 648
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of Databases",
+      "page": 649
+    },
+    {
+      "level": 3,
+      "title": "RAID",
+      "page": 651
+    },
+    {
+      "level": 3,
+      "title": "Protection Mechanisms",
+      "page": 652
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of Modern Operating Systems",
+      "page": 653
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 656
+    },
+    {
+      "level": 2,
+      "title": "5.19 Exercises",
+      "page": 640
+    },
+    {
+      "level": 1,
+      "title": "6 Parallel Processors from Client to Cloud",
+      "page": 674
+    },
+    {
+      "level": 2,
+      "title": "6.1 Introduction",
+      "page": 676
+    },
+    {
+      "level": 2,
+      "title": "6.2 The Difficulty of Creating Parallel Processing Programs",
+      "page": 678
+    },
+    {
+      "level": 2,
+      "title": "6.3 SISD, MIMD, SIMD, SPMD, and Vector",
+      "page": 683
+    },
+    {
+      "level": 3,
+      "title": "SIMD in x86: Multimedia Extensions",
+      "page": 684
+    },
+    {
+      "level": 3,
+      "title": "Vector",
+      "page": 684
+    },
+    {
+      "level": 3,
+      "title": "Vector versus Scalar",
+      "page": 686
+    },
+    {
+      "level": 3,
+      "title": "Vector versus Multimedia Extensions",
+      "page": 687
+    },
+    {
+      "level": 2,
+      "title": "6.4 Hardware Multithreading",
+      "page": 690
+    },
+    {
+      "level": 2,
+      "title": "6.5 Multicore and Other Shared Memory Multiprocessors",
+      "page": 693
+    },
+    {
+      "level": 2,
+      "title": "6.6 Introduction to Graphics Processing Units",
+      "page": 698
+    },
+    {
+      "level": 3,
+      "title": "An Introduction to the NVIDIA GPU Architecture",
+      "page": 699
+    },
+    {
+      "level": 3,
+      "title": "NVIDIA GPU Memory Structures",
+      "page": 701
+    },
+    {
+      "level": 3,
+      "title": "Putting GPUs into Perspective",
+      "page": 703
+    },
+    {
+      "level": 2,
+      "title": "6.7 Clusters, Warehouse Scale Computers, and Other Message-Passing Multiprocessors",
+      "page": 705
+    },
+    {
+      "level": 3,
+      "title": "Warehouse-Scale Computers",
+      "page": 707
+    },
+    {
+      "level": 2,
+      "title": "6.8 Introduction to Multiprocessor Network Topologies",
+      "page": 710
+    },
+    {
+      "level": 3,
+      "title": "Implementing Network Topologies",
+      "page": 712
+    },
+    {
+      "level": 2,
+      "title": "6.9 Communicating to the Outside World: Cluster Networking",
+      "page": 713
+    },
+    {
+      "level": 3,
+      "title": "The Role of the Operating System in Networking",
+      "page": 716
+    },
+    {
+      "level": 3,
+      "title": "Improving Network Performance",
+      "page": 719
+    },
+    {
+      "level": 2,
+      "title": "6.10 Multiprocessor Benchmarks and Performance Models",
+      "page": 723
+    },
+    {
+      "level": 3,
+      "title": "Performance Models",
+      "page": 725
+    },
+    {
+      "level": 3,
+      "title": "The Roofline Model",
+      "page": 727
+    },
+    {
+      "level": 3,
+      "title": "Comparing Two Generations of Opterons",
+      "page": 728
+    },
+    {
+      "level": 2,
+      "title": "6.11 Real Stuff: Benchmarking and Rooflines of the Intel Core i7 960 and the NVIDIA Tesla GPU",
+      "page": 733
+    },
+    {
+      "level": 2,
+      "title": "6.12 Going Faster: Multiple Processors and Matrix Multiply",
+      "page": 738
+    },
+    {
+      "level": 2,
+      "title": "6.13 Fallacies and Pitfalls",
+      "page": 741
+    },
+    {
+      "level": 2,
+      "title": "6.14 Concluding Remarks",
+      "page": 743
+    },
+    {
+      "level": 2,
+      "title": "6.15 Historical Perspective and Further Reading",
+      "page": 746
+    },
+    {
+      "level": 3,
+      "title": "SIMD Computers: Attractive Idea, Many Attempts, No Lasting Successes",
+      "page": 747
+    },
+    {
+      "level": 3,
+      "title": "Multimedia Extensions as SIMD Extensions to Instruction Sets",
+      "page": 749
+    },
+    {
+      "level": 3,
+      "title": "Other Early Experiments",
+      "page": 749
+    },
+    {
+      "level": 3,
+      "title": "Great Debates in Parallel Processing",
+      "page": 750
+    },
+    {
+      "level": 3,
+      "title": "More Recent Advances and Developments",
+      "page": 752
+    },
+    {
+      "level": 3,
+      "title": "The Development of Bus-Based Coherent Multiprocessors",
+      "page": 752
+    },
+    {
+      "level": 3,
+      "title": "Toward Large-Scale Multiprocessors",
+      "page": 752
+    },
+    {
+      "level": 3,
+      "title": "Clusters",
+      "page": 753
+    },
+    {
+      "level": 3,
+      "title": "Recent Trends in Large-Scale Multiprocessors",
+      "page": 754
+    },
+    {
+      "level": 3,
+      "title": "Looking Further",
+      "page": 755
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 756
+    },
+    {
+      "level": 3,
+      "title": "References",
+      "page": 746
+    },
+    {
+      "level": 2,
+      "title": "6.16 Exercises",
+      "page": 746
+    },
+    {
+      "level": 1,
+      "title": "Appendix A. The Basics of Logic Design",
+      "page": 771
+    },
+    {
+      "level": 2,
+      "title": "A.1 Introduction",
+      "page": 772
+    },
+    {
+      "level": 2,
+      "title": "A.2 Gates, Truth Tables, and Logic Equations",
+      "page": 773
+    },
+    {
+      "level": 3,
+      "title": "Truth Tables",
+      "page": 774
+    },
+    {
+      "level": 3,
+      "title": "Boolean Algebra",
+      "page": 775
+    },
+    {
+      "level": 3,
+      "title": "Gates",
+      "page": 777
+    },
+    {
+      "level": 2,
+      "title": "A.3 Combinational Logic",
+      "page": 778
+    },
+    {
+      "level": 3,
+      "title": "Decoders",
+      "page": 778
+    },
+    {
+      "level": 3,
+      "title": "Multiplexors",
+      "page": 779
+    },
+    {
+      "level": 3,
+      "title": "Two-Level Logic and PLAs",
+      "page": 780
+    },
+    {
+      "level": 3,
+      "title": "ROMs",
+      "page": 783
+    },
+    {
+      "level": 3,
+      "title": "Don’t Cares",
+      "page": 786
+    },
+    {
+      "level": 3,
+      "title": "Arrays of Logic Elements",
+      "page": 787
+    },
+    {
+      "level": 2,
+      "title": "A.4 Using a Hardware Description Language",
+      "page": 789
+    },
+    {
+      "level": 3,
+      "title": "Datatypes and Operators in Verilog",
+      "page": 790
+    },
+    {
+      "level": 3,
+      "title": "Structure of a Verilog Program",
+      "page": 792
+    },
+    {
+      "level": 3,
+      "title": "Representing Complex Combinational Logic in Verilog",
+      "page": 792
+    },
+    {
+      "level": 2,
+      "title": "A.5 Constructing a Basic Arithmetic Logic Unit",
+      "page": 795
+    },
+    {
+      "level": 3,
+      "title": "A 1-Bit ALU",
+      "page": 795
+    },
+    {
+      "level": 3,
+      "title": "A 64-Bit ALU",
+      "page": 798
+    },
+    {
+      "level": 3,
+      "title": "Tailoring the 64-Bit ALU to LEGv8",
+      "page": 800
+    },
+    {
+      "level": 3,
+      "title": "Defining the LEGv8 ALU in Verilog",
+      "page": 803
+    },
+    {
+      "level": 2,
+      "title": "A.6 Faster Addition: Carry Lookahead",
+      "page": 806
+    },
+    {
+      "level": 3,
+      "title": "Fast Carry Using “Infinite” Hardware",
+      "page": 807
+    },
+    {
+      "level": 3,
+      "title": "Fast Carry Using the First Level of Abstraction: Propagate and Generate",
+      "page": 807
+    },
+    {
+      "level": 3,
+      "title": "Fast Carry Using the Second Level of Abstraction",
+      "page": 809
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 814
+    },
+    {
+      "level": 2,
+      "title": "A.7 Clocks",
+      "page": 816
+    },
+    {
+      "level": 2,
+      "title": "A.8 Memory Elements: Flip-Flops, Latches, and Registers",
+      "page": 818
+    },
+    {
+      "level": 3,
+      "title": "Flip-Flops and Latches",
+      "page": 819
+    },
+    {
+      "level": 3,
+      "title": "Register Files",
+      "page": 822
+    },
+    {
+      "level": 3,
+      "title": "Specifying Sequential Logic in Verilog",
+      "page": 824
+    },
+    {
+      "level": 2,
+      "title": "A.9 Memory Elements: SRAMs and DRAMs",
+      "page": 826
+    },
+    {
+      "level": 3,
+      "title": "SRAMs",
+      "page": 826
+    },
+    {
+      "level": 3,
+      "title": "DRAMs",
+      "page": 831
+    },
+    {
+      "level": 3,
+      "title": "Error Correction",
+      "page": 833
+    },
+    {
+      "level": 2,
+      "title": "A.10 Finite-State Machines",
+      "page": 835
+    },
+    {
+      "level": 2,
+      "title": "A.11 Timing Methodologies",
+      "page": 840
+    },
+    {
+      "level": 3,
+      "title": "Level-Sensitive Timing",
+      "page": 843
+    },
+    {
+      "level": 3,
+      "title": "Asynchronous Inputs and Synchronizers",
+      "page": 844
+    },
+    {
+      "level": 2,
+      "title": "A.12 Field Programmable Devices",
+      "page": 846
+    },
+    {
+      "level": 2,
+      "title": "A.13 Concluding Remarks",
+      "page": 847
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 847
+    },
+    {
+      "level": 2,
+      "title": "A.14 Exercises",
+      "page": 848
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 856
+    },
+    {
+      "level": 1,
+      "title": "Appendix B. Graphics and Computing GPUs",
+      "page": 878
+    },
+    {
+      "level": 2,
+      "title": "B.1 Introduction",
+      "page": 879
+    },
+    {
+      "level": 3,
+      "title": "A Brief History of GPU Evolution",
+      "page": 879
+    },
+    {
+      "level": 3,
+      "title": "GPU Graphics Trends",
+      "page": 880
+    },
+    {
+      "level": 3,
+      "title": "Heterogeneous System",
+      "page": 880
+    },
+    {
+      "level": 3,
+      "title": "GPU Evolves into Scalable Parallel Processor",
+      "page": 881
+    },
+    {
+      "level": 3,
+      "title": "Why CUDA and GPU Computing?",
+      "page": 881
+    },
+    {
+      "level": 3,
+      "title": "GPU Unifes Graphics and Computing",
+      "page": 882
+    },
+    {
+      "level": 3,
+      "title": "GPU Visual Computing Applications",
+      "page": 882
+    },
+    {
+      "level": 2,
+      "title": "B.2 GPU System Architectures",
+      "page": 883
+    },
+    {
+      "level": 3,
+      "title": "Heterogeneous CPU–GPU System Architecture",
+      "page": 883
+    },
+    {
+      "level": 4,
+      "title": "The Historical PC (circa 1990)",
+      "page": 883
+    },
+    {
+      "level": 4,
+      "title": "Game Consoles",
+      "page": 885
+    },
+    {
+      "level": 3,
+      "title": "GPU Interfaces and Drivers",
+      "page": 885
+    },
+    {
+      "level": 3,
+      "title": "Graphics Logical Pipeline",
+      "page": 886
+    },
+    {
+      "level": 3,
+      "title": "Mapping Graphics Pipeline to Unified GPU Processors",
+      "page": 886
+    },
+    {
+      "level": 3,
+      "title": "Basic Unified GPU Architecture",
+      "page": 886
+    },
+    {
+      "level": 3,
+      "title": "Processor Array",
+      "page": 887
+    },
+    {
+      "level": 2,
+      "title": "B.3 Programming GPUs",
+      "page": 888
+    },
+    {
+      "level": 3,
+      "title": "Programming Real-Time Graphics",
+      "page": 889
+    },
+    {
+      "level": 3,
+      "title": "Logical Graphics Pipeline",
+      "page": 889
+    },
+    {
+      "level": 3,
+      "title": "Graphics Shader Programs",
+      "page": 890
+    },
+    {
+      "level": 3,
+      "title": "Pixel Shader Example",
+      "page": 891
+    },
+    {
+      "level": 3,
+      "title": "Programming Parallel Computing Applications",
+      "page": 893
+    },
+    {
+      "level": 4,
+      "title": "Data Parallel Problem Decomposition",
+      "page": 893
+    },
+    {
+      "level": 3,
+      "title": "Scalable Parallel Programming with CUDA",
+      "page": 893
+    },
+    {
+      "level": 4,
+      "title": "The CUDA Paradigm",
+      "page": 895
+    },
+    {
+      "level": 3,
+      "title": "Restrictions",
+      "page": 899
+    },
+    {
+      "level": 3,
+      "title": "Implications for Architecture",
+      "page": 900
+    },
+    {
+      "level": 2,
+      "title": "B.4 Multithreaded Multiprocessor Architecture",
+      "page": 901
+    },
+    {
+      "level": 3,
+      "title": "Massive Multithreading",
+      "page": 901
+    },
+    {
+      "level": 3,
+      "title": "Multiprocessor Architecture",
+      "page": 902
+    },
+    {
+      "level": 3,
+      "title": "Single-Instruction Multiple-Thread (SIMT)",
+      "page": 903
+    },
+    {
+      "level": 3,
+      "title": "SIMT Warp Execution and Divergence",
+      "page": 905
+    },
+    {
+      "level": 3,
+      "title": "Managing Threads and Thread Blocks",
+      "page": 906
+    },
+    {
+      "level": 3,
+      "title": "Thread Instructions",
+      "page": 906
+    },
+    {
+      "level": 3,
+      "title": "Instruction Set Architecture (ISA)",
+      "page": 907
+    },
+    {
+      "level": 4,
+      "title": "Memory Access Instructions",
+      "page": 909
+    },
+    {
+      "level": 4,
+      "title": "Barrier Synchronization for Thread Communication",
+      "page": 910
+    },
+    {
+      "level": 3,
+      "title": "Streaming Processor (SP)",
+      "page": 910
+    },
+    {
+      "level": 3,
+      "title": "Special Function Unit (SFU)",
+      "page": 911
+    },
+    {
+      "level": 3,
+      "title": "Comparing with Other Multiprocessors",
+      "page": 911
+    },
+    {
+      "level": 3,
+      "title": "Multithreaded Multiprocessor Conclusion",
+      "page": 912
+    },
+    {
+      "level": 2,
+      "title": "B.5 Parallel Memory System",
+      "page": 912
+    },
+    {
+      "level": 3,
+      "title": "DRAM Considerations",
+      "page": 913
+    },
+    {
+      "level": 3,
+      "title": "Caches",
+      "page": 914
+    },
+    {
+      "level": 3,
+      "title": "MMU",
+      "page": 914
+    },
+    {
+      "level": 3,
+      "title": "Memory Spaces",
+      "page": 915
+    },
+    {
+      "level": 3,
+      "title": "Global memory",
+      "page": 915
+    },
+    {
+      "level": 3,
+      "title": "Shared memory",
+      "page": 915
+    },
+    {
+      "level": 3,
+      "title": "Local Memory",
+      "page": 916
+    },
+    {
+      "level": 3,
+      "title": "Constant Memory",
+      "page": 916
+    },
+    {
+      "level": 3,
+      "title": "Texture Memory",
+      "page": 916
+    },
+    {
+      "level": 3,
+      "title": "Surfaces",
+      "page": 917
+    },
+    {
+      "level": 3,
+      "title": "Load/Store Access",
+      "page": 917
+    },
+    {
+      "level": 3,
+      "title": "ROP",
+      "page": 917
+    },
+    {
+      "level": 2,
+      "title": "B.6 Floating-point Arithmetic",
+      "page": 917
+    },
+    {
+      "level": 3,
+      "title": "Supported Formats",
+      "page": 918
+    },
+    {
+      "level": 3,
+      "title": "Basic Arithmetic",
+      "page": 918
+    },
+    {
+      "level": 3,
+      "title": "Specialized Arithmetic",
+      "page": 918
+    },
+    {
+      "level": 4,
+      "title": "Texture Operations",
+      "page": 920
+    },
+    {
+      "level": 3,
+      "title": "Performance",
+      "page": 920
+    },
+    {
+      "level": 3,
+      "title": "Double precision",
+      "page": 921
+    },
+    {
+      "level": 2,
+      "title": "B.7 Real Stuff: The NVIDIA GeForce 8800",
+      "page": 922
+    },
+    {
+      "level": 3,
+      "title": "Streaming Processor Array (SPA)",
+      "page": 922
+    },
+    {
+      "level": 3,
+      "title": "Texture/Processor Cluster (TPC)",
+      "page": 923
+    },
+    {
+      "level": 3,
+      "title": "Streaming Multiprocessor (SM)",
+      "page": 924
+    },
+    {
+      "level": 3,
+      "title": "Instruction Set",
+      "page": 925
+    },
+    {
+      "level": 3,
+      "title": "Streaming Processor (SP)",
+      "page": 925
+    },
+    {
+      "level": 3,
+      "title": "Special Function Unit (SFU)",
+      "page": 926
+    },
+    {
+      "level": 3,
+      "title": "Rasterization",
+      "page": 926
+    },
+    {
+      "level": 3,
+      "title": "Raster Operations Processor (ROP) and Memory System",
+      "page": 926
+    },
+    {
+      "level": 3,
+      "title": "Scalability",
+      "page": 927
+    },
+    {
+      "level": 3,
+      "title": "Performance",
+      "page": 927
+    },
+    {
+      "level": 3,
+      "title": "Dense Linear Algebra Performance",
+      "page": 927
+    },
+    {
+      "level": 3,
+      "title": "FFT Performance",
+      "page": 929
+    },
+    {
+      "level": 3,
+      "title": "Sorting Performance",
+      "page": 930
+    },
+    {
+      "level": 2,
+      "title": "B.8 Real Stuff: Mapping Applications to GPUs",
+      "page": 931
+    },
+    {
+      "level": 3,
+      "title": "Sparse Matrices",
+      "page": 931
+    },
+    {
+      "level": 3,
+      "title": "Caching in Shared Memory",
+      "page": 934
+    },
+    {
+      "level": 3,
+      "title": "Scan and Reduction",
+      "page": 936
+    },
+    {
+      "level": 3,
+      "title": "Radix Sort",
+      "page": 939
+    },
+    {
+      "level": 3,
+      "title": "N-Body Applications on a GPU",
+      "page": 941
+    },
+    {
+      "level": 4,
+      "title": "N-Body Mathematics",
+      "page": 941
+    },
+    {
+      "level": 4,
+      "title": "Optimization for GPU Execution",
+      "page": 943
+    },
+    {
+      "level": 4,
+      "title": "Using Shared Memory",
+      "page": 943
+    },
+    {
+      "level": 3,
+      "title": "Using Multiple Threads per Body",
+      "page": 944
+    },
+    {
+      "level": 4,
+      "title": "Performance Comparison",
+      "page": 945
+    },
+    {
+      "level": 4,
+      "title": "Results",
+      "page": 946
+    },
+    {
+      "level": 2,
+      "title": "B.9 Fallacies and Pitfalls",
+      "page": 948
+    },
+    {
+      "level": 2,
+      "title": "B.10 Concluding Remarks",
+      "page": 952
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments",
+      "page": 952
+    },
+    {
+      "level": 2,
+      "title": "B.11 Historical Perspective and Further Reading",
+      "page": 953
+    },
+    {
+      "level": 3,
+      "title": "Graphics Pipeline Evolution",
+      "page": 953
+    },
+    {
+      "level": 3,
+      "title": "Fixed-Function Graphics Pipelines",
+      "page": 953
+    },
+    {
+      "level": 3,
+      "title": "Evolution of Programmable Real-Time Graphics",
+      "page": 954
+    },
+    {
+      "level": 3,
+      "title": "Unified Graphics and Computing Processors",
+      "page": 955
+    },
+    {
+      "level": 3,
+      "title": "GPGPU: an Intermediate Step",
+      "page": 955
+    },
+    {
+      "level": 3,
+      "title": "GPU Computing",
+      "page": 956
+    },
+    {
+      "level": 3,
+      "title": "Scalable GPUs",
+      "page": 956
+    },
+    {
+      "level": 3,
+      "title": "Recent Developments",
+      "page": 957
+    },
+    {
+      "level": 3,
+      "title": "Future Trends",
+      "page": 957
+    },
+    {
+      "level": 2,
+      "title": "Further Reading",
+      "page": 957
+    },
+    {
+      "level": 1,
+      "title": "Appendix C. Mapping Control to Hardware",
+      "page": 961
+    },
+    {
+      "level": 2,
+      "title": "C.1 Introduction",
+      "page": 962
+    },
+    {
+      "level": 2,
+      "title": "C.2 Implementing Combinational Control Units",
+      "page": 963
+    },
+    {
+      "level": 3,
+      "title": "Mapping the ALU Control Function to Gates",
+      "page": 963
+    },
+    {
+      "level": 3,
+      "title": "Mapping the Main Control Function to Gates",
+      "page": 966
+    },
+    {
+      "level": 2,
+      "title": "C.3 Implementing Finite-State Machine Control",
+      "page": 967
+    },
+    {
+      "level": 3,
+      "title": "A ROM Implementation",
+      "page": 974
+    },
+    {
+      "level": 3,
+      "title": "A PLA Implementation",
+      "page": 979
+    },
+    {
+      "level": 2,
+      "title": "C.4 Implementing the Next-State Function with a Sequencer",
+      "page": 981
+    },
+    {
+      "level": 3,
+      "title": "Optimizing the Control Implementation",
+      "page": 986
+    },
+    {
+      "level": 2,
+      "title": "C.5 Translating a Microprogram to Hardware",
+      "page": 987
+    },
+    {
+      "level": 3,
+      "title": "Organizing the Control to Reduce the Logic",
+      "page": 990
+    },
+    {
+      "level": 2,
+      "title": "C.6 Concluding Remarks",
+      "page": 991
+    },
+    {
+      "level": 2,
+      "title": "C.7 Exercises",
+      "page": 992
+    },
+    {
+      "level": 1,
+      "title": "Appendix D. A Survey of RISC Architectures for Desktop, Server, and Embedded Computers",
+      "page": 994
+    },
+    {
+      "level": 2,
+      "title": "D.1 Introduction",
+      "page": 995
+    },
+    {
+      "level": 2,
+      "title": "D.2 Addressing Modes and Instruction Formats",
+      "page": 997
+    },
+    {
+      "level": 2,
+      "title": "D.3 Instructions: the MIPS Core Subset",
+      "page": 1001
+    },
+    {
+      "level": 3,
+      "title": "MIPS Core Instructions",
+      "page": 1001
+    },
+    {
+      "level": 3,
+      "title": "Compare and Conditional Branch",
+      "page": 1002
+    },
+    {
+      "level": 2,
+      "title": "D.4 Instructions: Multimedia Extensions of the Desktop/Server RISCs",
+      "page": 1008
+    },
+    {
+      "level": 2,
+      "title": "D.5 Instructions: Digital Signal-Processing Extensions of the Embedded RISCs",
+      "page": 1011
+    },
+    {
+      "level": 2,
+      "title": "D.6 Instructions: Common Extensions to MIPS Core",
+      "page": 1012
+    },
+    {
+      "level": 2,
+      "title": "D.7 Instructions Unique to MIPS-64",
+      "page": 1017
+    },
+    {
+      "level": 3,
+      "title": "Nonaligned Data Transfers",
+      "page": 1017
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1017
+    },
+    {
+      "level": 2,
+      "title": "D.8 Instructions Unique to Alpha",
+      "page": 1019
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1020
+    },
+    {
+      "level": 2,
+      "title": "D.9 Instructions Unique to SPARC v9",
+      "page": 1021
+    },
+    {
+      "level": 3,
+      "title": "Register Windows",
+      "page": 1021
+    },
+    {
+      "level": 3,
+      "title": "Fast Traps",
+      "page": 1022
+    },
+    {
+      "level": 3,
+      "title": "Support for LISP and Smalltalk",
+      "page": 1022
+    },
+    {
+      "level": 3,
+      "title": "Overlapped Integer and Floating-Point Operations",
+      "page": 1023
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1023
+    },
+    {
+      "level": 2,
+      "title": "D.10 Instructions Unique to PowerPC",
+      "page": 1024
+    },
+    {
+      "level": 3,
+      "title": "Branch Registers: Link and Counter",
+      "page": 1024
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1025
+    },
+    {
+      "level": 2,
+      "title": "D.11 Instructions Unique to PA-RISC 2.0",
+      "page": 1026
+    },
+    {
+      "level": 3,
+      "title": "Nullification",
+      "page": 1026
+    },
+    {
+      "level": 3,
+      "title": "A Cornucopia of Conditional Branches",
+      "page": 1026
+    },
+    {
+      "level": 3,
+      "title": "Synthesized Multiply and Divide",
+      "page": 1026
+    },
+    {
+      "level": 3,
+      "title": "Decimal Operations",
+      "page": 1027
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1027
+    },
+    {
+      "level": 2,
+      "title": "D.12 Instructions Unique to ARM",
+      "page": 1028
+    },
+    {
+      "level": 3,
+      "title": "Remaining Instructions",
+      "page": 1029
+    },
+    {
+      "level": 2,
+      "title": "D.13 Instructions Unique to Thumb",
+      "page": 1030
+    },
+    {
+      "level": 2,
+      "title": "D.14 Instructions Unique to SuperH",
+      "page": 1031
+    },
+    {
+      "level": 2,
+      "title": "D.15 Instructions Unique to M32R",
+      "page": 1032
+    },
+    {
+      "level": 2,
+      "title": "D.16 Instructions Unique to MIPS-16",
+      "page": 1032
+    },
+    {
+      "level": 2,
+      "title": "D.17 Concluding Remarks",
+      "page": 1035
+    },
+    {
+      "level": 2,
+      "title": "Further Reading",
+      "page": 1037
+    },
+    {
+      "level": 1,
+      "title": "Answers to Check Yourself",
+      "page": 1039
+    },
+    {
+      "level": 1,
+      "title": "Glossary",
+      "page": 1043
+    },
+    {
+      "level": 1,
+      "title": "Further Reading",
+      "page": 1057
+    },
+    {
+      "level": 1,
+      "title": "Back Cover",
+      "page": 1074
+    }
+  ]
+}

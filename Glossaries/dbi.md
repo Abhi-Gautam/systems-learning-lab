@@ -1,0 +1,268 @@
+# DBI Glossary
+_PDF pages: 590 · TOC entries: 265_
+
+- p.6 — Preface
+  - p.17 — How to Contact Us
+- p.19 — I. Storage Engines
+- p.27 — 1. Introduction and Overview
+  - p.29 — DBMS Architecture
+  - p.33 — Memory- Versus Disk-Based DBMS
+    - p.35 — Durability in Memory-Based Stores
+  - p.37 — Column- Versus Row-Oriented DBMS
+    - p.38 — Row-Oriented Data Layout
+    - p.39 — Column-Oriented Data Layout
+    - p.41 — Distinctions and Optimizations
+    - p.42 — Wide Column Stores
+  - p.45 — Data Files and Index Files
+    - p.47 — Data Files
+    - p.48 — Index Files
+    - p.50 — Primary Index as an Indirection
+  - p.52 — Buffering, Immutability, and Ordering
+  - p.54 — Summary
+- p.56 — 2. B-Tree Basics
+  - p.57 — Binary Search Trees
+    - p.59 — Tree Balancing
+    - p.61 — Trees for Disk-Based Storage
+  - p.63 — Disk-Based Structures
+    - p.64 — Hard Disk Drives
+    - p.65 — Solid State Drives
+    - p.67 — On-Disk Structures
+  - p.69 — Ubiquitous B-Trees
+    - p.72 — B-Tree Hierarchy
+    - p.74 — Separator Keys
+    - p.76 — B-Tree Lookup Complexity
+    - p.77 — B-Tree Lookup Algorithm
+    - p.78 — Counting Keys
+    - p.79 — B-Tree Node Splits
+    - p.82 — B-Tree Node Merges
+  - p.85 — Summary
+- p.86 — 3. File Formats
+  - p.87 — Motivation
+  - p.89 — Binary Encoding
+    - p.90 — Primitive Types
+    - p.92 — Strings and Variable-Size Data
+    - p.93 — Bit-Packed Data: Booleans, Enums, and Flags
+  - p.95 — General Principles
+  - p.97 — Page Structure
+  - p.98 — Slotted Pages
+  - p.101 — Cell Layout
+  - p.103 — Combining Cells into Slotted Pages
+  - p.105 — Managing Variable-Size Data
+  - p.107 — Versioning
+  - p.108 — Checksumming
+  - p.110 — Summary
+- p.111 — 4. Implementing B-Trees
+  - p.112 — Page Header
+    - p.113 — Magic Numbers
+    - p.114 — Sibling Links
+    - p.116 — Rightmost Pointers
+    - p.118 — Node High Keys
+    - p.120 — Overflow Pages
+  - p.123 — Binary Search
+    - p.124 — Binary Search with Indirection Pointers
+  - p.125 — Propagating Splits and Merges
+    - p.126 — Breadcrumbs
+  - p.128 — Rebalancing
+  - p.130 — Right-Only Appends
+    - p.131 — Bulk Loading
+  - p.132 — Compression
+  - p.134 — Vacuum and Maintenance
+    - p.136 — Fragmentation Caused by Updates and Deletes
+    - p.138 — Page Defragmentation
+  - p.139 — Summary
+- p.141 — 5. Transaction Processing and Recovery
+  - p.144 — Buffer Management
+    - p.147 — Caching Semantics
+    - p.148 — Cache Eviction
+    - p.149 — Locking Pages in Cache
+    - p.151 — Page Replacement
+      - p.152 — FIFO and LRU
+      - p.152 — CLOCK
+      - p.155 — LFU
+  - p.157 — Recovery
+    - p.159 — Log Semantics
+    - p.161 — Operation Versus Data Log
+    - p.162 — Steal and Force Policies
+    - p.164 — ARIES
+  - p.165 — Concurrency Control
+    - p.167 — Serializability
+    - p.169 — Transaction Isolation
+    - p.170 — Read and Write Anomalies
+    - p.172 — Isolation Levels
+    - p.174 — Optimistic Concurrency Control
+    - p.176 — Multiversion Concurrency Control
+    - p.177 — Pessimistic Concurrency Control
+    - p.178 — Lock-Based Concurrency Control
+      - p.179 — Deadlocks
+      - p.180 — Locks
+      - p.181 — Latches
+      - p.182 — Readers-writer lock
+      - p.183 — Latch crabbing
+      - p.186 — Blink-Trees
+  - p.188 — Summary
+- p.190 — 6. B-Tree Variants
+  - p.191 — Copy-on-Write
+    - p.193 — Implementing Copy-on-Write: LMDB
+  - p.194 — Abstracting Node Updates
+  - p.195 — Lazy B-Trees
+    - p.196 — WiredTiger
+    - p.199 — Lazy-Adaptive Tree
+  - p.201 — FD-Trees
+    - p.202 — Fractional Cascading
+    - p.204 — Logarithmic Runs
+  - p.206 — Bw-Trees
+    - p.207 — Update Chains
+    - p.208 — Taming Concurrency with Compare-and-Swap
+    - p.210 — Structural Modification Operations
+    - p.212 — Consolidation and Garbage Collection
+  - p.214 — Cache-Oblivious B-Trees
+    - p.216 — van Emde Boas Layout
+  - p.218 — Summary
+- p.220 — 7. Log-Structured Storage
+  - p.222 — LSM Trees
+    - p.224 — LSM Tree Structure
+      - p.225 — Two-component LSM Tree
+      - p.226 — Multicomponent LSM Trees
+      - p.227 — In-memory tables
+    - p.229 — Updates and Deletes
+    - p.231 — LSM Tree Lookups
+    - p.232 — Merge-Iteration
+    - p.236 — Reconciliation
+    - p.237 — Maintenance in LSM Trees
+      - p.238 — Leveled compaction
+      - p.239 — Size-tiered compaction
+  - p.241 — Read, Write, and Space Amplification
+    - p.242 — RUM Conjecture
+  - p.243 — Implementation Details
+    - p.244 — Sorted String Tables
+    - p.246 — Bloom Filters
+    - p.249 — Skiplist
+    - p.252 — Disk Access
+    - p.253 — Compression
+  - p.255 — Unordered LSM Storage
+    - p.256 — Bitcask
+    - p.258 — WiscKey
+  - p.260 — Concurrency in LSM Trees
+  - p.262 — Log Stacking
+    - p.263 — Flash Translation Layer
+    - p.265 — Filesystem Logging
+  - p.267 — LLAMA and Mindful Stacking
+    - p.269 — Open-Channel SSDs
+  - p.270 — Summary
+- p.272 — Part I Conclusion
+- p.275 — II. Distributed Systems
+- p.278 — 8. Introduction and Overview
+  - p.279 — Concurrent Execution
+    - p.281 — Shared State in a Distributed System
+  - p.282 — Fallacies of Distributed Computing
+    - p.284 — Processing
+    - p.286 — Clocks and Time
+    - p.287 — State Consistency
+    - p.288 — Local and Remote Execution
+    - p.289 — Need to Handle Failures
+    - p.290 — Network Partitions and Partial Failures
+    - p.292 — Cascading Failures
+  - p.294 — Distributed Systems Abstractions
+    - p.295 — Links
+      - p.295 — Fair-loss link
+      - p.296 — Message acknowledgments
+      - p.297 — Message retransmits
+      - p.298 — Problem with retransmits
+      - p.298 — Message order
+      - p.300 — Exactly-once delivery
+  - p.302 — Two Generals’ Problem
+  - p.304 — FLP Impossibility
+  - p.306 — System Synchrony
+  - p.308 — Failure Models
+    - p.309 — Crash Faults
+    - p.310 — Omission Faults
+    - p.311 — Arbitrary Faults
+    - p.312 — Handling Failures
+    - p.313 — Summary
+- p.314 — 9. Failure Detection
+  - p.316 — Heartbeats and Pings
+    - p.318 — Timeout-Free Failure Detector
+    - p.319 — Outsourced Heartbeats
+  - p.320 — Phi-Accural Failure Detector
+  - p.322 — Gossip and Failure Detection
+  - p.324 — Reversing Failure Detection Problem Statement
+  - p.326 — Summary
+- p.327 — 10. Leader Election
+  - p.329 — Bully Algorithm
+  - p.331 — Next-In-Line Failover
+  - p.333 — Candidate/Ordinary Optimization
+  - p.334 — Invitation Algorithm
+  - p.336 — Ring Algorithm
+  - p.338 — Summary
+- p.340 — 11. Replication and Consistency
+  - p.342 — Achieving Availability
+  - p.343 — Infamous CAP
+    - p.345 — Use CAP Carefully
+    - p.347 — Harvest and Yield
+  - p.348 — Shared Memory
+  - p.350 — Ordering
+  - p.352 — Consistency Models
+    - p.354 — Strict Consistency
+    - p.355 — Linearizability
+      - p.356 — Linearization point
+      - p.358 — Cost of linearizability
+    - p.360 — Sequential Consistency
+    - p.363 — Causal Consistency
+      - p.365 — Vector clocks
+  - p.368 — Session Models
+  - p.370 — Eventual Consistency
+  - p.371 — Tunable Consistency
+  - p.373 — Witness Replicas
+  - p.375 — Strong Eventual Consistency and CRDTs
+  - p.379 — Summary
+- p.381 — 12. Anti-Entropy and Dissemination
+  - p.384 — Read Repair
+  - p.386 — Digest Reads
+  - p.387 — Hinted Handoff
+  - p.388 — Merkle Trees
+  - p.390 — Bitmap Version Vectors
+  - p.392 — Gossip Dissemination
+    - p.394 — Gossip Mechanics
+    - p.395 — Overlay Networks
+    - p.397 — Hybrid Gossip
+    - p.399 — Partial Views
+  - p.401 — Summary
+- p.403 — 13. Distributed Transactions
+  - p.405 — Making Operations Appear Atomic
+  - p.407 — Two-Phase Commit
+    - p.410 — Cohort Failures in 2PC
+    - p.412 — Coordinator Failures in 2PC
+  - p.414 — Three-Phase Commit
+    - p.416 — Coordinator Failures in 3PC
+  - p.417 — Distributed Transactions with Calvin
+  - p.420 — Distributed Transactions with Spanner
+  - p.423 — Database Partitioning
+    - p.425 — Consistent Hashing
+  - p.426 — Distributed Transactions with Percolator
+  - p.430 — Coordination Avoidance
+  - p.433 — Summary
+- p.435 — 14. Consensus
+  - p.437 — Broadcast
+  - p.439 — Atomic Broadcast
+    - p.440 — Virtual Synchrony
+    - p.442 — Zookeeper Atomic Broadcast (ZAB)
+  - p.445 — Paxos
+    - p.447 — Paxos Algorithm
+    - p.450 — Quorums in Paxos
+    - p.451 — Failure Scenarios
+    - p.454 — Multi-Paxos
+    - p.456 — Fast Paxos
+    - p.458 — Egalitarian Paxos
+    - p.462 — Flexible Paxos
+    - p.464 — Generalized Solution to Consensus
+      - p.465 — Generalized Paxos algorithm
+  - p.468 — Raft
+    - p.471 — Leader Role in Raft
+    - p.474 — Failure Scenarios
+  - p.476 — Byzantine Consensus
+    - p.477 — PBFT Algorithm
+    - p.481 — Recovery and Checkpointing
+  - p.482 — Summary
+- p.485 — Part II Conclusion
+- p.489 — A. Bibliography
+- p.517 — Index

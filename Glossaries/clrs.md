@@ -1,0 +1,54 @@
+# CLRS Glossary
+_PDF pages: 1313 · TOC entries: 51_
+
+- p.6 — Contents
+- p.14 — Preface
+- p.23 — I Foundations
+  - p.26 — 1 The Role of Algorithms in Computing
+  - p.37 — 2 Getting Started
+  - p.64 — 3 Growth of Functions
+  - p.86 — 4 Divide-and-Conquer
+  - p.135 — 5 Probabilistic Analysis and Randomized Algorithms
+- p.167 — II Sorting and Order Statistics
+  - p.172 — 6 Heapsort
+  - p.191 — 7 Quicksort
+  - p.212 — 8 Sorting in Linear Time
+  - p.234 — 9 Medians and Order Statistics
+- p.249 — III Data Structures
+  - p.253 — 10 Elementary Data Structures
+  - p.274 — 11 Hash Tables
+  - p.307 — 12 Binary Search Trees
+  - p.329 — 13 Red-Black Trees
+  - p.360 — 14 Augmenting Data Structures
+- p.377 — IV Advanced Design and Analysis Techniques
+  - p.380 — 15 Dynamic Programming
+  - p.435 — 16 Greedy Algorithms
+  - p.472 — 17 Amortized Analysis
+- p.501 — V Advanced Data Structures
+  - p.505 — 18 B-Trees
+  - p.526 — 19 Fibonacci Heaps
+  - p.552 — 20 van Emde Boas Trees
+  - p.582 — 21 Data Structures for Disjoint Sets
+- p.607 — VI Graph Algorithms
+  - p.610 — 22 Elementary Graph Algorithms
+  - p.645 — 23 Minimum Spanning Trees
+  - p.664 — 24 Single-Source Shortest Paths
+  - p.705 — 25 All-Pairs Shortest Paths
+  - p.729 — 26 Maximum Flow
+- p.789 — VII Selected Topics
+  - p.793 — 27 Multithreaded Algorithms
+  - p.834 — 28 Matrix Operations
+  - p.864 — 29 Linear Programming
+  - p.919 — 30 Polynomials and the FFT
+  - p.947 — 31 Number-Theoretic Algorithms
+  - p.1006 — 32 String Matching
+  - p.1035 — 33 Computational Geometry
+  - p.1069 — 34 NP-Completeness
+  - p.1127 — 35 Approximation Algorithms
+- p.1163 — VIII Appendix: Mathematical Background
+  - p.1166 — A Summations
+  - p.1179 — B Sets, Etc.
+  - p.1204 — C Counting and Probability
+  - p.1238 — D Matrices
+- p.1252 — Bibliography
+- p.1272 — Index

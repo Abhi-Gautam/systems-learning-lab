@@ -1,0 +1,344 @@
+{
+  "alias": "TPP",
+  "pdf_pages": 352,
+  "book_to_pdf_offset": 25,
+  "source": "hand-curated from printed Contents page",
+  "entries": [
+    {
+      "level": 1,
+      "title": "Part 1. A Pragmatic Philosophy",
+      "page": 26,
+      "book_page": 1
+    },
+    {
+      "level": 2,
+      "title": "1. The Cat Ate My Source Code",
+      "page": 27,
+      "book_page": 2
+    },
+    {
+      "level": 2,
+      "title": "2. Software Entropy",
+      "page": 29,
+      "book_page": 4
+    },
+    {
+      "level": 2,
+      "title": "3. Stone Soup and Boiled Frogs",
+      "page": 32,
+      "book_page": 7
+    },
+    {
+      "level": 2,
+      "title": "4. Good-Enough Software",
+      "page": 34,
+      "book_page": 9
+    },
+    {
+      "level": 2,
+      "title": "5. Your Knowledge Portfolio",
+      "page": 37,
+      "book_page": 12
+    },
+    {
+      "level": 2,
+      "title": "6. Communicate!",
+      "page": 43,
+      "book_page": 18
+    },
+    {
+      "level": 1,
+      "title": "Part 2. A Pragmatic Approach",
+      "page": 50,
+      "book_page": 25
+    },
+    {
+      "level": 2,
+      "title": "7. The Evils of Duplication",
+      "page": 51,
+      "book_page": 26
+    },
+    {
+      "level": 2,
+      "title": "8. Orthogonality",
+      "page": 59,
+      "book_page": 34
+    },
+    {
+      "level": 2,
+      "title": "9. Reversibility",
+      "page": 69,
+      "book_page": 44
+    },
+    {
+      "level": 2,
+      "title": "10. Tracer Bullets",
+      "page": 73,
+      "book_page": 48
+    },
+    {
+      "level": 2,
+      "title": "11. Prototypes and Post-it Notes",
+      "page": 78,
+      "book_page": 53
+    },
+    {
+      "level": 2,
+      "title": "12. Domain Languages",
+      "page": 82,
+      "book_page": 57
+    },
+    {
+      "level": 2,
+      "title": "13. Estimating",
+      "page": 89,
+      "book_page": 64
+    },
+    {
+      "level": 1,
+      "title": "Part 3. The Basic Tools",
+      "page": 96,
+      "book_page": 71
+    },
+    {
+      "level": 2,
+      "title": "14. The Power of Plain Text",
+      "page": 98,
+      "book_page": 73
+    },
+    {
+      "level": 2,
+      "title": "15. Shell Games",
+      "page": 102,
+      "book_page": 77
+    },
+    {
+      "level": 2,
+      "title": "16. Power Editing",
+      "page": 107,
+      "book_page": 82
+    },
+    {
+      "level": 2,
+      "title": "17. Source Code Control",
+      "page": 111,
+      "book_page": 86
+    },
+    {
+      "level": 2,
+      "title": "18. Debugging",
+      "page": 115,
+      "book_page": 90
+    },
+    {
+      "level": 2,
+      "title": "19. Text Manipulation",
+      "page": 124,
+      "book_page": 99
+    },
+    {
+      "level": 2,
+      "title": "20. Code Generators",
+      "page": 127,
+      "book_page": 102
+    },
+    {
+      "level": 1,
+      "title": "Part 4. Pragmatic Paranoia",
+      "page": 132,
+      "book_page": 107
+    },
+    {
+      "level": 2,
+      "title": "21. Design by Contract",
+      "page": 134,
+      "book_page": 109
+    },
+    {
+      "level": 2,
+      "title": "22. Dead Programs Tell No Lies",
+      "page": 145,
+      "book_page": 120
+    },
+    {
+      "level": 2,
+      "title": "23. Assertive Programming",
+      "page": 147,
+      "book_page": 122
+    },
+    {
+      "level": 2,
+      "title": "24. When to Use Exceptions",
+      "page": 150,
+      "book_page": 125
+    },
+    {
+      "level": 2,
+      "title": "25. How to Balance Resources",
+      "page": 154,
+      "book_page": 129
+    },
+    {
+      "level": 1,
+      "title": "Part 5. Bend, or Break",
+      "page": 162,
+      "book_page": 137
+    },
+    {
+      "level": 2,
+      "title": "26. Decoupling and the Law of Demeter",
+      "page": 163,
+      "book_page": 138
+    },
+    {
+      "level": 2,
+      "title": "27. Metaprogramming",
+      "page": 169,
+      "book_page": 144
+    },
+    {
+      "level": 2,
+      "title": "28. Temporal Coupling",
+      "page": 175,
+      "book_page": 150
+    },
+    {
+      "level": 2,
+      "title": "29. It's Just a View",
+      "page": 182,
+      "book_page": 157
+    },
+    {
+      "level": 2,
+      "title": "30. Blackboards",
+      "page": 190,
+      "book_page": 165
+    },
+    {
+      "level": 1,
+      "title": "Part 6. While You Are Coding",
+      "page": 196,
+      "book_page": 171
+    },
+    {
+      "level": 2,
+      "title": "31. Programming by Coincidence",
+      "page": 197,
+      "book_page": 172
+    },
+    {
+      "level": 2,
+      "title": "32. Algorithm Speed",
+      "page": 202,
+      "book_page": 177
+    },
+    {
+      "level": 2,
+      "title": "33. Refactoring",
+      "page": 209,
+      "book_page": 184
+    },
+    {
+      "level": 2,
+      "title": "34. Code That's Easy to Test",
+      "page": 214,
+      "book_page": 189
+    },
+    {
+      "level": 2,
+      "title": "35. Evil Wizards",
+      "page": 223,
+      "book_page": 198
+    },
+    {
+      "level": 1,
+      "title": "Part 7. Before the Project",
+      "page": 226,
+      "book_page": 201
+    },
+    {
+      "level": 2,
+      "title": "36. The Requirements Pit",
+      "page": 227,
+      "book_page": 202
+    },
+    {
+      "level": 2,
+      "title": "37. Solving Impossible Puzzles",
+      "page": 237,
+      "book_page": 212
+    },
+    {
+      "level": 2,
+      "title": "38. Not Until You're Ready",
+      "page": 240,
+      "book_page": 215
+    },
+    {
+      "level": 2,
+      "title": "39. The Specification Trap",
+      "page": 242,
+      "book_page": 217
+    },
+    {
+      "level": 2,
+      "title": "40. Circles and Arrows",
+      "page": 245,
+      "book_page": 220
+    },
+    {
+      "level": 1,
+      "title": "Part 8. Pragmatic Projects",
+      "page": 248,
+      "book_page": 223
+    },
+    {
+      "level": 2,
+      "title": "41. Pragmatic Teams",
+      "page": 249,
+      "book_page": 224
+    },
+    {
+      "level": 2,
+      "title": "42. Ubiquitous Automation",
+      "page": 255,
+      "book_page": 230
+    },
+    {
+      "level": 2,
+      "title": "43. Ruthless Testing",
+      "page": 262,
+      "book_page": 237
+    },
+    {
+      "level": 2,
+      "title": "44. It's All Writing",
+      "page": 273,
+      "book_page": 248
+    },
+    {
+      "level": 2,
+      "title": "45. Great Expectations",
+      "page": 280,
+      "book_page": 255
+    },
+    {
+      "level": 2,
+      "title": "46. Pride and Prejudice",
+      "page": 283,
+      "book_page": 258
+    },
+    {
+      "level": 1,
+      "title": "Appendix A. Resources",
+      "page": 286,
+      "book_page": 261
+    },
+    {
+      "level": 1,
+      "title": "Appendix B. Answers to Exercises",
+      "page": 304,
+      "book_page": 279
+    }
+  ]
+}

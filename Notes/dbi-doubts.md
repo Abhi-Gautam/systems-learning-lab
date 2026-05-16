@@ -1,4 +1,3 @@
-# DBI - Database Internals
-## Doubts & Clarifications
+# DBI Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

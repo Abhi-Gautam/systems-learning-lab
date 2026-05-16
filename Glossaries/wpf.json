@@ -1,0 +1,1596 @@
+{
+  "alias": "WPF",
+  "pdf_pages": 388,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Cover Page",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "title": "Copyright",
+      "page": 2
+    },
+    {
+      "level": 2,
+      "title": "Copyright",
+      "page": 2
+    },
+    {
+      "level": 1,
+      "title": "Foreword",
+      "page": 3
+    },
+    {
+      "level": 2,
+      "title": "Foreword",
+      "page": 3
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 5
+    },
+    {
+      "level": 2,
+      "title": "Preface",
+      "page": 5
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments",
+      "page": 11
+    },
+    {
+      "level": 1,
+      "title": "1 How Failures Come to Be",
+      "page": 12
+    },
+    {
+      "level": 2,
+      "title": "1 How Failures Come to Be",
+      "page": 12
+    },
+    {
+      "level": 3,
+      "title": "My Program Does Not Work!",
+      "page": 12
+    },
+    {
+      "level": 3,
+      "title": "From Defects to Failures",
+      "page": 13
+    },
+    {
+      "level": 3,
+      "title": "Lost in Time and Space",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "From Failures to Fixes",
+      "page": 19
+    },
+    {
+      "level": 4,
+      "title": "Track the Problem",
+      "page": 19
+    },
+    {
+      "level": 4,
+      "title": "Reproduce the Failure",
+      "page": 20
+    },
+    {
+      "level": 4,
+      "title": "Automate and Simplify the Test Case",
+      "page": 20
+    },
+    {
+      "level": 4,
+      "title": "Find Possible Infection Origins",
+      "page": 20
+    },
+    {
+      "level": 4,
+      "title": "Focus on the Most Likely Origins",
+      "page": 23
+    },
+    {
+      "level": 4,
+      "title": "Isolate the Origin of the Infection",
+      "page": 23
+    },
+    {
+      "level": 4,
+      "title": "Correct the Defect",
+      "page": 24
+    },
+    {
+      "level": 3,
+      "title": "Automated Debugging Techniques",
+      "page": 25
+    },
+    {
+      "level": 3,
+      "title": "Bugs, Faults, or Defects?",
+      "page": 29
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 30
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 31
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 32
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 33
+    },
+    {
+      "level": 1,
+      "title": "2 Tracking Problems",
+      "page": 35
+    },
+    {
+      "level": 2,
+      "title": "2 Tracking Problems",
+      "page": 35
+    },
+    {
+      "level": 3,
+      "title": "Oh! All These Problems",
+      "page": 35
+    },
+    {
+      "level": 3,
+      "title": "Reporting Problems",
+      "page": 36
+    },
+    {
+      "level": 4,
+      "title": "Problem Facts",
+      "page": 36
+    },
+    {
+      "level": 4,
+      "title": "Product Facts",
+      "page": 38
+    },
+    {
+      "level": 4,
+      "title": "Querying Facts Automatically",
+      "page": 39
+    },
+    {
+      "level": 3,
+      "title": "Managing Problems",
+      "page": 41
+    },
+    {
+      "level": 3,
+      "title": "Classifying Problems",
+      "page": 42
+    },
+    {
+      "level": 4,
+      "title": "Severity",
+      "page": 43
+    },
+    {
+      "level": 4,
+      "title": "Priority",
+      "page": 43
+    },
+    {
+      "level": 4,
+      "title": "Identifier",
+      "page": 43
+    },
+    {
+      "level": 4,
+      "title": "Comments",
+      "page": 44
+    },
+    {
+      "level": 4,
+      "title": "Notification",
+      "page": 44
+    },
+    {
+      "level": 3,
+      "title": "Processing Problems",
+      "page": 44
+    },
+    {
+      "level": 3,
+      "title": "Managing Problem Tracking",
+      "page": 46
+    },
+    {
+      "level": 3,
+      "title": "Requirements as Problems",
+      "page": 47
+    },
+    {
+      "level": 3,
+      "title": "Managing Duplicates",
+      "page": 49
+    },
+    {
+      "level": 3,
+      "title": "Relating Problems and Fixes",
+      "page": 50
+    },
+    {
+      "level": 3,
+      "title": "Relating Problems and Tests",
+      "page": 53
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 54
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 55
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 56
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 56
+    },
+    {
+      "level": 1,
+      "title": "3 Making Programs Fail",
+      "page": 58
+    },
+    {
+      "level": 2,
+      "title": "3 Making Programs Fail",
+      "page": 58
+    },
+    {
+      "level": 3,
+      "title": "Testing for Debugging",
+      "page": 58
+    },
+    {
+      "level": 3,
+      "title": "Controlling the Program",
+      "page": 59
+    },
+    {
+      "level": 3,
+      "title": "Testing at the Presentation Layer",
+      "page": 62
+    },
+    {
+      "level": 4,
+      "title": "Low-Level Interaction",
+      "page": 62
+    },
+    {
+      "level": 4,
+      "title": "System-Level Interaction",
+      "page": 64
+    },
+    {
+      "level": 4,
+      "title": "Higher-Level Interaction",
+      "page": 64
+    },
+    {
+      "level": 4,
+      "title": "Assessing Test Results",
+      "page": 65
+    },
+    {
+      "level": 3,
+      "title": "Testing at the Functionality Layer",
+      "page": 66
+    },
+    {
+      "level": 3,
+      "title": "Testing at the Unit Layer",
+      "page": 68
+    },
+    {
+      "level": 3,
+      "title": "Isolating Units",
+      "page": 72
+    },
+    {
+      "level": 3,
+      "title": "Designing for Debugging",
+      "page": 75
+    },
+    {
+      "level": 3,
+      "title": "Preventing Unknown Problems",
+      "page": 78
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 79
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 81
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 81
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 82
+    },
+    {
+      "level": 1,
+      "title": "4 Reproducing Problems",
+      "page": 84
+    },
+    {
+      "level": 2,
+      "title": "4 Reproducing Problems",
+      "page": 84
+    },
+    {
+      "level": 3,
+      "title": "The First Task in Debugging",
+      "page": 84
+    },
+    {
+      "level": 3,
+      "title": "Reproducing the Problem Environment",
+      "page": 85
+    },
+    {
+      "level": 3,
+      "title": "Reproducing Program Execution",
+      "page": 87
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Data",
+      "page": 89
+    },
+    {
+      "level": 4,
+      "title": "Reproducing User Interaction",
+      "page": 89
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Communications",
+      "page": 91
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Time",
+      "page": 92
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Randomness",
+      "page": 92
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Operating Environments",
+      "page": 93
+    },
+    {
+      "level": 4,
+      "title": "Reproducing Schedules",
+      "page": 95
+    },
+    {
+      "level": 4,
+      "title": "Physical Influences",
+      "page": 97
+    },
+    {
+      "level": 4,
+      "title": "Effects of Debugging Tools",
+      "page": 98
+    },
+    {
+      "level": 3,
+      "title": "Reproducing System Interaction",
+      "page": 99
+    },
+    {
+      "level": 3,
+      "title": "Focusing on Units",
+      "page": 100
+    },
+    {
+      "level": 4,
+      "title": "Setting Up a Control Layer",
+      "page": 101
+    },
+    {
+      "level": 4,
+      "title": "A Control Example",
+      "page": 101
+    },
+    {
+      "level": 4,
+      "title": "Mock Objects",
+      "page": 104
+    },
+    {
+      "level": 4,
+      "title": "Controlling More Unit Interaction",
+      "page": 106
+    },
+    {
+      "level": 3,
+      "title": "Reproducing Crashes",
+      "page": 106
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 110
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 110
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 111
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 111
+    },
+    {
+      "level": 1,
+      "title": "5 Simplifying Problems",
+      "page": 113
+    },
+    {
+      "level": 2,
+      "title": "5 Simplifying Problems",
+      "page": 113
+    },
+    {
+      "level": 3,
+      "title": "Simplifying the Problem",
+      "page": 113
+    },
+    {
+      "level": 3,
+      "title": "The Gecko BugAThon",
+      "page": 114
+    },
+    {
+      "level": 3,
+      "title": "Manual Simplification",
+      "page": 117
+    },
+    {
+      "level": 3,
+      "title": "Automatic Simplification",
+      "page": 118
+    },
+    {
+      "level": 3,
+      "title": "A Simplification Algorithm",
+      "page": 120
+    },
+    {
+      "level": 3,
+      "title": "Simplifying User Interaction",
+      "page": 125
+    },
+    {
+      "level": 3,
+      "title": "Random Input Simplified",
+      "page": 126
+    },
+    {
+      "level": 3,
+      "title": "Simplifying Faster",
+      "page": 127
+    },
+    {
+      "level": 4,
+      "title": "Caching",
+      "page": 127
+    },
+    {
+      "level": 4,
+      "title": "Stop Early",
+      "page": 128
+    },
+    {
+      "level": 4,
+      "title": "Syntactic Simplification",
+      "page": 128
+    },
+    {
+      "level": 4,
+      "title": "Isolate Differences, Not Circumstances",
+      "page": 129
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 131
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 131
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 131
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 132
+    },
+    {
+      "level": 1,
+      "title": "6 Scientific Debugging",
+      "page": 136
+    },
+    {
+      "level": 2,
+      "title": "6 Scientific Debugging",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "How to Become a Debugging Guru",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "The Scientific Method",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "Applying the Scientific Method",
+      "page": 139
+    },
+    {
+      "level": 4,
+      "title": "Debugging sample---Preparation",
+      "page": 139
+    },
+    {
+      "level": 4,
+      "title": "Debugging sample---Hypothesis 1",
+      "page": 139
+    },
+    {
+      "level": 4,
+      "title": "Debugging sample---Hypothesis 2",
+      "page": 140
+    },
+    {
+      "level": 4,
+      "title": "Debugging sample---Hypothesis 3",
+      "page": 140
+    },
+    {
+      "level": 4,
+      "title": "Debugging sample---Hypothesis 4",
+      "page": 140
+    },
+    {
+      "level": 3,
+      "title": "Explicit Debugging",
+      "page": 141
+    },
+    {
+      "level": 3,
+      "title": "Keeping a Logbook",
+      "page": 141
+    },
+    {
+      "level": 3,
+      "title": "Debugging Quick-and-Dirty",
+      "page": 143
+    },
+    {
+      "level": 3,
+      "title": "Algorithmic Debugging",
+      "page": 144
+    },
+    {
+      "level": 3,
+      "title": "Deriving a Hypothesis",
+      "page": 147
+    },
+    {
+      "level": 4,
+      "title": "The Description of the Problem",
+      "page": 147
+    },
+    {
+      "level": 4,
+      "title": "The Program Code",
+      "page": 147
+    },
+    {
+      "level": 4,
+      "title": "The Failing Run",
+      "page": 147
+    },
+    {
+      "level": 4,
+      "title": "Alternate Runs",
+      "page": 148
+    },
+    {
+      "level": 4,
+      "title": "Earlier Hypotheses",
+      "page": 148
+    },
+    {
+      "level": 3,
+      "title": "Reasoning About Programs",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 151
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 151
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 152
+    },
+    {
+      "level": 1,
+      "title": "7 Deducing Errors",
+      "page": 154
+    },
+    {
+      "level": 2,
+      "title": "7 Deducing Errors",
+      "page": 154
+    },
+    {
+      "level": 3,
+      "title": "Isolating Value Origins",
+      "page": 154
+    },
+    {
+      "level": 3,
+      "title": "Understanding Control Flow",
+      "page": 155
+    },
+    {
+      "level": 3,
+      "title": "Tracking Dependences",
+      "page": 159
+    },
+    {
+      "level": 4,
+      "title": "Effects of Statements",
+      "page": 159
+    },
+    {
+      "level": 4,
+      "title": "Affected Statements",
+      "page": 160
+    },
+    {
+      "level": 4,
+      "title": "Statement Dependences",
+      "page": 161
+    },
+    {
+      "level": 4,
+      "title": "Following Dependences",
+      "page": 163
+    },
+    {
+      "level": 4,
+      "title": "Leveraging Dependences",
+      "page": 163
+    },
+    {
+      "level": 3,
+      "title": "Slicing Programs",
+      "page": 164
+    },
+    {
+      "level": 4,
+      "title": "Forward Slices",
+      "page": 164
+    },
+    {
+      "level": 4,
+      "title": "Backward Slices",
+      "page": 165
+    },
+    {
+      "level": 4,
+      "title": "Slice Operations",
+      "page": 165
+    },
+    {
+      "level": 4,
+      "title": "Leveraging Slices",
+      "page": 167
+    },
+    {
+      "level": 4,
+      "title": "Executable Slices",
+      "page": 167
+    },
+    {
+      "level": 3,
+      "title": "Deducing Code Smells",
+      "page": 168
+    },
+    {
+      "level": 4,
+      "title": "Reading Uninitialized Variables",
+      "page": 168
+    },
+    {
+      "level": 4,
+      "title": "Unused Values",
+      "page": 169
+    },
+    {
+      "level": 4,
+      "title": "Unreachable Code",
+      "page": 169
+    },
+    {
+      "level": 3,
+      "title": "Limits of Static Analysis",
+      "page": 173
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 177
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 177
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 178
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 178
+    },
+    {
+      "level": 1,
+      "title": "8 Observing Facts",
+      "page": 181
+    },
+    {
+      "level": 2,
+      "title": "8 Observing Facts",
+      "page": 181
+    },
+    {
+      "level": 3,
+      "title": "Observing State",
+      "page": 181
+    },
+    {
+      "level": 3,
+      "title": "Logging Execution",
+      "page": 182
+    },
+    {
+      "level": 4,
+      "title": "Logging Functions",
+      "page": 183
+    },
+    {
+      "level": 4,
+      "title": "Logging Frameworks",
+      "page": 186
+    },
+    {
+      "level": 4,
+      "title": "Logging with Aspects",
+      "page": 188
+    },
+    {
+      "level": 4,
+      "title": "Logging at the Binary Level",
+      "page": 192
+    },
+    {
+      "level": 3,
+      "title": "Using Debuggers",
+      "page": 194
+    },
+    {
+      "level": 4,
+      "title": "A Debugging Session",
+      "page": 195
+    },
+    {
+      "level": 4,
+      "title": "Controlling Execution",
+      "page": 198
+    },
+    {
+      "level": 4,
+      "title": "Postmortem Debugging",
+      "page": 198
+    },
+    {
+      "level": 4,
+      "title": "Logging Data",
+      "page": 199
+    },
+    {
+      "level": 4,
+      "title": "Invoking Functions",
+      "page": 200
+    },
+    {
+      "level": 4,
+      "title": "Fix and Continue",
+      "page": 200
+    },
+    {
+      "level": 4,
+      "title": "Embedded Debuggers",
+      "page": 200
+    },
+    {
+      "level": 4,
+      "title": "Debugger Caveats",
+      "page": 201
+    },
+    {
+      "level": 3,
+      "title": "Querying Events",
+      "page": 202
+    },
+    {
+      "level": 4,
+      "title": "Watchpoints",
+      "page": 202
+    },
+    {
+      "level": 4,
+      "title": "Uniform Event Queries",
+      "page": 203
+    },
+    {
+      "level": 3,
+      "title": "Hooking into the Interpreter",
+      "page": 205
+    },
+    {
+      "level": 3,
+      "title": "Visualizing State",
+      "page": 206
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 208
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 209
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 210
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 210
+    },
+    {
+      "level": 1,
+      "title": "9 Tracking Origins",
+      "page": 216
+    },
+    {
+      "level": 2,
+      "title": "9 Tracking Origins",
+      "page": 216
+    },
+    {
+      "level": 3,
+      "title": "Reasoning Backward",
+      "page": 216
+    },
+    {
+      "level": 3,
+      "title": "Exploring Execution History",
+      "page": 216
+    },
+    {
+      "level": 3,
+      "title": "Dynamic Slicing",
+      "page": 218
+    },
+    {
+      "level": 3,
+      "title": "Leveraging Origins",
+      "page": 221
+    },
+    {
+      "level": 3,
+      "title": "Tracking Down Infections",
+      "page": 224
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 225
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 226
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 226
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 226
+    },
+    {
+      "level": 1,
+      "title": "10 Asserting Expectations",
+      "page": 228
+    },
+    {
+      "level": 2,
+      "title": "10 Asserting Expectations",
+      "page": 228
+    },
+    {
+      "level": 3,
+      "title": "Automating Observation",
+      "page": 228
+    },
+    {
+      "level": 3,
+      "title": "Basic Assertions",
+      "page": 229
+    },
+    {
+      "level": 3,
+      "title": "Asserting Invariants",
+      "page": 231
+    },
+    {
+      "level": 3,
+      "title": "Asserting Correctness",
+      "page": 234
+    },
+    {
+      "level": 3,
+      "title": "Assertions as Specifications",
+      "page": 237
+    },
+    {
+      "level": 3,
+      "title": "From Assertions to Verification",
+      "page": 238
+    },
+    {
+      "level": 3,
+      "title": "Reference Runs",
+      "page": 240
+    },
+    {
+      "level": 3,
+      "title": "System Assertions",
+      "page": 243
+    },
+    {
+      "level": 4,
+      "title": "Validating the Heap with MALLOC_CHECK_",
+      "page": 244
+    },
+    {
+      "level": 4,
+      "title": "Avoiding Buffer Overflows with ELECTRICFENCE",
+      "page": 244
+    },
+    {
+      "level": 4,
+      "title": "Detecting Memory Errors with VALGRIND",
+      "page": 245
+    },
+    {
+      "level": 4,
+      "title": "Language Extensions",
+      "page": 246
+    },
+    {
+      "level": 3,
+      "title": "Checking Production Code",
+      "page": 247
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 249
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 251
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 252
+    },
+    {
+      "level": 1,
+      "title": "11 Detecting Anomalies",
+      "page": 257
+    },
+    {
+      "level": 2,
+      "title": "11 Detecting Anomalies",
+      "page": 257
+    },
+    {
+      "level": 3,
+      "title": "Capturing Normal Behavior",
+      "page": 257
+    },
+    {
+      "level": 3,
+      "title": "Comparing Coverage",
+      "page": 258
+    },
+    {
+      "level": 3,
+      "title": "Statistical Debugging",
+      "page": 263
+    },
+    {
+      "level": 3,
+      "title": "Collecting Data in the Field",
+      "page": 264
+    },
+    {
+      "level": 3,
+      "title": "Dynamic Invariants",
+      "page": 266
+    },
+    {
+      "level": 3,
+      "title": "Invariants on-the-Fly",
+      "page": 269
+    },
+    {
+      "level": 3,
+      "title": "From Anomalies to Defects",
+      "page": 270
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 271
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 273
+    },
+    {
+      "level": 1,
+      "title": "12 Causes and Effects",
+      "page": 275
+    },
+    {
+      "level": 2,
+      "title": "12 Causes and Effects",
+      "page": 275
+    },
+    {
+      "level": 3,
+      "title": "Causes and Alternate Worlds",
+      "page": 275
+    },
+    {
+      "level": 3,
+      "title": "Verifying Causes",
+      "page": 276
+    },
+    {
+      "level": 3,
+      "title": "Causality in Practice",
+      "page": 277
+    },
+    {
+      "level": 3,
+      "title": "Finding Actual Causes",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Narrowing Down Causes",
+      "page": 280
+    },
+    {
+      "level": 3,
+      "title": "A Narrowing Example",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "The Common Context",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "Causes in Debugging",
+      "page": 282
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 283
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 283
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 284
+    },
+    {
+      "level": 1,
+      "title": "13 Isolating Failure Causes",
+      "page": 286
+    },
+    {
+      "level": 2,
+      "title": "13 Isolating Failure Causes",
+      "page": 286
+    },
+    {
+      "level": 3,
+      "title": "Isolating Causes Automatically",
+      "page": 286
+    },
+    {
+      "level": 3,
+      "title": "Isolating versus Simplifying",
+      "page": 287
+    },
+    {
+      "level": 3,
+      "title": "An Isolation Algorithm",
+      "page": 289
+    },
+    {
+      "level": 3,
+      "title": "Implementing Isolation",
+      "page": 291
+    },
+    {
+      "level": 3,
+      "title": "Isolating Failure-inducing Input",
+      "page": 293
+    },
+    {
+      "level": 3,
+      "title": "Isolating Failure-inducing Schedules",
+      "page": 294
+    },
+    {
+      "level": 3,
+      "title": "Isolating Failure-inducing Changes",
+      "page": 296
+    },
+    {
+      "level": 3,
+      "title": "Problems and Limitations",
+      "page": 302
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 304
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 304
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 304
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 305
+    },
+    {
+      "level": 1,
+      "title": "14 Isolating Cause--Effect Chains",
+      "page": 307
+    },
+    {
+      "level": 2,
+      "title": "14 Isolating Cause--Effect Chains",
+      "page": 307
+    },
+    {
+      "level": 3,
+      "title": "Useless Causes",
+      "page": 307
+    },
+    {
+      "level": 3,
+      "title": "Capturing Program States",
+      "page": 309
+    },
+    {
+      "level": 3,
+      "title": "Comparing Program States",
+      "page": 313
+    },
+    {
+      "level": 3,
+      "title": "Isolating Relevant Program States",
+      "page": 314
+    },
+    {
+      "level": 3,
+      "title": "Isolating Cause--Effect Chains",
+      "page": 318
+    },
+    {
+      "level": 3,
+      "title": "Isolating Failure-Inducing Code",
+      "page": 322
+    },
+    {
+      "level": 3,
+      "title": "Issues and Risks",
+      "page": 326
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 328
+    },
+    {
+      "level": 3,
+      "title": "Tools",
+      "page": 328
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 329
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 329
+    },
+    {
+      "level": 1,
+      "title": "15 Fixing the Defect",
+      "page": 331
+    },
+    {
+      "level": 1,
+      "title": "16 Learning from Mistakes",
+      "page": 344
+    },
+    {
+      "level": 2,
+      "title": "16 Learning from Mistakes",
+      "page": 344
+    },
+    {
+      "level": 3,
+      "title": "Where the Defects are",
+      "page": 344
+    },
+    {
+      "level": 3,
+      "title": "Mining the Past",
+      "page": 345
+    },
+    {
+      "level": 3,
+      "title": "Where Defects come from",
+      "page": 347
+    },
+    {
+      "level": 3,
+      "title": "Errors during Specification",
+      "page": 348
+    },
+    {
+      "level": 4,
+      "title": "What You Can Do",
+      "page": 348
+    },
+    {
+      "level": 4,
+      "title": "What You Should Focus On",
+      "page": 349
+    },
+    {
+      "level": 3,
+      "title": "Errors during Programming",
+      "page": 350
+    },
+    {
+      "level": 4,
+      "title": "What You Can Do",
+      "page": 350
+    },
+    {
+      "level": 4,
+      "title": "What You Should Focus On",
+      "page": 351
+    },
+    {
+      "level": 3,
+      "title": "Errors during Quality Assurance",
+      "page": 352
+    },
+    {
+      "level": 4,
+      "title": "What You Can Do",
+      "page": 353
+    },
+    {
+      "level": 4,
+      "title": "What You Should Focus On",
+      "page": 354
+    },
+    {
+      "level": 3,
+      "title": "Predicting Problems",
+      "page": 354
+    },
+    {
+      "level": 4,
+      "title": "Predicting Errors from Imports",
+      "page": 355
+    },
+    {
+      "level": 4,
+      "title": "Predicting Errors from Change Frequency",
+      "page": 356
+    },
+    {
+      "level": 4,
+      "title": "A Cache for Bugs",
+      "page": 356
+    },
+    {
+      "level": 4,
+      "title": "Recommendation Systems",
+      "page": 357
+    },
+    {
+      "level": 4,
+      "title": "A Word of Warning",
+      "page": 357
+    },
+    {
+      "level": 3,
+      "title": "Fixing the Process",
+      "page": 358
+    },
+    {
+      "level": 3,
+      "title": "Concepts",
+      "page": 360
+    },
+    {
+      "level": 3,
+      "title": "Further Reading",
+      "page": 360
+    },
+    {
+      "level": 3,
+      "title": "Exercises",
+      "page": 361
+    },
+    {
+      "level": 1,
+      "title": "A Formal Definitions",
+      "page": 363
+    },
+    {
+      "level": 2,
+      "title": "A Formal Definitions",
+      "page": 363
+    },
+    {
+      "level": 3,
+      "title": "Delta Debugging",
+      "page": 363
+    },
+    {
+      "level": 4,
+      "title": "Configurations",
+      "page": 363
+    },
+    {
+      "level": 4,
+      "title": "Passing and Failing Run",
+      "page": 363
+    },
+    {
+      "level": 4,
+      "title": "Tests",
+      "page": 363
+    },
+    {
+      "level": 4,
+      "title": "Minimality",
+      "page": 364
+    },
+    {
+      "level": 4,
+      "title": "Simplifying",
+      "page": 364
+    },
+    {
+      "level": 4,
+      "title": "Differences",
+      "page": 364
+    },
+    {
+      "level": 4,
+      "title": "Isolating",
+      "page": 365
+    },
+    {
+      "level": 3,
+      "title": "Memory Graphs",
+      "page": 365
+    },
+    {
+      "level": 4,
+      "title": "Formal Structure",
+      "page": 365
+    },
+    {
+      "level": 4,
+      "title": "Unfolding Data Structures",
+      "page": 367
+    },
+    {
+      "level": 4,
+      "title": "Matching Vertices and Edges",
+      "page": 368
+    },
+    {
+      "level": 4,
+      "title": "Computing the Common Subgraph",
+      "page": 368
+    },
+    {
+      "level": 4,
+      "title": "Computing Graph Differences",
+      "page": 369
+    },
+    {
+      "level": 4,
+      "title": "Applying Partial State Changes",
+      "page": 371
+    },
+    {
+      "level": 4,
+      "title": "Capturing C State",
+      "page": 372
+    },
+    {
+      "level": 3,
+      "title": "Cause--Effect Chains",
+      "page": 374
+    },
+    {
+      "level": 1,
+      "title": "Glossary",
+      "page": 376
+    },
+    {
+      "level": 2,
+      "title": "Glossary",
+      "page": 376
+    },
+    {
+      "level": 1,
+      "title": "Bibliography",
+      "page": 380
+    },
+    {
+      "level": 2,
+      "title": "Bibliography",
+      "page": 380
+    }
+  ]
+}

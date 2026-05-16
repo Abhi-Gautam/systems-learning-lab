@@ -1,0 +1,213 @@
+# DDIA Glossary
+_PDF pages: 613 · TOC entries: 210_
+
+- p.4 — Copyright
+- p.9 — Table of Contents
+- p.15 — Preface
+  - p.16 — Who Should Read This Book?
+  - p.17 — Scope of This Book
+  - p.18 — Outline of This Book
+  - p.19 — References and Further Reading
+  - p.19 — O’Reilly Safari
+  - p.20 — How to Contact Us
+  - p.20 — Acknowledgments
+- p.23 — Part I. Foundations of Data Systems
+  - p.25 — Chapter 1. Reliable, Scalable, and Maintainable Applications
+    - p.26 — Thinking About Data Systems
+    - p.28 — Reliability
+      - p.29 — Hardware Faults
+      - p.30 — Software Errors
+      - p.31 — Human Errors
+      - p.32 — How Important Is Reliability?
+    - p.32 — Scalability
+      - p.33 — Describing Load
+      - p.35 — Describing Performance
+      - p.39 — Approaches for Coping with Load
+    - p.40 — Maintainability
+      - p.41 — Operability: Making Life Easy for Operations
+      - p.42 — Simplicity: Managing Complexity
+      - p.43 — Evolvability: Making Change Easy
+    - p.44 — Summary
+  - p.49 — Chapter 2. Data Models and Query Languages
+    - p.50 — Relational Model Versus Document Model
+      - p.51 — The Birth of NoSQL
+      - p.51 — The Object-Relational Mismatch
+      - p.55 — Many-to-One and Many-to-Many Relationships
+      - p.58 — Are Document Databases Repeating History?
+      - p.60 — Relational Versus Document Databases Today
+    - p.64 — Query Languages for Data
+      - p.66 — Declarative Queries on the Web
+      - p.68 — MapReduce Querying
+    - p.71 — Graph-Like Data Models
+      - p.72 — Property Graphs
+      - p.74 — The Cypher Query Language
+      - p.75 — Graph Queries in SQL
+      - p.77 — Triple-Stores and SPARQL
+      - p.82 — The Foundation: Datalog
+    - p.85 — Summary
+  - p.91 — Chapter 3. Storage and Retrieval
+    - p.92 — Data Structures That Power Your Database
+      - p.94 — Hash Indexes
+      - p.98 — SSTables and LSM-Trees
+      - p.101 — B-Trees
+      - p.105 — Comparing B-Trees and LSM-Trees
+      - p.107 — Other Indexing Structures
+    - p.112 — Transaction Processing or Analytics?
+      - p.113 — Data Warehousing
+      - p.115 — Stars and Snowflakes: Schemas for Analytics
+    - p.117 — Column-Oriented Storage
+      - p.119 — Column Compression
+      - p.121 — Sort Order in Column Storage
+      - p.123 — Writing to Column-Oriented Storage
+      - p.123 — Aggregation: Data Cubes and Materialized Views
+    - p.125 — Summary
+  - p.133 — Chapter 4. Encoding and Evolution
+    - p.134 — Formats for Encoding Data
+      - p.135 — Language-Specific Formats
+      - p.136 — JSON, XML, and Binary Variants
+      - p.139 — Thrift and Protocol Buffers
+      - p.144 — Avro
+      - p.149 — The Merits of Schemas
+    - p.150 — Modes of Dataflow
+      - p.151 — Dataflow Through Databases
+      - p.153 — Dataflow Through Services: REST and RPC
+      - p.158 — Message-Passing Dataflow
+    - p.161 — Summary
+- p.167 — Part II. Distributed Data
+  - p.173 — Chapter 5. Replication
+    - p.174 — Leaders and Followers
+      - p.175 — Synchronous Versus Asynchronous Replication
+      - p.177 — Setting Up New Followers
+      - p.178 — Handling Node Outages
+      - p.180 — Implementation of Replication Logs
+    - p.183 — Problems with Replication Lag
+      - p.184 — Reading Your Own Writes
+      - p.186 — Monotonic Reads
+      - p.187 — Consistent Prefix Reads
+      - p.189 — Solutions for Replication Lag
+    - p.190 — Multi-Leader Replication
+      - p.190 — Use Cases for Multi-Leader Replication
+      - p.193 — Handling Write Conflicts
+      - p.197 — Multi-Leader Replication Topologies
+    - p.199 — Leaderless Replication
+      - p.199 — Writing to the Database When a Node Is Down
+      - p.203 — Limitations of Quorum Consistency
+      - p.205 — Sloppy Quorums and Hinted Handoff
+      - p.206 — Detecting Concurrent Writes
+    - p.214 — Summary
+  - p.221 — Chapter 6. Partitioning
+    - p.222 — Partitioning and Replication
+    - p.223 — Partitioning of Key-Value Data
+      - p.224 — Partitioning by Key Range
+      - p.225 — Partitioning by Hash of Key
+      - p.227 — Skewed Workloads and Relieving Hot Spots
+    - p.228 — Partitioning and Secondary Indexes
+      - p.228 — Partitioning Secondary Indexes by Document
+      - p.230 — Partitioning Secondary Indexes by Term
+    - p.231 — Rebalancing Partitions
+      - p.232 — Strategies for Rebalancing
+      - p.235 — Operations: Automatic or Manual Rebalancing
+    - p.236 — Request Routing
+      - p.238 — Parallel Query Execution
+    - p.238 — Summary
+  - p.243 — Chapter 7. Transactions
+    - p.244 — The Slippery Concept of a Transaction
+      - p.245 — The Meaning of ACID
+      - p.250 — Single-Object and Multi-Object Operations
+    - p.255 — Weak Isolation Levels
+      - p.256 — Read Committed
+      - p.259 — Snapshot Isolation and Repeatable Read
+      - p.264 — Preventing Lost Updates
+      - p.268 — Write Skew and Phantoms
+    - p.273 — Serializability
+      - p.274 — Actual Serial Execution
+      - p.279 — Two-Phase Locking (2PL)
+      - p.283 — Serializable Snapshot Isolation (SSI)
+    - p.288 — Summary
+  - p.295 — Chapter 8. The Trouble with Distributed Systems
+    - p.296 — Faults and Partial Failures
+      - p.297 — Cloud Computing and Supercomputing
+    - p.299 — Unreliable Networks
+      - p.301 — Network Faults in Practice
+      - p.302 — Detecting Faults
+      - p.303 — Timeouts and Unbounded Delays
+      - p.306 — Synchronous Versus Asynchronous Networks
+    - p.309 — Unreliable Clocks
+      - p.310 — Monotonic Versus Time-of-Day Clocks
+      - p.311 — Clock Synchronization and Accuracy
+      - p.313 — Relying on Synchronized Clocks
+      - p.317 — Process Pauses
+    - p.322 — Knowledge, Truth, and Lies
+      - p.322 — The Truth Is Defined by the Majority
+      - p.326 — Byzantine Faults
+      - p.328 — System Model and Reality
+    - p.332 — Summary
+  - p.343 — Chapter 9. Consistency and Consensus
+    - p.344 — Consistency Guarantees
+    - p.346 — Linearizability
+      - p.347 — What Makes a System Linearizable?
+      - p.352 — Relying on Linearizability
+      - p.354 — Implementing Linearizable Systems
+      - p.357 — The Cost of Linearizability
+    - p.361 — Ordering Guarantees
+      - p.361 — Ordering and Causality
+      - p.365 — Sequence Number Ordering
+      - p.370 — Total Order Broadcast
+    - p.374 — Distributed Transactions and Consensus
+      - p.376 — Atomic Commit and Two-Phase Commit (2PC)
+      - p.382 — Distributed Transactions in Practice
+      - p.386 — Fault-Tolerant Consensus
+      - p.392 — Membership and Coordination Services
+    - p.395 — Summary
+- p.407 — Part III. Derived Data
+  - p.411 — Chapter 10. Batch Processing
+    - p.413 — Batch Processing with Unix Tools
+      - p.413 — Simple Log Analysis
+      - p.416 — The Unix Philosophy
+    - p.419 — MapReduce and Distributed Filesystems
+      - p.421 — MapReduce Job Execution
+      - p.425 — Reduce-Side Joins and Grouping
+      - p.430 — Map-Side Joins
+      - p.433 — The Output of Batch Workflows
+      - p.436 — Comparing Hadoop to Distributed Databases
+    - p.441 — Beyond MapReduce
+      - p.441 — Materialization of Intermediate State
+      - p.446 — Graphs and Iterative Processing
+      - p.448 — High-Level APIs and Languages
+    - p.451 — Summary
+  - p.461 — Chapter 11. Stream Processing
+    - p.462 — Transmitting Event Streams
+      - p.463 — Messaging Systems
+      - p.468 — Partitioned Logs
+    - p.473 — Databases and Streams
+      - p.474 — Keeping Systems in Sync
+      - p.476 — Change Data Capture
+      - p.479 — Event Sourcing
+      - p.481 — State, Streams, and Immutability
+    - p.486 — Processing Streams
+      - p.487 — Uses of Stream Processing
+      - p.490 — Reasoning About Time
+      - p.494 — Stream Joins
+      - p.498 — Fault Tolerance
+    - p.501 — Summary
+  - p.511 — Chapter 12. The Future of Data Systems
+    - p.512 — Data Integration
+      - p.512 — Combining Specialized Tools by Deriving Data
+      - p.516 — Batch and Stream Processing
+    - p.521 — Unbundling Databases
+      - p.521 — Composing Data Storage Technologies
+      - p.526 — Designing Applications Around Dataflow
+      - p.531 — Observing Derived State
+    - p.537 — Aiming for Correctness
+      - p.538 — The End-to-End Argument for Databases
+      - p.543 — Enforcing Constraints
+      - p.546 — Timeliness and Integrity
+      - p.550 — Trust, but Verify
+    - p.555 — Doing the Right Thing
+      - p.555 — Predictive Analytics
+      - p.558 — Privacy and Tracking
+    - p.565 — Summary
+- p.575 — Glossary
+- p.581 — Index
+- p.613 — About the Author
+- p.613 — Colophon

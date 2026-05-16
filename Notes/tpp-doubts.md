@@ -1,4 +1,3 @@
-# TPP - The Pragmatic Programmer
-## Doubts
+# TPP Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

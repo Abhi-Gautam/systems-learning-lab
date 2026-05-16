@@ -1,0 +1,98 @@
+{
+  "alias": "REF",
+  "pdf_pages": 337,
+  "book_to_pdf_offset": 0,
+  "source": "hand-curated from printed Contents page",
+  "entries": [
+    {
+      "level": 1,
+      "title": "Chapter 1. Refactoring, a First Example",
+      "page": 13,
+      "book_page": 13
+    },
+    {
+      "level": 1,
+      "title": "Chapter 2. Principles in Refactoring",
+      "page": 46,
+      "book_page": 46
+    },
+    {
+      "level": 1,
+      "title": "Chapter 3. Bad Smells in Code",
+      "page": 63,
+      "book_page": 63
+    },
+    {
+      "level": 1,
+      "title": "Chapter 4. Building Tests",
+      "page": 73,
+      "book_page": 73
+    },
+    {
+      "level": 1,
+      "title": "Chapter 5. Toward a Catalog of Refactorings",
+      "page": 85,
+      "book_page": 85
+    },
+    {
+      "level": 1,
+      "title": "Chapter 6. Composing Methods",
+      "page": 89,
+      "book_page": 89
+    },
+    {
+      "level": 1,
+      "title": "Chapter 7. Moving Features Between Objects",
+      "page": 115,
+      "book_page": 115
+    },
+    {
+      "level": 1,
+      "title": "Chapter 8. Organizing Data",
+      "page": 138,
+      "book_page": 138
+    },
+    {
+      "level": 1,
+      "title": "Chapter 9. Simplifying Conditional Expressions",
+      "page": 192,
+      "book_page": 192
+    },
+    {
+      "level": 1,
+      "title": "Chapter 10. Making Method Calls Simpler",
+      "page": 220,
+      "book_page": 220
+    },
+    {
+      "level": 1,
+      "title": "Chapter 11. Dealing with Generalization",
+      "page": 259,
+      "book_page": 259
+    },
+    {
+      "level": 1,
+      "title": "Chapter 12. Big Refactorings",
+      "page": 293,
+      "book_page": 293
+    },
+    {
+      "level": 1,
+      "title": "Chapter 13. Refactoring, Reuse, and Reality",
+      "page": 311,
+      "book_page": 311
+    },
+    {
+      "level": 1,
+      "title": "Chapter 14. Refactoring Tools",
+      "page": 328,
+      "book_page": 328
+    },
+    {
+      "level": 1,
+      "title": "Chapter 15. Putting It All Together",
+      "page": 333,
+      "book_page": 333
+    }
+  ]
+}

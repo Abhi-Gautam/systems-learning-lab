@@ -1,0 +1,113 @@
+# DSG Glossary
+_PDF pages: 245 · TOC entries: 110_
+
+- p.1 — Cover
+- p.7 — Table of Contents
+- p.10 — Acknowledgments
+- p.12 — Introduction
+  - p.13 — Who This Book Is For
+  - p.13 — What’s in This Book
+  - p.14 — Online Resources
+- p.15 — Part I—Get Started
+  - p.16 — 1. Let's Go
+    - p.17 — How JSON over HTTP Services Fits into Distributed Systems
+    - p.18 — Set Up the Project
+    - p.19 — Build a Commit Log Prototype
+    - p.20 — Build a JSON over HTTP Server
+    - p.23 — Run Your Server
+    - p.24 — Test Your API
+    - p.24 — What You Learned
+  - p.25 — 2. Structure Data with Protocol Buffers
+    - p.26 — Why Use Protocol Buffers?
+    - p.28 — Install the Protocol Buffer Compiler
+    - p.29 — Define Your Domain Types as Protocol Buffers
+    - p.31 — Compile Protocol Buffers
+    - p.32 — Work with the Generated Code
+    - p.33 — What You Learned
+  - p.34 — 3. Write a Log Package
+    - p.34 — The Log Is a Powerful Tool
+    - p.36 — How Logs Work
+    - p.37 — Build a Log
+    - p.62 — What You Learned
+- p.63 — Part II—Network
+  - p.64 — 4. Serve Requests with gRPC
+    - p.64 — What Is gRPC?
+    - p.65 — Goals When Building a Service
+    - p.67 — Define a gRPC Service
+    - p.69 — Compile with the gRPC Plugin
+    - p.69 — Implement a gRPC Server
+    - p.77 — Register Your Server
+    - p.77 — Test a gRPC Server and Client
+    - p.82 — What You Learned
+  - p.83 — 5. Secure Your Services
+    - p.84 — Secure Services in Three Steps
+    - p.86 — Authenticate the Server with TLS
+    - p.94 — Authenticate the Client with Mutual TLS Authentication
+    - p.96 — Authorize with Access Control Lists
+    - p.106 — What You Learned
+  - p.107 — 6. Observe Your Systems
+    - p.107 — Three Types of Telemetry Data
+    - p.111 — Make Your Service Observable
+    - p.117 — What You Learned
+- p.118 — Part III—Distribute
+  - p.119 — 7. Server-to-Server Service Discovery
+    - p.119 — Why Use Service Discovery?
+    - p.120 — Embed Service Discovery
+    - p.122 — Discover Services with Serf
+    - p.129 — Request Discovered Services and Replicate Logs
+    - p.140 — Test Discovery and the Service End-to-End
+    - p.144 — What You Learned
+  - p.146 — 8. Coordinate Your Services with Consensus
+    - p.146 — What Is Raft and How Does It Work?
+    - p.149 — Implement Raft in Our Service
+    - p.168 — Multiplex to Run Multiple Services on One Port
+    - p.174 — What You Learned
+  - p.175 — 9. Discover Servers and Load Balance from the Client
+    - p.175 — Three Load-Balancing Strategies
+    - p.176 — Load Balance on the Client in gRPC
+    - p.178 — Make Servers Discoverable
+    - p.181 — Resolve the Servers
+    - p.187 — Route and Balance Requests with Pickers
+    - p.192 — Test Discovery and Balancing End-to-End
+    - p.193 — What You Learned
+- p.194 — Part IV—Deploy
+  - p.195 — 10. Deploy Applications with Kubernetes Locally
+    - p.195 — What Is Kubernetes?
+    - p.196 — Install kubectl
+    - p.197 — Use Kind for Local Development and Continuous Integration
+    - p.198 — Write an Agent Command-Line Interface
+    - p.203 — Build Your Docker Image
+    - p.204 — Configure and Deploy Your Service with Helm
+    - p.215 — Advertise Raft on the Fully Qualified Domain Name
+    - p.219 — What You Learned
+  - p.220 — 11. Deploy Applications with Kubernetes to the Cloud
+    - p.221 — Create a Google Kubernetes Engine Cluster
+    - p.223 — Create Custom Controllers with Metacontroller
+    - p.229 — Deploy to the Internet
+    - p.229 — What You Learned
+- p.230 — Index
+  - p.230 — – SYMBOLS –
+  - p.230 — – DIGITS –
+  - p.230 — – A –
+  - p.230 — – B –
+  - p.230 — – C –
+  - p.232 — – D –
+  - p.232 — – E –
+  - p.233 — – F –
+  - p.233 — – G –
+  - p.234 — – H –
+  - p.234 — – I –
+  - p.234 — – J –
+  - p.234 — – K –
+  - p.234 — – L –
+  - p.235 — – M –
+  - p.235 — – N –
+  - p.235 — – O –
+  - p.236 — – P –
+  - p.236 — – R –
+  - p.237 — – S –
+  - p.238 — – T –
+  - p.239 — – U –
+  - p.239 — – V –
+  - p.239 — – W –
+  - p.239 — – Z –

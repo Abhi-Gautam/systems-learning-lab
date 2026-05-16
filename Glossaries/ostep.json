@@ -1,0 +1,332 @@
+{
+  "alias": "OSTEP",
+  "pdf_pages": 687,
+  "book_to_pdf_offset": 25,
+  "source": "hand-curated from printed Contents page",
+  "entries": [
+    {
+      "level": 1,
+      "title": "1. A Dialogue on the Book",
+      "page": 26,
+      "book_page": 1
+    },
+    {
+      "level": 1,
+      "title": "2. Introduction to Operating Systems",
+      "page": 28,
+      "book_page": 3
+    },
+    {
+      "level": 1,
+      "title": "Part I. Virtualization",
+      "page": 46,
+      "book_page": 21
+    },
+    {
+      "level": 2,
+      "title": "3. A Dialogue on Virtualization",
+      "page": 48,
+      "book_page": 23
+    },
+    {
+      "level": 2,
+      "title": "4. The Abstraction: The Process",
+      "page": 50,
+      "book_page": 25
+    },
+    {
+      "level": 2,
+      "title": "5. Interlude: Process API",
+      "page": 64,
+      "book_page": 39
+    },
+    {
+      "level": 2,
+      "title": "6. Mechanism: Limited Direct Execution",
+      "page": 80,
+      "book_page": 55
+    },
+    {
+      "level": 2,
+      "title": "7. Scheduling: Introduction",
+      "page": 98,
+      "book_page": 73
+    },
+    {
+      "level": 2,
+      "title": "8. Scheduling: The Multi-Level Feedback Queue",
+      "page": 110,
+      "book_page": 85
+    },
+    {
+      "level": 2,
+      "title": "9. Scheduling: Proportional Share",
+      "page": 122,
+      "book_page": 97
+    },
+    {
+      "level": 2,
+      "title": "10. Multiprocessor Scheduling (Advanced)",
+      "page": 132,
+      "book_page": 107
+    },
+    {
+      "level": 2,
+      "title": "11. Summary Dialogue on CPU Virtualization",
+      "page": 146,
+      "book_page": 121
+    },
+    {
+      "level": 2,
+      "title": "12. A Dialogue on Memory Virtualization",
+      "page": 148,
+      "book_page": 123
+    },
+    {
+      "level": 2,
+      "title": "13. The Abstraction: Address Spaces",
+      "page": 150,
+      "book_page": 125
+    },
+    {
+      "level": 2,
+      "title": "14. Interlude: Memory API",
+      "page": 160,
+      "book_page": 135
+    },
+    {
+      "level": 2,
+      "title": "15. Mechanism: Address Translation",
+      "page": 172,
+      "book_page": 147
+    },
+    {
+      "level": 2,
+      "title": "16. Segmentation",
+      "page": 186,
+      "book_page": 161
+    },
+    {
+      "level": 2,
+      "title": "17. Free-Space Management",
+      "page": 198,
+      "book_page": 173
+    },
+    {
+      "level": 2,
+      "title": "18. Paging: Introduction",
+      "page": 212,
+      "book_page": 187
+    },
+    {
+      "level": 2,
+      "title": "19. Paging: Faster Translations (TLBs)",
+      "page": 226,
+      "book_page": 201
+    },
+    {
+      "level": 2,
+      "title": "20. Paging: Smaller Tables",
+      "page": 242,
+      "book_page": 217
+    },
+    {
+      "level": 2,
+      "title": "21. Beyond Physical Memory: Mechanisms",
+      "page": 254,
+      "book_page": 229
+    },
+    {
+      "level": 2,
+      "title": "22. Beyond Physical Memory: Policies",
+      "page": 264,
+      "book_page": 239
+    },
+    {
+      "level": 2,
+      "title": "23. Complete Virtual Memory Systems",
+      "page": 276,
+      "book_page": 251
+    },
+    {
+      "level": 2,
+      "title": "24. Summary Dialogue on Memory Virtualization",
+      "page": 298,
+      "book_page": 273
+    },
+    {
+      "level": 1,
+      "title": "Part II. Concurrency",
+      "page": 300,
+      "book_page": 275
+    },
+    {
+      "level": 2,
+      "title": "25. A Dialogue on Concurrency",
+      "page": 302,
+      "book_page": 277
+    },
+    {
+      "level": 2,
+      "title": "26. Concurrency: An Introduction",
+      "page": 304,
+      "book_page": 279
+    },
+    {
+      "level": 2,
+      "title": "27. Interlude: Thread API",
+      "page": 322,
+      "book_page": 297
+    },
+    {
+      "level": 2,
+      "title": "28. Locks",
+      "page": 334,
+      "book_page": 309
+    },
+    {
+      "level": 2,
+      "title": "29. Lock-based Concurrent Data Structures",
+      "page": 354,
+      "book_page": 329
+    },
+    {
+      "level": 2,
+      "title": "30. Condition Variables",
+      "page": 366,
+      "book_page": 341
+    },
+    {
+      "level": 2,
+      "title": "31. Semaphores",
+      "page": 382,
+      "book_page": 357
+    },
+    {
+      "level": 2,
+      "title": "32. Common Concurrency Problems",
+      "page": 402,
+      "book_page": 377
+    },
+    {
+      "level": 2,
+      "title": "33. Event-based Concurrency (Advanced)",
+      "page": 416,
+      "book_page": 391
+    },
+    {
+      "level": 2,
+      "title": "34. Summary Dialogue on Concurrency",
+      "page": 426,
+      "book_page": 401
+    },
+    {
+      "level": 1,
+      "title": "Part III. Persistence",
+      "page": 428,
+      "book_page": 403
+    },
+    {
+      "level": 2,
+      "title": "35. A Dialogue on Persistence",
+      "page": 430,
+      "book_page": 405
+    },
+    {
+      "level": 2,
+      "title": "36. I/O Devices",
+      "page": 432,
+      "book_page": 407
+    },
+    {
+      "level": 2,
+      "title": "37. Hard Disk Drives",
+      "page": 446,
+      "book_page": 421
+    },
+    {
+      "level": 2,
+      "title": "38. Redundant Arrays of Inexpensive Disks (RAIDs)",
+      "page": 460,
+      "book_page": 435
+    },
+    {
+      "level": 2,
+      "title": "39. Interlude: File and Directories",
+      "page": 476,
+      "book_page": 451
+    },
+    {
+      "level": 2,
+      "title": "40. File System Implementation",
+      "page": 492,
+      "book_page": 467
+    },
+    {
+      "level": 2,
+      "title": "41. Locality and The Fast File System",
+      "page": 506,
+      "book_page": 481
+    },
+    {
+      "level": 2,
+      "title": "42. Crash Consistency: FSCK and Journaling",
+      "page": 516,
+      "book_page": 491
+    },
+    {
+      "level": 2,
+      "title": "43. Log-structured File Systems",
+      "page": 536,
+      "book_page": 511
+    },
+    {
+      "level": 2,
+      "title": "44. Flash-based SSDs",
+      "page": 550,
+      "book_page": 525
+    },
+    {
+      "level": 2,
+      "title": "45. Data Integrity and Protection",
+      "page": 570,
+      "book_page": 545
+    },
+    {
+      "level": 2,
+      "title": "46. Summary Dialogue on Persistence",
+      "page": 582,
+      "book_page": 557
+    },
+    {
+      "level": 2,
+      "title": "47. A Dialogue on Distribution",
+      "page": 584,
+      "book_page": 559
+    },
+    {
+      "level": 2,
+      "title": "48. Distributed Systems",
+      "page": 586,
+      "book_page": 561
+    },
+    {
+      "level": 2,
+      "title": "49. Sun's Network File System (NFS)",
+      "page": 604,
+      "book_page": 579
+    },
+    {
+      "level": 2,
+      "title": "50. The Andrew File System (AFS)",
+      "page": 620,
+      "book_page": 595
+    },
+    {
+      "level": 2,
+      "title": "51. Summary Dialogue on Distribution",
+      "page": 632,
+      "book_page": 607
+    }
+  ]
+}

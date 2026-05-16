@@ -1,0 +1,222 @@
+# SAHP Glossary
+_PDF pages: 462 · TOC entries: 216_
+
+- p.1 — Cover
+- p.6 — Copyright
+- p.7 — Table of Contents
+- p.13 — Preface
+  - p.13 — Conventions Used in This Book
+  - p.14 — Using Code Examples
+  - p.15 — O’Reilly Online Learning
+  - p.15 — How to Contact Us
+  - p.16 — Acknowledgments
+    - p.16 — Acknowledgments from Mark Richards
+    - p.16 — Acknowledgments from Neal Ford
+    - p.17 — Acknowledgments from Pramod Sadalage
+    - p.17 — Acknowledgments from Zhamak Dehghani
+- p.19 — Chapter 1. What Happens When There 
+Are No “Best Practices”?
+  - p.20 — Why “The Hard Parts”?
+  - p.21 — Giving Timeless Advice About Software Architecture
+  - p.22 — The Importance of Data in Architecture
+  - p.23 — Architectural Decision Records
+  - p.24 — Architecture Fitness Functions
+    - p.25 — Using Fitness Functions
+  - p.31 — Architecture Versus Design: Keeping Definitions Simple
+  - p.33 — Introducing the Sysops Squad Saga
+    - p.34 — Nonticketing Workflow
+    - p.35 — Ticketing Workflow
+    - p.35 — A Bad Scenario
+    - p.36 — Sysops Squad Architectural Components
+    - p.37 — Sysops Squad Data Model
+- p.41 — Part I. Pulling Things Apart
+  - p.43 — Chapter 2. Discerning Coupling in 
+Software Architecture
+    - p.46 — Architecture (Quantum | Quanta)
+      - p.47 — Independently Deployable
+      - p.48 — High Functional Cohesion
+      - p.48 — High Static Coupling
+      - p.56 — Dynamic Quantum Coupling
+    - p.60 — Sysops Squad Saga: Understanding Quanta
+  - p.63 — Chapter 3. Architectural Modularity
+    - p.67 — Modularity Drivers
+      - p.68 — Maintainability
+      - p.72 — Testability
+      - p.73 — Deployability
+      - p.74 — Scalability
+      - p.76 — Availability/Fault Tolerance
+    - p.77 — Sysops Squad Saga: Creating a Business Case
+  - p.81 — Chapter 4. Architectural Decomposition
+    - p.83 — Is the Codebase Decomposable?
+      - p.84 — Afferent and Efferent Coupling
+      - p.85 — Abstractness and Instability
+      - p.87 — Distance from the Main Sequence
+    - p.89 — Component-Based Decomposition
+    - p.91 — Tactical Forking
+      - p.95 — Trade-Offs
+    - p.96 — Sysops Squad Saga: Choosing a Decomposition Approach
+  - p.99 — Chapter 5. Component-Based Decomposition Patterns
+    - p.102 — Identify and Size Components Pattern
+      - p.102 — Pattern Description
+      - p.105 — Fitness Functions for Governance
+      - p.108 — Sysops Squad Saga: Sizing Components
+    - p.112 — Gather Common Domain Components Pattern
+      - p.112 — Pattern Description
+      - p.113 — Fitness Functions for Governance
+      - p.115 — Sysops Squad Saga: Gathering Common Components
+    - p.119 — Flatten Components Pattern
+      - p.120 — Pattern Description
+      - p.125 — Fitness Functions for Governance
+      - p.125 — Sysops Squad Saga: Flattening Components
+    - p.129 — Determine Component Dependencies Pattern
+      - p.130 — Pattern Description
+      - p.135 — Fitness Functions for Governance
+      - p.136 — Sysops Squad Saga: Identifying Component Dependencies
+    - p.138 — Create Component Domains Pattern
+      - p.139 — Pattern Description
+      - p.140 — Fitness Functions for Governance
+      - p.141 — Sysops Squad Saga: Creating Component Domains
+    - p.144 — Create Domain Services Pattern
+      - p.144 — Pattern Description
+      - p.147 — Fitness Functions for Governance
+      - p.147 — Sysops Squad Saga: Creating Domain Services
+    - p.148 — Summary
+  - p.149 — Chapter 6. Pulling Apart Operational Data
+    - p.150 — Data Decomposition Drivers
+      - p.151 — Data Disintegrators
+      - p.164 — Data Integrators
+      - p.168 — Sysops Squad Saga: Justifying Database Decomposition
+    - p.169 — Decomposing Monolithic Data
+      - p.174 — Step 1: Analyze Database and Create Data Domains
+      - p.174 — Step 2: Assign Tables to Data Domains
+      - p.176 — Step 3: Separate Database Connections to Data Domains
+      - p.177 — Step 4: Move Schemas to Separate Database Servers
+      - p.179 — Step 5: Switch Over to Independent Database Servers
+    - p.179 — Selecting a Database Type
+      - p.181 — Relational Databases
+      - p.183 — Key-Value Databases
+      - p.185 — Document Databases
+      - p.187 — Column Family Databases
+      - p.189 — Graph Databases
+      - p.191 — NewSQL Databases
+      - p.193 — Cloud Native Databases
+      - p.195 — Time-Series Databases
+    - p.197 — Sysops Squad Saga: Polyglot Databases
+  - p.203 — Chapter 7. Service Granularity
+    - p.206 — Granularity Disintegrators
+      - p.207 — Service Scope and Function
+      - p.209 — Code Volatility
+      - p.210 — Scalability and Throughput
+      - p.211 — Fault Tolerance
+      - p.213 — Security
+      - p.214 — Extensibility
+    - p.215 — Granularity Integrators
+      - p.216 — Database Transactions
+      - p.218 — Workflow and Choreography
+      - p.221 — Shared Code
+      - p.223 — Data Relationships
+    - p.226 — Finding the Right Balance
+    - p.227 — Sysops Squad Saga: Ticket Assignment Granularity
+    - p.230 — Sysops Squad Saga: Customer Registration Granularity
+- p.235 — Part II. Putting Things Back Together
+  - p.237 — Chapter 8. Reuse Patterns
+    - p.239 — Code Replication
+      - p.241 — When to Use
+    - p.241 — Shared Library
+      - p.242 — Dependency Management and Change Control
+      - p.243 — Versioning Strategies
+      - p.245 — When To Use
+    - p.246 — Shared Service
+      - p.247 — Change Risk
+      - p.249 — Performance
+      - p.250 — Scalability
+      - p.250 — Fault Tolerance
+      - p.252 — When to Use
+    - p.252 — Sidecars and Service Mesh
+      - p.257 — When to Use
+    - p.257 — Sysops Squad Saga: Common Infrastructure Logic
+    - p.260 — Code Reuse: When Does It Add Value?
+      - p.262 — Reuse via Platforms
+    - p.262 — Sysops Squad Saga: Shared Domain Functionality
+  - p.267 — Chapter 9. Data Ownership and 
+Distributed Transactions
+    - p.268 — Assigning Data Ownership
+    - p.269 — Single Ownership Scenario
+    - p.270 — Common Ownership Scenario
+    - p.271 — Joint Ownership Scenario
+      - p.272 — Table Split Technique
+      - p.274 — Data Domain Technique
+      - p.276 — Delegate Technique
+    - p.279 — Service Consolidation Technique
+    - p.280 — Data Ownership Summary
+    - p.281 — Distributed Transactions
+    - p.285 — Eventual Consistency Patterns
+      - p.287 — Background Synchronization Pattern
+      - p.290 — Orchestrated Request-Based Pattern
+      - p.295 — Event-Based Pattern
+    - p.297 — Sysops Squad Saga: Data Ownership for Ticket Processing
+  - p.301 — Chapter 10. Distributed Data Access
+    - p.303 — Interservice Communication Pattern
+    - p.305 — Column Schema Replication Pattern
+    - p.306 — Replicated Caching Pattern
+    - p.311 — Data Domain Pattern
+    - p.313 — Sysops Squad Saga: Data Access for Ticket Assignment
+  - p.317 — Chapter 11. Managing Distributed Workflows
+    - p.319 — Orchestration Communication Style
+    - p.324 — Choreography Communication Style
+      - p.329 — Workflow State Management
+    - p.333 — Trade-Offs Between Orchestration and Choreography
+      - p.333 — State Owner and Coupling
+    - p.335 — Sysops Squad Saga: Managing Workflows
+  - p.341 — Chapter 12. Transactional Sagas
+    - p.342 — Transactional Saga Patterns
+      - p.343 — Epic Saga(sao) Pattern
+      - p.348 — Phone Tag Saga(sac) Pattern
+      - p.351 — Fairy Tale Saga(seo) Pattern
+      - p.354 — Time Travel Saga(sec) Pattern
+      - p.358 — Fantasy Fiction Saga(aao) Pattern
+      - p.361 — Horror Story(aac) Pattern
+      - p.364 — Parallel Saga(aeo) Pattern
+      - p.367 — Anthology Saga(aec) Pattern
+    - p.369 — State Management and Eventual Consistency
+      - p.370 — Saga State Machines
+    - p.374 — Techniques for Managing Sagas
+    - p.376 — Sysops Squad Saga: Atomic Transactions and Compensating Updates
+  - p.383 — Chapter 13. Contracts
+    - p.385 — Strict Versus Loose Contracts
+      - p.388 — Trade-Offs Between Strict and Loose Contracts
+      - p.390 — Contracts in Microservices
+    - p.394 — Stamp Coupling
+      - p.394 — Over-Coupling via Stamp Coupling
+      - p.395 — Bandwidth
+      - p.396 — Stamp Coupling for Workflow Management
+    - p.397 — Sysops Squad Saga: Managing Ticketing Contracts
+  - p.399 — Chapter 14. Managing Analytical Data
+    - p.400 — Previous Approaches
+      - p.400 — The Data Warehouse
+      - p.404 — The Data Lake
+    - p.407 — The Data Mesh
+      - p.407 — Definition of Data Mesh
+      - p.408 — Data Product Quantum
+      - p.411 — Data Mesh, Coupling, and Architecture Quantum
+      - p.411 — When to Use Data Mesh
+    - p.412 — Sysops Squad Saga: Data Mesh
+  - p.417 — Chapter 15. Build Your Own Trade-Off Analysis
+    - p.419 — Finding Entangled Dimensions
+      - p.419 — Coupling
+      - p.420 — Analyze Coupling Points
+      - p.421 — Assess Trade-Offs
+    - p.422 — Trade-Off Techniques
+      - p.422 — Qualitative Versus Quantative Analysis
+      - p.422 — MECE Lists
+      - p.423 — The “Out-of-Context” Trap
+      - p.426 — Model Relevant Domain Cases
+      - p.428 — Prefer Bottom Line over Overwhelming Evidence
+      - p.430 — Avoiding Snake Oil and Evangelism
+    - p.434 — Sysops Squad Saga: Epilogue
+- p.435 — Appendix A. Concept and Term References
+- p.437 — Appendix B. Architecture Decision Record References
+- p.439 — Appendix C. Trade-Off References
+- p.443 — Index
+- p.460 — About the Authors
+- p.461 — Colophon

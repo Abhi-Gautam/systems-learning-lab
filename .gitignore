@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# Editor and local tool state
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Rust
+target/
+**/target/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/

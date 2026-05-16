@@ -1,0 +1,60 @@
+# TPP Glossary
+_PDF pages: 352 · TOC entries: 56 · book→PDF offset: +25_
+_Source: hand-curated from printed Contents page._
+
+- p.26 (book p.1) — Part 1. A Pragmatic Philosophy
+  - p.27 (book p.2) — 1. The Cat Ate My Source Code
+  - p.29 (book p.4) — 2. Software Entropy
+  - p.32 (book p.7) — 3. Stone Soup and Boiled Frogs
+  - p.34 (book p.9) — 4. Good-Enough Software
+  - p.37 (book p.12) — 5. Your Knowledge Portfolio
+  - p.43 (book p.18) — 6. Communicate!
+- p.50 (book p.25) — Part 2. A Pragmatic Approach
+  - p.51 (book p.26) — 7. The Evils of Duplication
+  - p.59 (book p.34) — 8. Orthogonality
+  - p.69 (book p.44) — 9. Reversibility
+  - p.73 (book p.48) — 10. Tracer Bullets
+  - p.78 (book p.53) — 11. Prototypes and Post-it Notes
+  - p.82 (book p.57) — 12. Domain Languages
+  - p.89 (book p.64) — 13. Estimating
+- p.96 (book p.71) — Part 3. The Basic Tools
+  - p.98 (book p.73) — 14. The Power of Plain Text
+  - p.102 (book p.77) — 15. Shell Games
+  - p.107 (book p.82) — 16. Power Editing
+  - p.111 (book p.86) — 17. Source Code Control
+  - p.115 (book p.90) — 18. Debugging
+  - p.124 (book p.99) — 19. Text Manipulation
+  - p.127 (book p.102) — 20. Code Generators
+- p.132 (book p.107) — Part 4. Pragmatic Paranoia
+  - p.134 (book p.109) — 21. Design by Contract
+  - p.145 (book p.120) — 22. Dead Programs Tell No Lies
+  - p.147 (book p.122) — 23. Assertive Programming
+  - p.150 (book p.125) — 24. When to Use Exceptions
+  - p.154 (book p.129) — 25. How to Balance Resources
+- p.162 (book p.137) — Part 5. Bend, or Break
+  - p.163 (book p.138) — 26. Decoupling and the Law of Demeter
+  - p.169 (book p.144) — 27. Metaprogramming
+  - p.175 (book p.150) — 28. Temporal Coupling
+  - p.182 (book p.157) — 29. It's Just a View
+  - p.190 (book p.165) — 30. Blackboards
+- p.196 (book p.171) — Part 6. While You Are Coding
+  - p.197 (book p.172) — 31. Programming by Coincidence
+  - p.202 (book p.177) — 32. Algorithm Speed
+  - p.209 (book p.184) — 33. Refactoring
+  - p.214 (book p.189) — 34. Code That's Easy to Test
+  - p.223 (book p.198) — 35. Evil Wizards
+- p.226 (book p.201) — Part 7. Before the Project
+  - p.227 (book p.202) — 36. The Requirements Pit
+  - p.237 (book p.212) — 37. Solving Impossible Puzzles
+  - p.240 (book p.215) — 38. Not Until You're Ready
+  - p.242 (book p.217) — 39. The Specification Trap
+  - p.245 (book p.220) — 40. Circles and Arrows
+- p.248 (book p.223) — Part 8. Pragmatic Projects
+  - p.249 (book p.224) — 41. Pragmatic Teams
+  - p.255 (book p.230) — 42. Ubiquitous Automation
+  - p.262 (book p.237) — 43. Ruthless Testing
+  - p.273 (book p.248) — 44. It's All Writing
+  - p.280 (book p.255) — 45. Great Expectations
+  - p.283 (book p.258) — 46. Pride and Prejudice
+- p.286 (book p.261) — Appendix A. Resources
+- p.304 (book p.279) — Appendix B. Answers to Exercises

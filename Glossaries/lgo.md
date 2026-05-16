@@ -1,0 +1,266 @@
+# LGO Glossary
+_PDF pages: 450 · TOC entries: 263_
+
+- p.5 — Preface
+  - p.6 — Who Should Read This Book
+  - p.6 — Conventions Used in This Book
+  - p.7 — Using Code Examples
+  - p.8 — O’Reilly Online Learning
+  - p.8 — How to Contact Us
+  - p.9 — Acknowledgments
+- p.11 — 1. Setting Up Your Go Environment
+  - p.11 — Installing the Go Tools
+  - p.13 — The Go Workspace
+    - p.14 — Other Environment Variables
+  - p.14 — The go Command
+    - p.14 — go run and go build
+    - p.16 — Getting Third-Party Go Tools
+    - p.17 — Formatting Your Code
+  - p.20 — Linting and Vetting
+  - p.21 — Choose Your Tools
+    - p.22 — Visual Studio Code
+    - p.27 — GoLand
+    - p.29 — The Go Playground
+  - p.33 — Makefiles
+  - p.35 — Staying Up to Date
+  - p.36 — Wrapping Up
+- p.37 — 2. Primitive Types and Declarations
+  - p.37 — Built-in types
+    - p.37 — The zero value
+    - p.38 — Literals
+    - p.40 — Booleans
+    - p.40 — Numeric Types
+    - p.45 — Complex types (you’re probably not going to use these)
+  - p.47 — A Taste of Strings and Runes
+    - p.48 — Explicit Type Conversion
+  - p.49 — var vs :=
+  - p.52 — using const
+    - p.54 — Typed and untyped constants
+  - p.55 — Unused variables
+  - p.56 — Naming variables and constants
+  - p.58 — Wrapping Up
+- p.59 — 3. Composite Types
+  - p.59 — Arrays - Too Rigid To Use Directly
+  - p.61 — Slices
+    - p.63 — len
+    - p.63 — append
+    - p.64 — Capacity
+    - p.66 — make
+    - p.67 — Declaring Your Slice
+    - p.69 — Slicing Slices
+    - p.72 — Converting Arrays to Slices
+    - p.73 — copy
+  - p.74 — Strings and Runes and Bytes
+    - p.75 — Slicing Strings Can Hurt
+  - p.78 — Maps
+    - p.81 — Reading and Writing a Map
+    - p.82 — The comma ok Idiom
+    - p.83 — Deleting From Maps
+    - p.83 — Using Maps as Sets
+  - p.85 — Structs
+    - p.87 — Anonymous Structs
+    - p.88 — Comparing and Converting Structs
+  - p.90 — Wrapping Up
+- p.91 — 4. Blocks, Shadows, and Control Structures
+  - p.91 — Blocks
+    - p.92 — Shadowing Variables
+    - p.94 — Detecting Shadowed Variables
+  - p.96 — if
+  - p.97 — for, Four Ways
+    - p.98 — The Complete for Statement
+    - p.99 — The Condition-only for Statement
+    - p.99 — The Infinite for Statement
+    - p.100 — break and continue
+    - p.102 — The for-range Statement
+    - p.104 — Iterating Over Maps
+    - p.107 — The for-range Value is a Copy
+    - p.108 — Labeling Your “for” Statements
+    - p.109 — Choosing The Right “for” Statement
+  - p.110 — switch
+    - p.114 — blank switches
+  - p.116 — Choosing Between “if” and “switch”
+  - p.116 — goto. Yes, goto.
+  - p.119 — Wrapping Up
+- p.120 — 5. Functions
+  - p.120 — Declaring and Calling Functions
+    - p.121 — Simulating Named and Optional Parameters
+    - p.122 — Variadic Input Parameters and Slices
+    - p.123 — Multiple Return Values
+    - p.125 — Multiple Return Values are Multiple Values
+    - p.125 — Ignoring Returned Values
+    - p.126 — Named Return Values
+    - p.128 — Blank Returns — Never Use These!
+  - p.128 — Functions Are Values
+    - p.131 — Function Type Declarations
+    - p.131 — Anonymous Functions
+  - p.132 — Closures
+    - p.133 — Passing Functions as Parameters
+    - p.135 — Returning Functions from Functions
+  - p.136 — defer
+  - p.140 — Go is Call By Value
+  - p.143 — Wrapping Up
+- p.144 — 6. Pointers
+  - p.144 — A Quick Pointer Primer
+  - p.149 — Don’t Fear The Pointers
+  - p.150 — Pointers Indicate Mutable Parameters
+  - p.156 — Pointers Are A Last Resort
+    - p.157 — Pointer Passing Performance
+  - p.158 — The Zero Value vs No Value
+  - p.159 — The Difference Between Maps and Slices
+    - p.169 — Slices as Buffers
+  - p.170 — Reducing the Garbage Collector’s Workload
+  - p.174 — Wrapping Up
+- p.175 — 7. Types, Methods, and Interfaces
+  - p.175 — Types in Go
+  - p.176 — Methods
+    - p.177 — Pointer Receivers and Value Receivers
+    - p.180 — Code Your Methods for nil Instances
+    - p.182 — Methods Are Functions Too
+    - p.183 — Functions vs. Methods
+    - p.183 — Type Declarations Aren’t Inheritance
+    - p.184 — Types are Executable Documentation
+    - p.185 — iota is for Enumerations. Sometimes.
+  - p.187 — Use Embedding for Composition
+    - p.188 — Embedding Is Not Inheritance
+  - p.190 — A Quick Lesson on Interfaces
+  - p.191 — Interfaces are Type-Safe Duck Typing
+    - p.195 — Embedding and Interfaces
+  - p.196 — Accept Interfaces, Return Structs
+  - p.197 — Interfaces and nil
+    - p.198 — The Empty Interface Says Nothing
+    - p.200 — Type Assertions and Type Switches
+    - p.203 — Use Type Assertions and Type Switches Sparingly
+    - p.206 — Function Types Are a Bridge to Interfaces
+  - p.207 — Implicit Interfaces Make Dependency Injection Easier
+    - p.212 — Wire
+  - p.212 — Go isn’t Particularly Object-Oriented (and that’s great)
+  - p.213 — Wrapping Up
+- p.214 — 8. Errors
+  - p.214 — How to Handle Errors: The Basics
+  - p.216 — Use Strings For Simple Errors
+  - p.217 — Sentinel Errors
+  - p.219 — Errors are Values
+  - p.222 — Wrapping Errors
+  - p.225 — Is and As
+  - p.229 — Wrapping Errors with defer
+  - p.230 — panic and recover
+  - p.232 — Getting a stack trace from an error
+  - p.233 — Wrapping Up
+- p.234 — 9. Modules, Packages, and Imports
+  - p.234 — Repositories, Modules, and Packages
+    - p.235 — go.mod
+  - p.235 — Building Packages
+    - p.236 — Imports and Exports
+    - p.236 — Creating and Accessing a Package
+    - p.239 — Naming Packages
+    - p.240 — How to Organize Your Module
+    - p.241 — Overriding a Package’s Name
+    - p.244 — The internal Package
+    - p.247 — Circular Dependencies
+    - p.248 — Gracefully Renaming and Reorganizing Your API
+  - p.250 — Working With Modules
+    - p.250 — Importing Third-Party Code
+    - p.253 — Working with Versions
+    - p.256 — Minimum Version Selection
+    - p.257 — Updating to Compatible Versions
+    - p.258 — Updating to Incompatible Versions
+    - p.260 — Vendoring
+    - p.261 — pkg.go.dev
+    - p.263 — Additional Information
+  - p.263 — Publishing Your Module
+    - p.264 — Versioning Your Module
+  - p.265 — Module Proxy Servers
+    - p.266 — Specifying a Proxy Server
+    - p.266 — Private Repositories
+  - p.267 — Wrapping Up
+- p.268 — 10. Concurrency in Go
+  - p.268 — When To Use Concurrency
+  - p.270 — Goroutines
+  - p.272 — Channels
+    - p.272 — Reading, Writing, and Buffering
+    - p.273 — for-range and Channels
+    - p.274 — Closing a Channel
+    - p.275 — How Channels Behave
+  - p.276 — select
+  - p.279 — Concurrency Practices and Patterns
+    - p.279 — Keep Your APIs Concurrency-Free
+    - p.280 — Goroutines, for Loops, and Varying Variables
+    - p.281 — Always Cleanup Your Goroutines
+    - p.283 — The Done Channel Pattern
+    - p.284 — Using a Cancel Function To Terminate a Goroutine
+    - p.284 — When to use buffered and unbuffered channels
+    - p.286 — Backpressure
+    - p.287 — Turning Off a case In a select
+    - p.288 — How to Time Out Code
+    - p.289 — Using WaitGroups
+    - p.291 — Running Code Exactly Once
+    - p.292 — Putting Our Concurrent Tools Together
+  - p.296 — When to use Mutexes instead of channels
+  - p.301 — Atomics – You Probably Don’t Need These
+  - p.301 — Where To Learn More About Concurrency
+  - p.302 — Wrapping Up
+- p.303 — 11. The Standard Library
+  - p.303 — io and Friends
+  - p.309 — time
+    - p.312 — Monotonic Time
+    - p.312 — Timers and Timeouts
+  - p.313 — encoding/json
+    - p.313 — Use Struct Tags To Add Metadata
+    - p.315 — Unmarshaling and Marshaling
+    - p.316 — JSON, Readers, and Writers
+    - p.317 — Encoding and Decoding JSON Streams
+    - p.319 — Custom JSON Parsing
+  - p.321 — net/http
+    - p.321 — The Client
+    - p.323 — The Server
+  - p.328 — Wrapping Up
+- p.330 — 12. The Context
+  - p.330 — What is the Context?
+  - p.333 — Cancelation
+  - p.337 — Timers
+    - p.340 — Handling Context Cancelation in Your Own Code
+  - p.342 — Values
+  - p.348 — Wrapping Up
+- p.349 — 13. Writing Tests
+  - p.349 — The Basics of Testing
+    - p.351 — Reporting Test Failures
+    - p.352 — Setting Up and Tearing Down
+    - p.354 — Storing Sample Test Data
+    - p.354 — Caching Test Results
+    - p.355 — Testing Your Public API
+    - p.356 — Use go-cmp to Compare Test Results
+  - p.358 — Table Tests
+  - p.360 — Checking Your Code Coverage
+  - p.365 — Benchmarks
+  - p.370 — Stubs in Go
+    - p.376 — httptest
+  - p.379 — Integration Tests and Build Tags
+  - p.381 — Finding Concurrency Problems with the Race Checker
+  - p.383 — Wrapping Up
+- p.384 — 14. Here There Be Dragons: Reflect, Unsafe, and CGo
+  - p.384 — Reflection Lets Us Work With Types at Runtime
+    - p.386 — Types, Kinds, and Values
+  - p.392 — Making New Values
+    - p.393 — Use Reflection To Check If an Interface’s Value is nil
+    - p.394 — Use Reflection to Write a Data Marshaler
+    - p.400 — Build Functions With Reflection to Automate Repetitive Tasks
+    - p.401 — You Can Build Structs With Reflection, But Don’t
+    - p.402 — Reflection Can’t Make Methods
+    - p.402 — Only Use Reflection If It’s Worthwhile
+  - p.403 — unsafe is Unsafe
+    - p.404 — Use unsafe To Convert External Binary Data
+    - p.408 — unsafe Strings and Slices
+    - p.410 — unsafe Tools
+  - p.410 — cgo is For Integration, Not Performance
+  - p.414 — Wrapping Up
+- p.415 — 15. A Look at the Future: Generics in Go
+  - p.415 — Generics Reduce Repetitive Code and Increase Type Safety
+  - p.418 — Introducing Generics in Go
+  - p.424 — Use Type Lists To Specify Operators
+  - p.425 — Generic Functions Abstract Algorithms
+  - p.427 — Type Lists Limit Constants and Implementations
+  - p.431 — Things That Are Left Out
+  - p.433 — Idiomatic Go and Generics
+  - p.433 — Further Futures Unlocked
+  - p.434 — Wrapping Up
+- p.436 — Index

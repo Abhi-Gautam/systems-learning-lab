@@ -1,0 +1,104 @@
+{
+  "alias": "N2T",
+  "pdf_pages": 331,
+  "book_to_pdf_offset": 14,
+  "source": "hand-curated from printed Contents page",
+  "entries": [
+    {
+      "level": 1,
+      "title": "Introduction: Hello, World Below",
+      "page": 15,
+      "book_page": 1
+    },
+    {
+      "level": 1,
+      "title": "1. Boolean Logic",
+      "page": 21,
+      "book_page": 7
+    },
+    {
+      "level": 1,
+      "title": "2. Boolean Arithmetic",
+      "page": 43,
+      "book_page": 29
+    },
+    {
+      "level": 1,
+      "title": "3. Sequential Logic",
+      "page": 55,
+      "book_page": 41
+    },
+    {
+      "level": 1,
+      "title": "4. Machine Language",
+      "page": 71,
+      "book_page": 57
+    },
+    {
+      "level": 1,
+      "title": "5. Computer Architecture",
+      "page": 93,
+      "book_page": 79
+    },
+    {
+      "level": 1,
+      "title": "6. Assembler",
+      "page": 117,
+      "book_page": 103
+    },
+    {
+      "level": 1,
+      "title": "7. Virtual Machine I: Stack Arithmetic",
+      "page": 135,
+      "book_page": 121
+    },
+    {
+      "level": 1,
+      "title": "8. Virtual Machine II: Program Control",
+      "page": 167,
+      "book_page": 153
+    },
+    {
+      "level": 1,
+      "title": "9. High-Level Language",
+      "page": 187,
+      "book_page": 173
+    },
+    {
+      "level": 1,
+      "title": "10. Compiler I: Syntax Analysis",
+      "page": 213,
+      "book_page": 199
+    },
+    {
+      "level": 1,
+      "title": "11. Compiler II: Code Generation",
+      "page": 237,
+      "book_page": 223
+    },
+    {
+      "level": 1,
+      "title": "12. Operating System",
+      "page": 261,
+      "book_page": 247
+    },
+    {
+      "level": 1,
+      "title": "13. Postscript: More Fun to Go",
+      "page": 291,
+      "book_page": 277
+    },
+    {
+      "level": 1,
+      "title": "Appendix A: Hardware Description Language (HDL)",
+      "page": 295,
+      "book_page": 281
+    },
+    {
+      "level": 1,
+      "title": "Appendix B: Test Scripting Language",
+      "page": 311,
+      "book_page": 297
+    }
+  ]
+}

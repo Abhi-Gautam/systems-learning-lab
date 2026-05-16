@@ -1,4 +1,3 @@
-# DDIA - Designing Data-Intensive Applications
-## Doubts & Clarifications
+# DDIA Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

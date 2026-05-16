@@ -1,0 +1,1086 @@
+{
+  "alias": "SAHP",
+  "pdf_pages": 462,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Cover",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "title": "Copyright",
+      "page": 6
+    },
+    {
+      "level": 1,
+      "title": "Table of Contents",
+      "page": 7
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 13
+    },
+    {
+      "level": 2,
+      "title": "Conventions Used in This Book",
+      "page": 13
+    },
+    {
+      "level": 2,
+      "title": "Using Code Examples",
+      "page": 14
+    },
+    {
+      "level": 2,
+      "title": "O’Reilly Online Learning",
+      "page": 15
+    },
+    {
+      "level": 2,
+      "title": "How to Contact Us",
+      "page": 15
+    },
+    {
+      "level": 2,
+      "title": "Acknowledgments",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments from Mark Richards",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments from Neal Ford",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments from Pramod Sadalage",
+      "page": 17
+    },
+    {
+      "level": 3,
+      "title": "Acknowledgments from Zhamak Dehghani",
+      "page": 17
+    },
+    {
+      "level": 1,
+      "title": "Chapter 1. What Happens When There \nAre No “Best Practices”?",
+      "page": 19
+    },
+    {
+      "level": 2,
+      "title": "Why “The Hard Parts”?",
+      "page": 20
+    },
+    {
+      "level": 2,
+      "title": "Giving Timeless Advice About Software Architecture",
+      "page": 21
+    },
+    {
+      "level": 2,
+      "title": "The Importance of Data in Architecture",
+      "page": 22
+    },
+    {
+      "level": 2,
+      "title": "Architectural Decision Records",
+      "page": 23
+    },
+    {
+      "level": 2,
+      "title": "Architecture Fitness Functions",
+      "page": 24
+    },
+    {
+      "level": 3,
+      "title": "Using Fitness Functions",
+      "page": 25
+    },
+    {
+      "level": 2,
+      "title": "Architecture Versus Design: Keeping Definitions Simple",
+      "page": 31
+    },
+    {
+      "level": 2,
+      "title": "Introducing the Sysops Squad Saga",
+      "page": 33
+    },
+    {
+      "level": 3,
+      "title": "Nonticketing Workflow",
+      "page": 34
+    },
+    {
+      "level": 3,
+      "title": "Ticketing Workflow",
+      "page": 35
+    },
+    {
+      "level": 3,
+      "title": "A Bad Scenario",
+      "page": 35
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Architectural Components",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Data Model",
+      "page": 37
+    },
+    {
+      "level": 1,
+      "title": "Part I. Pulling Things Apart",
+      "page": 41
+    },
+    {
+      "level": 2,
+      "title": "Chapter 2. Discerning Coupling in \nSoftware Architecture",
+      "page": 43
+    },
+    {
+      "level": 3,
+      "title": "Architecture (Quantum | Quanta)",
+      "page": 46
+    },
+    {
+      "level": 4,
+      "title": "Independently Deployable",
+      "page": 47
+    },
+    {
+      "level": 4,
+      "title": "High Functional Cohesion",
+      "page": 48
+    },
+    {
+      "level": 4,
+      "title": "High Static Coupling",
+      "page": 48
+    },
+    {
+      "level": 4,
+      "title": "Dynamic Quantum Coupling",
+      "page": 56
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Understanding Quanta",
+      "page": 60
+    },
+    {
+      "level": 2,
+      "title": "Chapter 3. Architectural Modularity",
+      "page": 63
+    },
+    {
+      "level": 3,
+      "title": "Modularity Drivers",
+      "page": 67
+    },
+    {
+      "level": 4,
+      "title": "Maintainability",
+      "page": 68
+    },
+    {
+      "level": 4,
+      "title": "Testability",
+      "page": 72
+    },
+    {
+      "level": 4,
+      "title": "Deployability",
+      "page": 73
+    },
+    {
+      "level": 4,
+      "title": "Scalability",
+      "page": 74
+    },
+    {
+      "level": 4,
+      "title": "Availability/Fault Tolerance",
+      "page": 76
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Creating a Business Case",
+      "page": 77
+    },
+    {
+      "level": 2,
+      "title": "Chapter 4. Architectural Decomposition",
+      "page": 81
+    },
+    {
+      "level": 3,
+      "title": "Is the Codebase Decomposable?",
+      "page": 83
+    },
+    {
+      "level": 4,
+      "title": "Afferent and Efferent Coupling",
+      "page": 84
+    },
+    {
+      "level": 4,
+      "title": "Abstractness and Instability",
+      "page": 85
+    },
+    {
+      "level": 4,
+      "title": "Distance from the Main Sequence",
+      "page": 87
+    },
+    {
+      "level": 3,
+      "title": "Component-Based Decomposition",
+      "page": 89
+    },
+    {
+      "level": 3,
+      "title": "Tactical Forking",
+      "page": 91
+    },
+    {
+      "level": 4,
+      "title": "Trade-Offs",
+      "page": 95
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Choosing a Decomposition Approach",
+      "page": 96
+    },
+    {
+      "level": 2,
+      "title": "Chapter 5. Component-Based Decomposition Patterns",
+      "page": 99
+    },
+    {
+      "level": 3,
+      "title": "Identify and Size Components Pattern",
+      "page": 102
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 102
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 105
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Sizing Components",
+      "page": 108
+    },
+    {
+      "level": 3,
+      "title": "Gather Common Domain Components Pattern",
+      "page": 112
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 112
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 113
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Gathering Common Components",
+      "page": 115
+    },
+    {
+      "level": 3,
+      "title": "Flatten Components Pattern",
+      "page": 119
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 120
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 125
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Flattening Components",
+      "page": 125
+    },
+    {
+      "level": 3,
+      "title": "Determine Component Dependencies Pattern",
+      "page": 129
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 130
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 135
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Identifying Component Dependencies",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "Create Component Domains Pattern",
+      "page": 138
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 139
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 140
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Creating Component Domains",
+      "page": 141
+    },
+    {
+      "level": 3,
+      "title": "Create Domain Services Pattern",
+      "page": 144
+    },
+    {
+      "level": 4,
+      "title": "Pattern Description",
+      "page": 144
+    },
+    {
+      "level": 4,
+      "title": "Fitness Functions for Governance",
+      "page": 147
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Creating Domain Services",
+      "page": 147
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 148
+    },
+    {
+      "level": 2,
+      "title": "Chapter 6. Pulling Apart Operational Data",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Data Decomposition Drivers",
+      "page": 150
+    },
+    {
+      "level": 4,
+      "title": "Data Disintegrators",
+      "page": 151
+    },
+    {
+      "level": 4,
+      "title": "Data Integrators",
+      "page": 164
+    },
+    {
+      "level": 4,
+      "title": "Sysops Squad Saga: Justifying Database Decomposition",
+      "page": 168
+    },
+    {
+      "level": 3,
+      "title": "Decomposing Monolithic Data",
+      "page": 169
+    },
+    {
+      "level": 4,
+      "title": "Step 1: Analyze Database and Create Data Domains",
+      "page": 174
+    },
+    {
+      "level": 4,
+      "title": "Step 2: Assign Tables to Data Domains",
+      "page": 174
+    },
+    {
+      "level": 4,
+      "title": "Step 3: Separate Database Connections to Data Domains",
+      "page": 176
+    },
+    {
+      "level": 4,
+      "title": "Step 4: Move Schemas to Separate Database Servers",
+      "page": 177
+    },
+    {
+      "level": 4,
+      "title": "Step 5: Switch Over to Independent Database Servers",
+      "page": 179
+    },
+    {
+      "level": 3,
+      "title": "Selecting a Database Type",
+      "page": 179
+    },
+    {
+      "level": 4,
+      "title": "Relational Databases",
+      "page": 181
+    },
+    {
+      "level": 4,
+      "title": "Key-Value Databases",
+      "page": 183
+    },
+    {
+      "level": 4,
+      "title": "Document Databases",
+      "page": 185
+    },
+    {
+      "level": 4,
+      "title": "Column Family Databases",
+      "page": 187
+    },
+    {
+      "level": 4,
+      "title": "Graph Databases",
+      "page": 189
+    },
+    {
+      "level": 4,
+      "title": "NewSQL Databases",
+      "page": 191
+    },
+    {
+      "level": 4,
+      "title": "Cloud Native Databases",
+      "page": 193
+    },
+    {
+      "level": 4,
+      "title": "Time-Series Databases",
+      "page": 195
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Polyglot Databases",
+      "page": 197
+    },
+    {
+      "level": 2,
+      "title": "Chapter 7. Service Granularity",
+      "page": 203
+    },
+    {
+      "level": 3,
+      "title": "Granularity Disintegrators",
+      "page": 206
+    },
+    {
+      "level": 4,
+      "title": "Service Scope and Function",
+      "page": 207
+    },
+    {
+      "level": 4,
+      "title": "Code Volatility",
+      "page": 209
+    },
+    {
+      "level": 4,
+      "title": "Scalability and Throughput",
+      "page": 210
+    },
+    {
+      "level": 4,
+      "title": "Fault Tolerance",
+      "page": 211
+    },
+    {
+      "level": 4,
+      "title": "Security",
+      "page": 213
+    },
+    {
+      "level": 4,
+      "title": "Extensibility",
+      "page": 214
+    },
+    {
+      "level": 3,
+      "title": "Granularity Integrators",
+      "page": 215
+    },
+    {
+      "level": 4,
+      "title": "Database Transactions",
+      "page": 216
+    },
+    {
+      "level": 4,
+      "title": "Workflow and Choreography",
+      "page": 218
+    },
+    {
+      "level": 4,
+      "title": "Shared Code",
+      "page": 221
+    },
+    {
+      "level": 4,
+      "title": "Data Relationships",
+      "page": 223
+    },
+    {
+      "level": 3,
+      "title": "Finding the Right Balance",
+      "page": 226
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Ticket Assignment Granularity",
+      "page": 227
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Customer Registration Granularity",
+      "page": 230
+    },
+    {
+      "level": 1,
+      "title": "Part II. Putting Things Back Together",
+      "page": 235
+    },
+    {
+      "level": 2,
+      "title": "Chapter 8. Reuse Patterns",
+      "page": 237
+    },
+    {
+      "level": 3,
+      "title": "Code Replication",
+      "page": 239
+    },
+    {
+      "level": 4,
+      "title": "When to Use",
+      "page": 241
+    },
+    {
+      "level": 3,
+      "title": "Shared Library",
+      "page": 241
+    },
+    {
+      "level": 4,
+      "title": "Dependency Management and Change Control",
+      "page": 242
+    },
+    {
+      "level": 4,
+      "title": "Versioning Strategies",
+      "page": 243
+    },
+    {
+      "level": 4,
+      "title": "When To Use",
+      "page": 245
+    },
+    {
+      "level": 3,
+      "title": "Shared Service",
+      "page": 246
+    },
+    {
+      "level": 4,
+      "title": "Change Risk",
+      "page": 247
+    },
+    {
+      "level": 4,
+      "title": "Performance",
+      "page": 249
+    },
+    {
+      "level": 4,
+      "title": "Scalability",
+      "page": 250
+    },
+    {
+      "level": 4,
+      "title": "Fault Tolerance",
+      "page": 250
+    },
+    {
+      "level": 4,
+      "title": "When to Use",
+      "page": 252
+    },
+    {
+      "level": 3,
+      "title": "Sidecars and Service Mesh",
+      "page": 252
+    },
+    {
+      "level": 4,
+      "title": "When to Use",
+      "page": 257
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Common Infrastructure Logic",
+      "page": 257
+    },
+    {
+      "level": 3,
+      "title": "Code Reuse: When Does It Add Value?",
+      "page": 260
+    },
+    {
+      "level": 4,
+      "title": "Reuse via Platforms",
+      "page": 262
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Shared Domain Functionality",
+      "page": 262
+    },
+    {
+      "level": 2,
+      "title": "Chapter 9. Data Ownership and \nDistributed Transactions",
+      "page": 267
+    },
+    {
+      "level": 3,
+      "title": "Assigning Data Ownership",
+      "page": 268
+    },
+    {
+      "level": 3,
+      "title": "Single Ownership Scenario",
+      "page": 269
+    },
+    {
+      "level": 3,
+      "title": "Common Ownership Scenario",
+      "page": 270
+    },
+    {
+      "level": 3,
+      "title": "Joint Ownership Scenario",
+      "page": 271
+    },
+    {
+      "level": 4,
+      "title": "Table Split Technique",
+      "page": 272
+    },
+    {
+      "level": 4,
+      "title": "Data Domain Technique",
+      "page": 274
+    },
+    {
+      "level": 4,
+      "title": "Delegate Technique",
+      "page": 276
+    },
+    {
+      "level": 3,
+      "title": "Service Consolidation Technique",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Data Ownership Summary",
+      "page": 280
+    },
+    {
+      "level": 3,
+      "title": "Distributed Transactions",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "Eventual Consistency Patterns",
+      "page": 285
+    },
+    {
+      "level": 4,
+      "title": "Background Synchronization Pattern",
+      "page": 287
+    },
+    {
+      "level": 4,
+      "title": "Orchestrated Request-Based Pattern",
+      "page": 290
+    },
+    {
+      "level": 4,
+      "title": "Event-Based Pattern",
+      "page": 295
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Data Ownership for Ticket Processing",
+      "page": 297
+    },
+    {
+      "level": 2,
+      "title": "Chapter 10. Distributed Data Access",
+      "page": 301
+    },
+    {
+      "level": 3,
+      "title": "Interservice Communication Pattern",
+      "page": 303
+    },
+    {
+      "level": 3,
+      "title": "Column Schema Replication Pattern",
+      "page": 305
+    },
+    {
+      "level": 3,
+      "title": "Replicated Caching Pattern",
+      "page": 306
+    },
+    {
+      "level": 3,
+      "title": "Data Domain Pattern",
+      "page": 311
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Data Access for Ticket Assignment",
+      "page": 313
+    },
+    {
+      "level": 2,
+      "title": "Chapter 11. Managing Distributed Workflows",
+      "page": 317
+    },
+    {
+      "level": 3,
+      "title": "Orchestration Communication Style",
+      "page": 319
+    },
+    {
+      "level": 3,
+      "title": "Choreography Communication Style",
+      "page": 324
+    },
+    {
+      "level": 4,
+      "title": "Workflow State Management",
+      "page": 329
+    },
+    {
+      "level": 3,
+      "title": "Trade-Offs Between Orchestration and Choreography",
+      "page": 333
+    },
+    {
+      "level": 4,
+      "title": "State Owner and Coupling",
+      "page": 333
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Managing Workflows",
+      "page": 335
+    },
+    {
+      "level": 2,
+      "title": "Chapter 12. Transactional Sagas",
+      "page": 341
+    },
+    {
+      "level": 3,
+      "title": "Transactional Saga Patterns",
+      "page": 342
+    },
+    {
+      "level": 4,
+      "title": "Epic Saga(sao) Pattern",
+      "page": 343
+    },
+    {
+      "level": 4,
+      "title": "Phone Tag Saga(sac) Pattern",
+      "page": 348
+    },
+    {
+      "level": 4,
+      "title": "Fairy Tale Saga(seo) Pattern",
+      "page": 351
+    },
+    {
+      "level": 4,
+      "title": "Time Travel Saga(sec) Pattern",
+      "page": 354
+    },
+    {
+      "level": 4,
+      "title": "Fantasy Fiction Saga(aao) Pattern",
+      "page": 358
+    },
+    {
+      "level": 4,
+      "title": "Horror Story(aac) Pattern",
+      "page": 361
+    },
+    {
+      "level": 4,
+      "title": "Parallel Saga(aeo) Pattern",
+      "page": 364
+    },
+    {
+      "level": 4,
+      "title": "Anthology Saga(aec) Pattern",
+      "page": 367
+    },
+    {
+      "level": 3,
+      "title": "State Management and Eventual Consistency",
+      "page": 369
+    },
+    {
+      "level": 4,
+      "title": "Saga State Machines",
+      "page": 370
+    },
+    {
+      "level": 3,
+      "title": "Techniques for Managing Sagas",
+      "page": 374
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Atomic Transactions and Compensating Updates",
+      "page": 376
+    },
+    {
+      "level": 2,
+      "title": "Chapter 13. Contracts",
+      "page": 383
+    },
+    {
+      "level": 3,
+      "title": "Strict Versus Loose Contracts",
+      "page": 385
+    },
+    {
+      "level": 4,
+      "title": "Trade-Offs Between Strict and Loose Contracts",
+      "page": 388
+    },
+    {
+      "level": 4,
+      "title": "Contracts in Microservices",
+      "page": 390
+    },
+    {
+      "level": 3,
+      "title": "Stamp Coupling",
+      "page": 394
+    },
+    {
+      "level": 4,
+      "title": "Over-Coupling via Stamp Coupling",
+      "page": 394
+    },
+    {
+      "level": 4,
+      "title": "Bandwidth",
+      "page": 395
+    },
+    {
+      "level": 4,
+      "title": "Stamp Coupling for Workflow Management",
+      "page": 396
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Managing Ticketing Contracts",
+      "page": 397
+    },
+    {
+      "level": 2,
+      "title": "Chapter 14. Managing Analytical Data",
+      "page": 399
+    },
+    {
+      "level": 3,
+      "title": "Previous Approaches",
+      "page": 400
+    },
+    {
+      "level": 4,
+      "title": "The Data Warehouse",
+      "page": 400
+    },
+    {
+      "level": 4,
+      "title": "The Data Lake",
+      "page": 404
+    },
+    {
+      "level": 3,
+      "title": "The Data Mesh",
+      "page": 407
+    },
+    {
+      "level": 4,
+      "title": "Definition of Data Mesh",
+      "page": 407
+    },
+    {
+      "level": 4,
+      "title": "Data Product Quantum",
+      "page": 408
+    },
+    {
+      "level": 4,
+      "title": "Data Mesh, Coupling, and Architecture Quantum",
+      "page": 411
+    },
+    {
+      "level": 4,
+      "title": "When to Use Data Mesh",
+      "page": 411
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Data Mesh",
+      "page": 412
+    },
+    {
+      "level": 2,
+      "title": "Chapter 15. Build Your Own Trade-Off Analysis",
+      "page": 417
+    },
+    {
+      "level": 3,
+      "title": "Finding Entangled Dimensions",
+      "page": 419
+    },
+    {
+      "level": 4,
+      "title": "Coupling",
+      "page": 419
+    },
+    {
+      "level": 4,
+      "title": "Analyze Coupling Points",
+      "page": 420
+    },
+    {
+      "level": 4,
+      "title": "Assess Trade-Offs",
+      "page": 421
+    },
+    {
+      "level": 3,
+      "title": "Trade-Off Techniques",
+      "page": 422
+    },
+    {
+      "level": 4,
+      "title": "Qualitative Versus Quantative Analysis",
+      "page": 422
+    },
+    {
+      "level": 4,
+      "title": "MECE Lists",
+      "page": 422
+    },
+    {
+      "level": 4,
+      "title": "The “Out-of-Context” Trap",
+      "page": 423
+    },
+    {
+      "level": 4,
+      "title": "Model Relevant Domain Cases",
+      "page": 426
+    },
+    {
+      "level": 4,
+      "title": "Prefer Bottom Line over Overwhelming Evidence",
+      "page": 428
+    },
+    {
+      "level": 4,
+      "title": "Avoiding Snake Oil and Evangelism",
+      "page": 430
+    },
+    {
+      "level": 3,
+      "title": "Sysops Squad Saga: Epilogue",
+      "page": 434
+    },
+    {
+      "level": 1,
+      "title": "Appendix A. Concept and Term References",
+      "page": 435
+    },
+    {
+      "level": 1,
+      "title": "Appendix B. Architecture Decision Record References",
+      "page": 437
+    },
+    {
+      "level": 1,
+      "title": "Appendix C. Trade-Off References",
+      "page": 439
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 443
+    },
+    {
+      "level": 1,
+      "title": "About the Authors",
+      "page": 460
+    },
+    {
+      "level": 1,
+      "title": "Colophon",
+      "page": 461
+    }
+  ]
+}

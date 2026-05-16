@@ -1,0 +1,1331 @@
+{
+  "alias": "DBI",
+  "pdf_pages": 590,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 6
+    },
+    {
+      "level": 2,
+      "title": "How to Contact Us",
+      "page": 17
+    },
+    {
+      "level": 1,
+      "title": "I. Storage Engines",
+      "page": 19
+    },
+    {
+      "level": 1,
+      "title": "1. Introduction and Overview",
+      "page": 27
+    },
+    {
+      "level": 2,
+      "title": "DBMS Architecture",
+      "page": 29
+    },
+    {
+      "level": 2,
+      "title": "Memory- Versus Disk-Based DBMS",
+      "page": 33
+    },
+    {
+      "level": 3,
+      "title": "Durability in Memory-Based Stores",
+      "page": 35
+    },
+    {
+      "level": 2,
+      "title": "Column- Versus Row-Oriented DBMS",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Row-Oriented Data Layout",
+      "page": 38
+    },
+    {
+      "level": 3,
+      "title": "Column-Oriented Data Layout",
+      "page": 39
+    },
+    {
+      "level": 3,
+      "title": "Distinctions and Optimizations",
+      "page": 41
+    },
+    {
+      "level": 3,
+      "title": "Wide Column Stores",
+      "page": 42
+    },
+    {
+      "level": 2,
+      "title": "Data Files and Index Files",
+      "page": 45
+    },
+    {
+      "level": 3,
+      "title": "Data Files",
+      "page": 47
+    },
+    {
+      "level": 3,
+      "title": "Index Files",
+      "page": 48
+    },
+    {
+      "level": 3,
+      "title": "Primary Index as an Indirection",
+      "page": 50
+    },
+    {
+      "level": 2,
+      "title": "Buffering, Immutability, and Ordering",
+      "page": 52
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 54
+    },
+    {
+      "level": 1,
+      "title": "2. B-Tree Basics",
+      "page": 56
+    },
+    {
+      "level": 2,
+      "title": "Binary Search Trees",
+      "page": 57
+    },
+    {
+      "level": 3,
+      "title": "Tree Balancing",
+      "page": 59
+    },
+    {
+      "level": 3,
+      "title": "Trees for Disk-Based Storage",
+      "page": 61
+    },
+    {
+      "level": 2,
+      "title": "Disk-Based Structures",
+      "page": 63
+    },
+    {
+      "level": 3,
+      "title": "Hard Disk Drives",
+      "page": 64
+    },
+    {
+      "level": 3,
+      "title": "Solid State Drives",
+      "page": 65
+    },
+    {
+      "level": 3,
+      "title": "On-Disk Structures",
+      "page": 67
+    },
+    {
+      "level": 2,
+      "title": "Ubiquitous B-Trees",
+      "page": 69
+    },
+    {
+      "level": 3,
+      "title": "B-Tree Hierarchy",
+      "page": 72
+    },
+    {
+      "level": 3,
+      "title": "Separator Keys",
+      "page": 74
+    },
+    {
+      "level": 3,
+      "title": "B-Tree Lookup Complexity",
+      "page": 76
+    },
+    {
+      "level": 3,
+      "title": "B-Tree Lookup Algorithm",
+      "page": 77
+    },
+    {
+      "level": 3,
+      "title": "Counting Keys",
+      "page": 78
+    },
+    {
+      "level": 3,
+      "title": "B-Tree Node Splits",
+      "page": 79
+    },
+    {
+      "level": 3,
+      "title": "B-Tree Node Merges",
+      "page": 82
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 85
+    },
+    {
+      "level": 1,
+      "title": "3. File Formats",
+      "page": 86
+    },
+    {
+      "level": 2,
+      "title": "Motivation",
+      "page": 87
+    },
+    {
+      "level": 2,
+      "title": "Binary Encoding",
+      "page": 89
+    },
+    {
+      "level": 3,
+      "title": "Primitive Types",
+      "page": 90
+    },
+    {
+      "level": 3,
+      "title": "Strings and Variable-Size Data",
+      "page": 92
+    },
+    {
+      "level": 3,
+      "title": "Bit-Packed Data: Booleans, Enums, and Flags",
+      "page": 93
+    },
+    {
+      "level": 2,
+      "title": "General Principles",
+      "page": 95
+    },
+    {
+      "level": 2,
+      "title": "Page Structure",
+      "page": 97
+    },
+    {
+      "level": 2,
+      "title": "Slotted Pages",
+      "page": 98
+    },
+    {
+      "level": 2,
+      "title": "Cell Layout",
+      "page": 101
+    },
+    {
+      "level": 2,
+      "title": "Combining Cells into Slotted Pages",
+      "page": 103
+    },
+    {
+      "level": 2,
+      "title": "Managing Variable-Size Data",
+      "page": 105
+    },
+    {
+      "level": 2,
+      "title": "Versioning",
+      "page": 107
+    },
+    {
+      "level": 2,
+      "title": "Checksumming",
+      "page": 108
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 110
+    },
+    {
+      "level": 1,
+      "title": "4. Implementing B-Trees",
+      "page": 111
+    },
+    {
+      "level": 2,
+      "title": "Page Header",
+      "page": 112
+    },
+    {
+      "level": 3,
+      "title": "Magic Numbers",
+      "page": 113
+    },
+    {
+      "level": 3,
+      "title": "Sibling Links",
+      "page": 114
+    },
+    {
+      "level": 3,
+      "title": "Rightmost Pointers",
+      "page": 116
+    },
+    {
+      "level": 3,
+      "title": "Node High Keys",
+      "page": 118
+    },
+    {
+      "level": 3,
+      "title": "Overflow Pages",
+      "page": 120
+    },
+    {
+      "level": 2,
+      "title": "Binary Search",
+      "page": 123
+    },
+    {
+      "level": 3,
+      "title": "Binary Search with Indirection Pointers",
+      "page": 124
+    },
+    {
+      "level": 2,
+      "title": "Propagating Splits and Merges",
+      "page": 125
+    },
+    {
+      "level": 3,
+      "title": "Breadcrumbs",
+      "page": 126
+    },
+    {
+      "level": 2,
+      "title": "Rebalancing",
+      "page": 128
+    },
+    {
+      "level": 2,
+      "title": "Right-Only Appends",
+      "page": 130
+    },
+    {
+      "level": 3,
+      "title": "Bulk Loading",
+      "page": 131
+    },
+    {
+      "level": 2,
+      "title": "Compression",
+      "page": 132
+    },
+    {
+      "level": 2,
+      "title": "Vacuum and Maintenance",
+      "page": 134
+    },
+    {
+      "level": 3,
+      "title": "Fragmentation Caused by Updates and Deletes",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "Page Defragmentation",
+      "page": 138
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 139
+    },
+    {
+      "level": 1,
+      "title": "5. Transaction Processing and Recovery",
+      "page": 141
+    },
+    {
+      "level": 2,
+      "title": "Buffer Management",
+      "page": 144
+    },
+    {
+      "level": 3,
+      "title": "Caching Semantics",
+      "page": 147
+    },
+    {
+      "level": 3,
+      "title": "Cache Eviction",
+      "page": 148
+    },
+    {
+      "level": 3,
+      "title": "Locking Pages in Cache",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Page Replacement",
+      "page": 151
+    },
+    {
+      "level": 4,
+      "title": "FIFO and LRU",
+      "page": 152
+    },
+    {
+      "level": 4,
+      "title": "CLOCK",
+      "page": 152
+    },
+    {
+      "level": 4,
+      "title": "LFU",
+      "page": 155
+    },
+    {
+      "level": 2,
+      "title": "Recovery",
+      "page": 157
+    },
+    {
+      "level": 3,
+      "title": "Log Semantics",
+      "page": 159
+    },
+    {
+      "level": 3,
+      "title": "Operation Versus Data Log",
+      "page": 161
+    },
+    {
+      "level": 3,
+      "title": "Steal and Force Policies",
+      "page": 162
+    },
+    {
+      "level": 3,
+      "title": "ARIES",
+      "page": 164
+    },
+    {
+      "level": 2,
+      "title": "Concurrency Control",
+      "page": 165
+    },
+    {
+      "level": 3,
+      "title": "Serializability",
+      "page": 167
+    },
+    {
+      "level": 3,
+      "title": "Transaction Isolation",
+      "page": 169
+    },
+    {
+      "level": 3,
+      "title": "Read and Write Anomalies",
+      "page": 170
+    },
+    {
+      "level": 3,
+      "title": "Isolation Levels",
+      "page": 172
+    },
+    {
+      "level": 3,
+      "title": "Optimistic Concurrency Control",
+      "page": 174
+    },
+    {
+      "level": 3,
+      "title": "Multiversion Concurrency Control",
+      "page": 176
+    },
+    {
+      "level": 3,
+      "title": "Pessimistic Concurrency Control",
+      "page": 177
+    },
+    {
+      "level": 3,
+      "title": "Lock-Based Concurrency Control",
+      "page": 178
+    },
+    {
+      "level": 4,
+      "title": "Deadlocks",
+      "page": 179
+    },
+    {
+      "level": 4,
+      "title": "Locks",
+      "page": 180
+    },
+    {
+      "level": 4,
+      "title": "Latches",
+      "page": 181
+    },
+    {
+      "level": 4,
+      "title": "Readers-writer lock",
+      "page": 182
+    },
+    {
+      "level": 4,
+      "title": "Latch crabbing",
+      "page": 183
+    },
+    {
+      "level": 4,
+      "title": "Blink-Trees",
+      "page": 186
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 188
+    },
+    {
+      "level": 1,
+      "title": "6. B-Tree Variants",
+      "page": 190
+    },
+    {
+      "level": 2,
+      "title": "Copy-on-Write",
+      "page": 191
+    },
+    {
+      "level": 3,
+      "title": "Implementing Copy-on-Write: LMDB",
+      "page": 193
+    },
+    {
+      "level": 2,
+      "title": "Abstracting Node Updates",
+      "page": 194
+    },
+    {
+      "level": 2,
+      "title": "Lazy B-Trees",
+      "page": 195
+    },
+    {
+      "level": 3,
+      "title": "WiredTiger",
+      "page": 196
+    },
+    {
+      "level": 3,
+      "title": "Lazy-Adaptive Tree",
+      "page": 199
+    },
+    {
+      "level": 2,
+      "title": "FD-Trees",
+      "page": 201
+    },
+    {
+      "level": 3,
+      "title": "Fractional Cascading",
+      "page": 202
+    },
+    {
+      "level": 3,
+      "title": "Logarithmic Runs",
+      "page": 204
+    },
+    {
+      "level": 2,
+      "title": "Bw-Trees",
+      "page": 206
+    },
+    {
+      "level": 3,
+      "title": "Update Chains",
+      "page": 207
+    },
+    {
+      "level": 3,
+      "title": "Taming Concurrency with Compare-and-Swap",
+      "page": 208
+    },
+    {
+      "level": 3,
+      "title": "Structural Modification Operations",
+      "page": 210
+    },
+    {
+      "level": 3,
+      "title": "Consolidation and Garbage Collection",
+      "page": 212
+    },
+    {
+      "level": 2,
+      "title": "Cache-Oblivious B-Trees",
+      "page": 214
+    },
+    {
+      "level": 3,
+      "title": "van Emde Boas Layout",
+      "page": 216
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 218
+    },
+    {
+      "level": 1,
+      "title": "7. Log-Structured Storage",
+      "page": 220
+    },
+    {
+      "level": 2,
+      "title": "LSM Trees",
+      "page": 222
+    },
+    {
+      "level": 3,
+      "title": "LSM Tree Structure",
+      "page": 224
+    },
+    {
+      "level": 4,
+      "title": "Two-component LSM Tree",
+      "page": 225
+    },
+    {
+      "level": 4,
+      "title": "Multicomponent LSM Trees",
+      "page": 226
+    },
+    {
+      "level": 4,
+      "title": "In-memory tables",
+      "page": 227
+    },
+    {
+      "level": 3,
+      "title": "Updates and Deletes",
+      "page": 229
+    },
+    {
+      "level": 3,
+      "title": "LSM Tree Lookups",
+      "page": 231
+    },
+    {
+      "level": 3,
+      "title": "Merge-Iteration",
+      "page": 232
+    },
+    {
+      "level": 3,
+      "title": "Reconciliation",
+      "page": 236
+    },
+    {
+      "level": 3,
+      "title": "Maintenance in LSM Trees",
+      "page": 237
+    },
+    {
+      "level": 4,
+      "title": "Leveled compaction",
+      "page": 238
+    },
+    {
+      "level": 4,
+      "title": "Size-tiered compaction",
+      "page": 239
+    },
+    {
+      "level": 2,
+      "title": "Read, Write, and Space Amplification",
+      "page": 241
+    },
+    {
+      "level": 3,
+      "title": "RUM Conjecture",
+      "page": 242
+    },
+    {
+      "level": 2,
+      "title": "Implementation Details",
+      "page": 243
+    },
+    {
+      "level": 3,
+      "title": "Sorted String Tables",
+      "page": 244
+    },
+    {
+      "level": 3,
+      "title": "Bloom Filters",
+      "page": 246
+    },
+    {
+      "level": 3,
+      "title": "Skiplist",
+      "page": 249
+    },
+    {
+      "level": 3,
+      "title": "Disk Access",
+      "page": 252
+    },
+    {
+      "level": 3,
+      "title": "Compression",
+      "page": 253
+    },
+    {
+      "level": 2,
+      "title": "Unordered LSM Storage",
+      "page": 255
+    },
+    {
+      "level": 3,
+      "title": "Bitcask",
+      "page": 256
+    },
+    {
+      "level": 3,
+      "title": "WiscKey",
+      "page": 258
+    },
+    {
+      "level": 2,
+      "title": "Concurrency in LSM Trees",
+      "page": 260
+    },
+    {
+      "level": 2,
+      "title": "Log Stacking",
+      "page": 262
+    },
+    {
+      "level": 3,
+      "title": "Flash Translation Layer",
+      "page": 263
+    },
+    {
+      "level": 3,
+      "title": "Filesystem Logging",
+      "page": 265
+    },
+    {
+      "level": 2,
+      "title": "LLAMA and Mindful Stacking",
+      "page": 267
+    },
+    {
+      "level": 3,
+      "title": "Open-Channel SSDs",
+      "page": 269
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 270
+    },
+    {
+      "level": 1,
+      "title": "Part I Conclusion",
+      "page": 272
+    },
+    {
+      "level": 1,
+      "title": "II. Distributed Systems",
+      "page": 275
+    },
+    {
+      "level": 1,
+      "title": "8. Introduction and Overview",
+      "page": 278
+    },
+    {
+      "level": 2,
+      "title": "Concurrent Execution",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Shared State in a Distributed System",
+      "page": 281
+    },
+    {
+      "level": 2,
+      "title": "Fallacies of Distributed Computing",
+      "page": 282
+    },
+    {
+      "level": 3,
+      "title": "Processing",
+      "page": 284
+    },
+    {
+      "level": 3,
+      "title": "Clocks and Time",
+      "page": 286
+    },
+    {
+      "level": 3,
+      "title": "State Consistency",
+      "page": 287
+    },
+    {
+      "level": 3,
+      "title": "Local and Remote Execution",
+      "page": 288
+    },
+    {
+      "level": 3,
+      "title": "Need to Handle Failures",
+      "page": 289
+    },
+    {
+      "level": 3,
+      "title": "Network Partitions and Partial Failures",
+      "page": 290
+    },
+    {
+      "level": 3,
+      "title": "Cascading Failures",
+      "page": 292
+    },
+    {
+      "level": 2,
+      "title": "Distributed Systems Abstractions",
+      "page": 294
+    },
+    {
+      "level": 3,
+      "title": "Links",
+      "page": 295
+    },
+    {
+      "level": 4,
+      "title": "Fair-loss link",
+      "page": 295
+    },
+    {
+      "level": 4,
+      "title": "Message acknowledgments",
+      "page": 296
+    },
+    {
+      "level": 4,
+      "title": "Message retransmits",
+      "page": 297
+    },
+    {
+      "level": 4,
+      "title": "Problem with retransmits",
+      "page": 298
+    },
+    {
+      "level": 4,
+      "title": "Message order",
+      "page": 298
+    },
+    {
+      "level": 4,
+      "title": "Exactly-once delivery",
+      "page": 300
+    },
+    {
+      "level": 2,
+      "title": "Two Generals’ Problem",
+      "page": 302
+    },
+    {
+      "level": 2,
+      "title": "FLP Impossibility",
+      "page": 304
+    },
+    {
+      "level": 2,
+      "title": "System Synchrony",
+      "page": 306
+    },
+    {
+      "level": 2,
+      "title": "Failure Models",
+      "page": 308
+    },
+    {
+      "level": 3,
+      "title": "Crash Faults",
+      "page": 309
+    },
+    {
+      "level": 3,
+      "title": "Omission Faults",
+      "page": 310
+    },
+    {
+      "level": 3,
+      "title": "Arbitrary Faults",
+      "page": 311
+    },
+    {
+      "level": 3,
+      "title": "Handling Failures",
+      "page": 312
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 313
+    },
+    {
+      "level": 1,
+      "title": "9. Failure Detection",
+      "page": 314
+    },
+    {
+      "level": 2,
+      "title": "Heartbeats and Pings",
+      "page": 316
+    },
+    {
+      "level": 3,
+      "title": "Timeout-Free Failure Detector",
+      "page": 318
+    },
+    {
+      "level": 3,
+      "title": "Outsourced Heartbeats",
+      "page": 319
+    },
+    {
+      "level": 2,
+      "title": "Phi-Accural Failure Detector",
+      "page": 320
+    },
+    {
+      "level": 2,
+      "title": "Gossip and Failure Detection",
+      "page": 322
+    },
+    {
+      "level": 2,
+      "title": "Reversing Failure Detection Problem Statement",
+      "page": 324
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 326
+    },
+    {
+      "level": 1,
+      "title": "10. Leader Election",
+      "page": 327
+    },
+    {
+      "level": 2,
+      "title": "Bully Algorithm",
+      "page": 329
+    },
+    {
+      "level": 2,
+      "title": "Next-In-Line Failover",
+      "page": 331
+    },
+    {
+      "level": 2,
+      "title": "Candidate/Ordinary Optimization",
+      "page": 333
+    },
+    {
+      "level": 2,
+      "title": "Invitation Algorithm",
+      "page": 334
+    },
+    {
+      "level": 2,
+      "title": "Ring Algorithm",
+      "page": 336
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 338
+    },
+    {
+      "level": 1,
+      "title": "11. Replication and Consistency",
+      "page": 340
+    },
+    {
+      "level": 2,
+      "title": "Achieving Availability",
+      "page": 342
+    },
+    {
+      "level": 2,
+      "title": "Infamous CAP",
+      "page": 343
+    },
+    {
+      "level": 3,
+      "title": "Use CAP Carefully",
+      "page": 345
+    },
+    {
+      "level": 3,
+      "title": "Harvest and Yield",
+      "page": 347
+    },
+    {
+      "level": 2,
+      "title": "Shared Memory",
+      "page": 348
+    },
+    {
+      "level": 2,
+      "title": "Ordering",
+      "page": 350
+    },
+    {
+      "level": 2,
+      "title": "Consistency Models",
+      "page": 352
+    },
+    {
+      "level": 3,
+      "title": "Strict Consistency",
+      "page": 354
+    },
+    {
+      "level": 3,
+      "title": "Linearizability",
+      "page": 355
+    },
+    {
+      "level": 4,
+      "title": "Linearization point",
+      "page": 356
+    },
+    {
+      "level": 4,
+      "title": "Cost of linearizability",
+      "page": 358
+    },
+    {
+      "level": 3,
+      "title": "Sequential Consistency",
+      "page": 360
+    },
+    {
+      "level": 3,
+      "title": "Causal Consistency",
+      "page": 363
+    },
+    {
+      "level": 4,
+      "title": "Vector clocks",
+      "page": 365
+    },
+    {
+      "level": 2,
+      "title": "Session Models",
+      "page": 368
+    },
+    {
+      "level": 2,
+      "title": "Eventual Consistency",
+      "page": 370
+    },
+    {
+      "level": 2,
+      "title": "Tunable Consistency",
+      "page": 371
+    },
+    {
+      "level": 2,
+      "title": "Witness Replicas",
+      "page": 373
+    },
+    {
+      "level": 2,
+      "title": "Strong Eventual Consistency and CRDTs",
+      "page": 375
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 379
+    },
+    {
+      "level": 1,
+      "title": "12. Anti-Entropy and Dissemination",
+      "page": 381
+    },
+    {
+      "level": 2,
+      "title": "Read Repair",
+      "page": 384
+    },
+    {
+      "level": 2,
+      "title": "Digest Reads",
+      "page": 386
+    },
+    {
+      "level": 2,
+      "title": "Hinted Handoff",
+      "page": 387
+    },
+    {
+      "level": 2,
+      "title": "Merkle Trees",
+      "page": 388
+    },
+    {
+      "level": 2,
+      "title": "Bitmap Version Vectors",
+      "page": 390
+    },
+    {
+      "level": 2,
+      "title": "Gossip Dissemination",
+      "page": 392
+    },
+    {
+      "level": 3,
+      "title": "Gossip Mechanics",
+      "page": 394
+    },
+    {
+      "level": 3,
+      "title": "Overlay Networks",
+      "page": 395
+    },
+    {
+      "level": 3,
+      "title": "Hybrid Gossip",
+      "page": 397
+    },
+    {
+      "level": 3,
+      "title": "Partial Views",
+      "page": 399
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 401
+    },
+    {
+      "level": 1,
+      "title": "13. Distributed Transactions",
+      "page": 403
+    },
+    {
+      "level": 2,
+      "title": "Making Operations Appear Atomic",
+      "page": 405
+    },
+    {
+      "level": 2,
+      "title": "Two-Phase Commit",
+      "page": 407
+    },
+    {
+      "level": 3,
+      "title": "Cohort Failures in 2PC",
+      "page": 410
+    },
+    {
+      "level": 3,
+      "title": "Coordinator Failures in 2PC",
+      "page": 412
+    },
+    {
+      "level": 2,
+      "title": "Three-Phase Commit",
+      "page": 414
+    },
+    {
+      "level": 3,
+      "title": "Coordinator Failures in 3PC",
+      "page": 416
+    },
+    {
+      "level": 2,
+      "title": "Distributed Transactions with Calvin",
+      "page": 417
+    },
+    {
+      "level": 2,
+      "title": "Distributed Transactions with Spanner",
+      "page": 420
+    },
+    {
+      "level": 2,
+      "title": "Database Partitioning",
+      "page": 423
+    },
+    {
+      "level": 3,
+      "title": "Consistent Hashing",
+      "page": 425
+    },
+    {
+      "level": 2,
+      "title": "Distributed Transactions with Percolator",
+      "page": 426
+    },
+    {
+      "level": 2,
+      "title": "Coordination Avoidance",
+      "page": 430
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 433
+    },
+    {
+      "level": 1,
+      "title": "14. Consensus",
+      "page": 435
+    },
+    {
+      "level": 2,
+      "title": "Broadcast",
+      "page": 437
+    },
+    {
+      "level": 2,
+      "title": "Atomic Broadcast",
+      "page": 439
+    },
+    {
+      "level": 3,
+      "title": "Virtual Synchrony",
+      "page": 440
+    },
+    {
+      "level": 3,
+      "title": "Zookeeper Atomic Broadcast (ZAB)",
+      "page": 442
+    },
+    {
+      "level": 2,
+      "title": "Paxos",
+      "page": 445
+    },
+    {
+      "level": 3,
+      "title": "Paxos Algorithm",
+      "page": 447
+    },
+    {
+      "level": 3,
+      "title": "Quorums in Paxos",
+      "page": 450
+    },
+    {
+      "level": 3,
+      "title": "Failure Scenarios",
+      "page": 451
+    },
+    {
+      "level": 3,
+      "title": "Multi-Paxos",
+      "page": 454
+    },
+    {
+      "level": 3,
+      "title": "Fast Paxos",
+      "page": 456
+    },
+    {
+      "level": 3,
+      "title": "Egalitarian Paxos",
+      "page": 458
+    },
+    {
+      "level": 3,
+      "title": "Flexible Paxos",
+      "page": 462
+    },
+    {
+      "level": 3,
+      "title": "Generalized Solution to Consensus",
+      "page": 464
+    },
+    {
+      "level": 4,
+      "title": "Generalized Paxos algorithm",
+      "page": 465
+    },
+    {
+      "level": 2,
+      "title": "Raft",
+      "page": 468
+    },
+    {
+      "level": 3,
+      "title": "Leader Role in Raft",
+      "page": 471
+    },
+    {
+      "level": 3,
+      "title": "Failure Scenarios",
+      "page": 474
+    },
+    {
+      "level": 2,
+      "title": "Byzantine Consensus",
+      "page": 476
+    },
+    {
+      "level": 3,
+      "title": "PBFT Algorithm",
+      "page": 477
+    },
+    {
+      "level": 3,
+      "title": "Recovery and Checkpointing",
+      "page": 481
+    },
+    {
+      "level": 2,
+      "title": "Summary",
+      "page": 482
+    },
+    {
+      "level": 1,
+      "title": "Part II Conclusion",
+      "page": 485
+    },
+    {
+      "level": 1,
+      "title": "A. Bibliography",
+      "page": 489
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 517
+    }
+  ]
+}

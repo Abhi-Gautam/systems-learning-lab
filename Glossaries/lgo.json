@@ -1,0 +1,1321 @@
+{
+  "alias": "LGO",
+  "pdf_pages": 450,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 5
+    },
+    {
+      "level": 2,
+      "title": "Who Should Read This Book",
+      "page": 6
+    },
+    {
+      "level": 2,
+      "title": "Conventions Used in This Book",
+      "page": 6
+    },
+    {
+      "level": 2,
+      "title": "Using Code Examples",
+      "page": 7
+    },
+    {
+      "level": 2,
+      "title": "O’Reilly Online Learning",
+      "page": 8
+    },
+    {
+      "level": 2,
+      "title": "How to Contact Us",
+      "page": 8
+    },
+    {
+      "level": 2,
+      "title": "Acknowledgments",
+      "page": 9
+    },
+    {
+      "level": 1,
+      "title": "1. Setting Up Your Go Environment",
+      "page": 11
+    },
+    {
+      "level": 2,
+      "title": "Installing the Go Tools",
+      "page": 11
+    },
+    {
+      "level": 2,
+      "title": "The Go Workspace",
+      "page": 13
+    },
+    {
+      "level": 3,
+      "title": "Other Environment Variables",
+      "page": 14
+    },
+    {
+      "level": 2,
+      "title": "The go Command",
+      "page": 14
+    },
+    {
+      "level": 3,
+      "title": "go run and go build",
+      "page": 14
+    },
+    {
+      "level": 3,
+      "title": "Getting Third-Party Go Tools",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "Formatting Your Code",
+      "page": 17
+    },
+    {
+      "level": 2,
+      "title": "Linting and Vetting",
+      "page": 20
+    },
+    {
+      "level": 2,
+      "title": "Choose Your Tools",
+      "page": 21
+    },
+    {
+      "level": 3,
+      "title": "Visual Studio Code",
+      "page": 22
+    },
+    {
+      "level": 3,
+      "title": "GoLand",
+      "page": 27
+    },
+    {
+      "level": 3,
+      "title": "The Go Playground",
+      "page": 29
+    },
+    {
+      "level": 2,
+      "title": "Makefiles",
+      "page": 33
+    },
+    {
+      "level": 2,
+      "title": "Staying Up to Date",
+      "page": 35
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 36
+    },
+    {
+      "level": 1,
+      "title": "2. Primitive Types and Declarations",
+      "page": 37
+    },
+    {
+      "level": 2,
+      "title": "Built-in types",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "The zero value",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Literals",
+      "page": 38
+    },
+    {
+      "level": 3,
+      "title": "Booleans",
+      "page": 40
+    },
+    {
+      "level": 3,
+      "title": "Numeric Types",
+      "page": 40
+    },
+    {
+      "level": 3,
+      "title": "Complex types (you’re probably not going to use these)",
+      "page": 45
+    },
+    {
+      "level": 2,
+      "title": "A Taste of Strings and Runes",
+      "page": 47
+    },
+    {
+      "level": 3,
+      "title": "Explicit Type Conversion",
+      "page": 48
+    },
+    {
+      "level": 2,
+      "title": "var vs :=",
+      "page": 49
+    },
+    {
+      "level": 2,
+      "title": "using const",
+      "page": 52
+    },
+    {
+      "level": 3,
+      "title": "Typed and untyped constants",
+      "page": 54
+    },
+    {
+      "level": 2,
+      "title": "Unused variables",
+      "page": 55
+    },
+    {
+      "level": 2,
+      "title": "Naming variables and constants",
+      "page": 56
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 58
+    },
+    {
+      "level": 1,
+      "title": "3. Composite Types",
+      "page": 59
+    },
+    {
+      "level": 2,
+      "title": "Arrays - Too Rigid To Use Directly",
+      "page": 59
+    },
+    {
+      "level": 2,
+      "title": "Slices",
+      "page": 61
+    },
+    {
+      "level": 3,
+      "title": "len",
+      "page": 63
+    },
+    {
+      "level": 3,
+      "title": "append",
+      "page": 63
+    },
+    {
+      "level": 3,
+      "title": "Capacity",
+      "page": 64
+    },
+    {
+      "level": 3,
+      "title": "make",
+      "page": 66
+    },
+    {
+      "level": 3,
+      "title": "Declaring Your Slice",
+      "page": 67
+    },
+    {
+      "level": 3,
+      "title": "Slicing Slices",
+      "page": 69
+    },
+    {
+      "level": 3,
+      "title": "Converting Arrays to Slices",
+      "page": 72
+    },
+    {
+      "level": 3,
+      "title": "copy",
+      "page": 73
+    },
+    {
+      "level": 2,
+      "title": "Strings and Runes and Bytes",
+      "page": 74
+    },
+    {
+      "level": 3,
+      "title": "Slicing Strings Can Hurt",
+      "page": 75
+    },
+    {
+      "level": 2,
+      "title": "Maps",
+      "page": 78
+    },
+    {
+      "level": 3,
+      "title": "Reading and Writing a Map",
+      "page": 81
+    },
+    {
+      "level": 3,
+      "title": "The comma ok Idiom",
+      "page": 82
+    },
+    {
+      "level": 3,
+      "title": "Deleting From Maps",
+      "page": 83
+    },
+    {
+      "level": 3,
+      "title": "Using Maps as Sets",
+      "page": 83
+    },
+    {
+      "level": 2,
+      "title": "Structs",
+      "page": 85
+    },
+    {
+      "level": 3,
+      "title": "Anonymous Structs",
+      "page": 87
+    },
+    {
+      "level": 3,
+      "title": "Comparing and Converting Structs",
+      "page": 88
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 90
+    },
+    {
+      "level": 1,
+      "title": "4. Blocks, Shadows, and Control Structures",
+      "page": 91
+    },
+    {
+      "level": 2,
+      "title": "Blocks",
+      "page": 91
+    },
+    {
+      "level": 3,
+      "title": "Shadowing Variables",
+      "page": 92
+    },
+    {
+      "level": 3,
+      "title": "Detecting Shadowed Variables",
+      "page": 94
+    },
+    {
+      "level": 2,
+      "title": "if",
+      "page": 96
+    },
+    {
+      "level": 2,
+      "title": "for, Four Ways",
+      "page": 97
+    },
+    {
+      "level": 3,
+      "title": "The Complete for Statement",
+      "page": 98
+    },
+    {
+      "level": 3,
+      "title": "The Condition-only for Statement",
+      "page": 99
+    },
+    {
+      "level": 3,
+      "title": "The Infinite for Statement",
+      "page": 99
+    },
+    {
+      "level": 3,
+      "title": "break and continue",
+      "page": 100
+    },
+    {
+      "level": 3,
+      "title": "The for-range Statement",
+      "page": 102
+    },
+    {
+      "level": 3,
+      "title": "Iterating Over Maps",
+      "page": 104
+    },
+    {
+      "level": 3,
+      "title": "The for-range Value is a Copy",
+      "page": 107
+    },
+    {
+      "level": 3,
+      "title": "Labeling Your “for” Statements",
+      "page": 108
+    },
+    {
+      "level": 3,
+      "title": "Choosing The Right “for” Statement",
+      "page": 109
+    },
+    {
+      "level": 2,
+      "title": "switch",
+      "page": 110
+    },
+    {
+      "level": 3,
+      "title": "blank switches",
+      "page": 114
+    },
+    {
+      "level": 2,
+      "title": "Choosing Between “if” and “switch”",
+      "page": 116
+    },
+    {
+      "level": 2,
+      "title": "goto. Yes, goto.",
+      "page": 116
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 119
+    },
+    {
+      "level": 1,
+      "title": "5. Functions",
+      "page": 120
+    },
+    {
+      "level": 2,
+      "title": "Declaring and Calling Functions",
+      "page": 120
+    },
+    {
+      "level": 3,
+      "title": "Simulating Named and Optional Parameters",
+      "page": 121
+    },
+    {
+      "level": 3,
+      "title": "Variadic Input Parameters and Slices",
+      "page": 122
+    },
+    {
+      "level": 3,
+      "title": "Multiple Return Values",
+      "page": 123
+    },
+    {
+      "level": 3,
+      "title": "Multiple Return Values are Multiple Values",
+      "page": 125
+    },
+    {
+      "level": 3,
+      "title": "Ignoring Returned Values",
+      "page": 125
+    },
+    {
+      "level": 3,
+      "title": "Named Return Values",
+      "page": 126
+    },
+    {
+      "level": 3,
+      "title": "Blank Returns — Never Use These!",
+      "page": 128
+    },
+    {
+      "level": 2,
+      "title": "Functions Are Values",
+      "page": 128
+    },
+    {
+      "level": 3,
+      "title": "Function Type Declarations",
+      "page": 131
+    },
+    {
+      "level": 3,
+      "title": "Anonymous Functions",
+      "page": 131
+    },
+    {
+      "level": 2,
+      "title": "Closures",
+      "page": 132
+    },
+    {
+      "level": 3,
+      "title": "Passing Functions as Parameters",
+      "page": 133
+    },
+    {
+      "level": 3,
+      "title": "Returning Functions from Functions",
+      "page": 135
+    },
+    {
+      "level": 2,
+      "title": "defer",
+      "page": 136
+    },
+    {
+      "level": 2,
+      "title": "Go is Call By Value",
+      "page": 140
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 143
+    },
+    {
+      "level": 1,
+      "title": "6. Pointers",
+      "page": 144
+    },
+    {
+      "level": 2,
+      "title": "A Quick Pointer Primer",
+      "page": 144
+    },
+    {
+      "level": 2,
+      "title": "Don’t Fear The Pointers",
+      "page": 149
+    },
+    {
+      "level": 2,
+      "title": "Pointers Indicate Mutable Parameters",
+      "page": 150
+    },
+    {
+      "level": 2,
+      "title": "Pointers Are A Last Resort",
+      "page": 156
+    },
+    {
+      "level": 3,
+      "title": "Pointer Passing Performance",
+      "page": 157
+    },
+    {
+      "level": 2,
+      "title": "The Zero Value vs No Value",
+      "page": 158
+    },
+    {
+      "level": 2,
+      "title": "The Difference Between Maps and Slices",
+      "page": 159
+    },
+    {
+      "level": 3,
+      "title": "Slices as Buffers",
+      "page": 169
+    },
+    {
+      "level": 2,
+      "title": "Reducing the Garbage Collector’s Workload",
+      "page": 170
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 174
+    },
+    {
+      "level": 1,
+      "title": "7. Types, Methods, and Interfaces",
+      "page": 175
+    },
+    {
+      "level": 2,
+      "title": "Types in Go",
+      "page": 175
+    },
+    {
+      "level": 2,
+      "title": "Methods",
+      "page": 176
+    },
+    {
+      "level": 3,
+      "title": "Pointer Receivers and Value Receivers",
+      "page": 177
+    },
+    {
+      "level": 3,
+      "title": "Code Your Methods for nil Instances",
+      "page": 180
+    },
+    {
+      "level": 3,
+      "title": "Methods Are Functions Too",
+      "page": 182
+    },
+    {
+      "level": 3,
+      "title": "Functions vs. Methods",
+      "page": 183
+    },
+    {
+      "level": 3,
+      "title": "Type Declarations Aren’t Inheritance",
+      "page": 183
+    },
+    {
+      "level": 3,
+      "title": "Types are Executable Documentation",
+      "page": 184
+    },
+    {
+      "level": 3,
+      "title": "iota is for Enumerations. Sometimes.",
+      "page": 185
+    },
+    {
+      "level": 2,
+      "title": "Use Embedding for Composition",
+      "page": 187
+    },
+    {
+      "level": 3,
+      "title": "Embedding Is Not Inheritance",
+      "page": 188
+    },
+    {
+      "level": 2,
+      "title": "A Quick Lesson on Interfaces",
+      "page": 190
+    },
+    {
+      "level": 2,
+      "title": "Interfaces are Type-Safe Duck Typing",
+      "page": 191
+    },
+    {
+      "level": 3,
+      "title": "Embedding and Interfaces",
+      "page": 195
+    },
+    {
+      "level": 2,
+      "title": "Accept Interfaces, Return Structs",
+      "page": 196
+    },
+    {
+      "level": 2,
+      "title": "Interfaces and nil",
+      "page": 197
+    },
+    {
+      "level": 3,
+      "title": "The Empty Interface Says Nothing",
+      "page": 198
+    },
+    {
+      "level": 3,
+      "title": "Type Assertions and Type Switches",
+      "page": 200
+    },
+    {
+      "level": 3,
+      "title": "Use Type Assertions and Type Switches Sparingly",
+      "page": 203
+    },
+    {
+      "level": 3,
+      "title": "Function Types Are a Bridge to Interfaces",
+      "page": 206
+    },
+    {
+      "level": 2,
+      "title": "Implicit Interfaces Make Dependency Injection Easier",
+      "page": 207
+    },
+    {
+      "level": 3,
+      "title": "Wire",
+      "page": 212
+    },
+    {
+      "level": 2,
+      "title": "Go isn’t Particularly Object-Oriented (and that’s great)",
+      "page": 212
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 213
+    },
+    {
+      "level": 1,
+      "title": "8. Errors",
+      "page": 214
+    },
+    {
+      "level": 2,
+      "title": "How to Handle Errors: The Basics",
+      "page": 214
+    },
+    {
+      "level": 2,
+      "title": "Use Strings For Simple Errors",
+      "page": 216
+    },
+    {
+      "level": 2,
+      "title": "Sentinel Errors",
+      "page": 217
+    },
+    {
+      "level": 2,
+      "title": "Errors are Values",
+      "page": 219
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Errors",
+      "page": 222
+    },
+    {
+      "level": 2,
+      "title": "Is and As",
+      "page": 225
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Errors with defer",
+      "page": 229
+    },
+    {
+      "level": 2,
+      "title": "panic and recover",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "Getting a stack trace from an error",
+      "page": 232
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 233
+    },
+    {
+      "level": 1,
+      "title": "9. Modules, Packages, and Imports",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "Repositories, Modules, and Packages",
+      "page": 234
+    },
+    {
+      "level": 3,
+      "title": "go.mod",
+      "page": 235
+    },
+    {
+      "level": 2,
+      "title": "Building Packages",
+      "page": 235
+    },
+    {
+      "level": 3,
+      "title": "Imports and Exports",
+      "page": 236
+    },
+    {
+      "level": 3,
+      "title": "Creating and Accessing a Package",
+      "page": 236
+    },
+    {
+      "level": 3,
+      "title": "Naming Packages",
+      "page": 239
+    },
+    {
+      "level": 3,
+      "title": "How to Organize Your Module",
+      "page": 240
+    },
+    {
+      "level": 3,
+      "title": "Overriding a Package’s Name",
+      "page": 241
+    },
+    {
+      "level": 3,
+      "title": "The internal Package",
+      "page": 244
+    },
+    {
+      "level": 3,
+      "title": "Circular Dependencies",
+      "page": 247
+    },
+    {
+      "level": 3,
+      "title": "Gracefully Renaming and Reorganizing Your API",
+      "page": 248
+    },
+    {
+      "level": 2,
+      "title": "Working With Modules",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Importing Third-Party Code",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Working with Versions",
+      "page": 253
+    },
+    {
+      "level": 3,
+      "title": "Minimum Version Selection",
+      "page": 256
+    },
+    {
+      "level": 3,
+      "title": "Updating to Compatible Versions",
+      "page": 257
+    },
+    {
+      "level": 3,
+      "title": "Updating to Incompatible Versions",
+      "page": 258
+    },
+    {
+      "level": 3,
+      "title": "Vendoring",
+      "page": 260
+    },
+    {
+      "level": 3,
+      "title": "pkg.go.dev",
+      "page": 261
+    },
+    {
+      "level": 3,
+      "title": "Additional Information",
+      "page": 263
+    },
+    {
+      "level": 2,
+      "title": "Publishing Your Module",
+      "page": 263
+    },
+    {
+      "level": 3,
+      "title": "Versioning Your Module",
+      "page": 264
+    },
+    {
+      "level": 2,
+      "title": "Module Proxy Servers",
+      "page": 265
+    },
+    {
+      "level": 3,
+      "title": "Specifying a Proxy Server",
+      "page": 266
+    },
+    {
+      "level": 3,
+      "title": "Private Repositories",
+      "page": 266
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 267
+    },
+    {
+      "level": 1,
+      "title": "10. Concurrency in Go",
+      "page": 268
+    },
+    {
+      "level": 2,
+      "title": "When To Use Concurrency",
+      "page": 268
+    },
+    {
+      "level": 2,
+      "title": "Goroutines",
+      "page": 270
+    },
+    {
+      "level": 2,
+      "title": "Channels",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "Reading, Writing, and Buffering",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "for-range and Channels",
+      "page": 273
+    },
+    {
+      "level": 3,
+      "title": "Closing a Channel",
+      "page": 274
+    },
+    {
+      "level": 3,
+      "title": "How Channels Behave",
+      "page": 275
+    },
+    {
+      "level": 2,
+      "title": "select",
+      "page": 276
+    },
+    {
+      "level": 2,
+      "title": "Concurrency Practices and Patterns",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Keep Your APIs Concurrency-Free",
+      "page": 279
+    },
+    {
+      "level": 3,
+      "title": "Goroutines, for Loops, and Varying Variables",
+      "page": 280
+    },
+    {
+      "level": 3,
+      "title": "Always Cleanup Your Goroutines",
+      "page": 281
+    },
+    {
+      "level": 3,
+      "title": "The Done Channel Pattern",
+      "page": 283
+    },
+    {
+      "level": 3,
+      "title": "Using a Cancel Function To Terminate a Goroutine",
+      "page": 284
+    },
+    {
+      "level": 3,
+      "title": "When to use buffered and unbuffered channels",
+      "page": 284
+    },
+    {
+      "level": 3,
+      "title": "Backpressure",
+      "page": 286
+    },
+    {
+      "level": 3,
+      "title": "Turning Off a case In a select",
+      "page": 287
+    },
+    {
+      "level": 3,
+      "title": "How to Time Out Code",
+      "page": 288
+    },
+    {
+      "level": 3,
+      "title": "Using WaitGroups",
+      "page": 289
+    },
+    {
+      "level": 3,
+      "title": "Running Code Exactly Once",
+      "page": 291
+    },
+    {
+      "level": 3,
+      "title": "Putting Our Concurrent Tools Together",
+      "page": 292
+    },
+    {
+      "level": 2,
+      "title": "When to use Mutexes instead of channels",
+      "page": 296
+    },
+    {
+      "level": 2,
+      "title": "Atomics – You Probably Don’t Need These",
+      "page": 301
+    },
+    {
+      "level": 2,
+      "title": "Where To Learn More About Concurrency",
+      "page": 301
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 302
+    },
+    {
+      "level": 1,
+      "title": "11. The Standard Library",
+      "page": 303
+    },
+    {
+      "level": 2,
+      "title": "io and Friends",
+      "page": 303
+    },
+    {
+      "level": 2,
+      "title": "time",
+      "page": 309
+    },
+    {
+      "level": 3,
+      "title": "Monotonic Time",
+      "page": 312
+    },
+    {
+      "level": 3,
+      "title": "Timers and Timeouts",
+      "page": 312
+    },
+    {
+      "level": 2,
+      "title": "encoding/json",
+      "page": 313
+    },
+    {
+      "level": 3,
+      "title": "Use Struct Tags To Add Metadata",
+      "page": 313
+    },
+    {
+      "level": 3,
+      "title": "Unmarshaling and Marshaling",
+      "page": 315
+    },
+    {
+      "level": 3,
+      "title": "JSON, Readers, and Writers",
+      "page": 316
+    },
+    {
+      "level": 3,
+      "title": "Encoding and Decoding JSON Streams",
+      "page": 317
+    },
+    {
+      "level": 3,
+      "title": "Custom JSON Parsing",
+      "page": 319
+    },
+    {
+      "level": 2,
+      "title": "net/http",
+      "page": 321
+    },
+    {
+      "level": 3,
+      "title": "The Client",
+      "page": 321
+    },
+    {
+      "level": 3,
+      "title": "The Server",
+      "page": 323
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 328
+    },
+    {
+      "level": 1,
+      "title": "12. The Context",
+      "page": 330
+    },
+    {
+      "level": 2,
+      "title": "What is the Context?",
+      "page": 330
+    },
+    {
+      "level": 2,
+      "title": "Cancelation",
+      "page": 333
+    },
+    {
+      "level": 2,
+      "title": "Timers",
+      "page": 337
+    },
+    {
+      "level": 3,
+      "title": "Handling Context Cancelation in Your Own Code",
+      "page": 340
+    },
+    {
+      "level": 2,
+      "title": "Values",
+      "page": 342
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 348
+    },
+    {
+      "level": 1,
+      "title": "13. Writing Tests",
+      "page": 349
+    },
+    {
+      "level": 2,
+      "title": "The Basics of Testing",
+      "page": 349
+    },
+    {
+      "level": 3,
+      "title": "Reporting Test Failures",
+      "page": 351
+    },
+    {
+      "level": 3,
+      "title": "Setting Up and Tearing Down",
+      "page": 352
+    },
+    {
+      "level": 3,
+      "title": "Storing Sample Test Data",
+      "page": 354
+    },
+    {
+      "level": 3,
+      "title": "Caching Test Results",
+      "page": 354
+    },
+    {
+      "level": 3,
+      "title": "Testing Your Public API",
+      "page": 355
+    },
+    {
+      "level": 3,
+      "title": "Use go-cmp to Compare Test Results",
+      "page": 356
+    },
+    {
+      "level": 2,
+      "title": "Table Tests",
+      "page": 358
+    },
+    {
+      "level": 2,
+      "title": "Checking Your Code Coverage",
+      "page": 360
+    },
+    {
+      "level": 2,
+      "title": "Benchmarks",
+      "page": 365
+    },
+    {
+      "level": 2,
+      "title": "Stubs in Go",
+      "page": 370
+    },
+    {
+      "level": 3,
+      "title": "httptest",
+      "page": 376
+    },
+    {
+      "level": 2,
+      "title": "Integration Tests and Build Tags",
+      "page": 379
+    },
+    {
+      "level": 2,
+      "title": "Finding Concurrency Problems with the Race Checker",
+      "page": 381
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 383
+    },
+    {
+      "level": 1,
+      "title": "14. Here There Be Dragons: Reflect, Unsafe, and CGo",
+      "page": 384
+    },
+    {
+      "level": 2,
+      "title": "Reflection Lets Us Work With Types at Runtime",
+      "page": 384
+    },
+    {
+      "level": 3,
+      "title": "Types, Kinds, and Values",
+      "page": 386
+    },
+    {
+      "level": 2,
+      "title": "Making New Values",
+      "page": 392
+    },
+    {
+      "level": 3,
+      "title": "Use Reflection To Check If an Interface’s Value is nil",
+      "page": 393
+    },
+    {
+      "level": 3,
+      "title": "Use Reflection to Write a Data Marshaler",
+      "page": 394
+    },
+    {
+      "level": 3,
+      "title": "Build Functions With Reflection to Automate Repetitive Tasks",
+      "page": 400
+    },
+    {
+      "level": 3,
+      "title": "You Can Build Structs With Reflection, But Don’t",
+      "page": 401
+    },
+    {
+      "level": 3,
+      "title": "Reflection Can’t Make Methods",
+      "page": 402
+    },
+    {
+      "level": 3,
+      "title": "Only Use Reflection If It’s Worthwhile",
+      "page": 402
+    },
+    {
+      "level": 2,
+      "title": "unsafe is Unsafe",
+      "page": 403
+    },
+    {
+      "level": 3,
+      "title": "Use unsafe To Convert External Binary Data",
+      "page": 404
+    },
+    {
+      "level": 3,
+      "title": "unsafe Strings and Slices",
+      "page": 408
+    },
+    {
+      "level": 3,
+      "title": "unsafe Tools",
+      "page": 410
+    },
+    {
+      "level": 2,
+      "title": "cgo is For Integration, Not Performance",
+      "page": 410
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 414
+    },
+    {
+      "level": 1,
+      "title": "15. A Look at the Future: Generics in Go",
+      "page": 415
+    },
+    {
+      "level": 2,
+      "title": "Generics Reduce Repetitive Code and Increase Type Safety",
+      "page": 415
+    },
+    {
+      "level": 2,
+      "title": "Introducing Generics in Go",
+      "page": 418
+    },
+    {
+      "level": 2,
+      "title": "Use Type Lists To Specify Operators",
+      "page": 424
+    },
+    {
+      "level": 2,
+      "title": "Generic Functions Abstract Algorithms",
+      "page": 425
+    },
+    {
+      "level": 2,
+      "title": "Type Lists Limit Constants and Implementations",
+      "page": 427
+    },
+    {
+      "level": 2,
+      "title": "Things That Are Left Out",
+      "page": 431
+    },
+    {
+      "level": 2,
+      "title": "Idiomatic Go and Generics",
+      "page": 433
+    },
+    {
+      "level": 2,
+      "title": "Further Futures Unlocked",
+      "page": 433
+    },
+    {
+      "level": 2,
+      "title": "Wrapping Up",
+      "page": 434
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 436
+    }
+  ]
+}

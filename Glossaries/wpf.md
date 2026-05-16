@@ -1,0 +1,321 @@
+# WPF Glossary
+_PDF pages: 388 · TOC entries: 318_
+
+- p.1 — Cover Page
+- p.2 — Copyright
+  - p.2 — Copyright
+- p.3 — Foreword
+  - p.3 — Foreword
+- p.5 — Preface
+  - p.5 — Preface
+    - p.11 — Acknowledgments
+- p.12 — 1 How Failures Come to Be
+  - p.12 — 1 How Failures Come to Be
+    - p.12 — My Program Does Not Work!
+    - p.13 — From Defects to Failures
+    - p.16 — Lost in Time and Space
+    - p.19 — From Failures to Fixes
+      - p.19 — Track the Problem
+      - p.20 — Reproduce the Failure
+      - p.20 — Automate and Simplify the Test Case
+      - p.20 — Find Possible Infection Origins
+      - p.23 — Focus on the Most Likely Origins
+      - p.23 — Isolate the Origin of the Infection
+      - p.24 — Correct the Defect
+    - p.25 — Automated Debugging Techniques
+    - p.29 — Bugs, Faults, or Defects?
+    - p.30 — Concepts
+    - p.31 — Tools
+    - p.32 — Further Reading
+    - p.33 — Exercises
+- p.35 — 2 Tracking Problems
+  - p.35 — 2 Tracking Problems
+    - p.35 — Oh! All These Problems
+    - p.36 — Reporting Problems
+      - p.36 — Problem Facts
+      - p.38 — Product Facts
+      - p.39 — Querying Facts Automatically
+    - p.41 — Managing Problems
+    - p.42 — Classifying Problems
+      - p.43 — Severity
+      - p.43 — Priority
+      - p.43 — Identifier
+      - p.44 — Comments
+      - p.44 — Notification
+    - p.44 — Processing Problems
+    - p.46 — Managing Problem Tracking
+    - p.47 — Requirements as Problems
+    - p.49 — Managing Duplicates
+    - p.50 — Relating Problems and Fixes
+    - p.53 — Relating Problems and Tests
+    - p.54 — Concepts
+    - p.55 — Tools
+    - p.56 — Further Reading
+    - p.56 — Exercises
+- p.58 — 3 Making Programs Fail
+  - p.58 — 3 Making Programs Fail
+    - p.58 — Testing for Debugging
+    - p.59 — Controlling the Program
+    - p.62 — Testing at the Presentation Layer
+      - p.62 — Low-Level Interaction
+      - p.64 — System-Level Interaction
+      - p.64 — Higher-Level Interaction
+      - p.65 — Assessing Test Results
+    - p.66 — Testing at the Functionality Layer
+    - p.68 — Testing at the Unit Layer
+    - p.72 — Isolating Units
+    - p.75 — Designing for Debugging
+    - p.78 — Preventing Unknown Problems
+    - p.79 — Concepts
+    - p.81 — Tools
+    - p.81 — Further Reading
+    - p.82 — Exercises
+- p.84 — 4 Reproducing Problems
+  - p.84 — 4 Reproducing Problems
+    - p.84 — The First Task in Debugging
+    - p.85 — Reproducing the Problem Environment
+    - p.87 — Reproducing Program Execution
+      - p.89 — Reproducing Data
+      - p.89 — Reproducing User Interaction
+      - p.91 — Reproducing Communications
+      - p.92 — Reproducing Time
+      - p.92 — Reproducing Randomness
+      - p.93 — Reproducing Operating Environments
+      - p.95 — Reproducing Schedules
+      - p.97 — Physical Influences
+      - p.98 — Effects of Debugging Tools
+    - p.99 — Reproducing System Interaction
+    - p.100 — Focusing on Units
+      - p.101 — Setting Up a Control Layer
+      - p.101 — A Control Example
+      - p.104 — Mock Objects
+      - p.106 — Controlling More Unit Interaction
+    - p.106 — Reproducing Crashes
+    - p.110 — Concepts
+    - p.110 — Tools
+    - p.111 — Further Reading
+    - p.111 — Exercises
+- p.113 — 5 Simplifying Problems
+  - p.113 — 5 Simplifying Problems
+    - p.113 — Simplifying the Problem
+    - p.114 — The Gecko BugAThon
+    - p.117 — Manual Simplification
+    - p.118 — Automatic Simplification
+    - p.120 — A Simplification Algorithm
+    - p.125 — Simplifying User Interaction
+    - p.126 — Random Input Simplified
+    - p.127 — Simplifying Faster
+      - p.127 — Caching
+      - p.128 — Stop Early
+      - p.128 — Syntactic Simplification
+      - p.129 — Isolate Differences, Not Circumstances
+    - p.131 — Concepts
+    - p.131 — Tools
+    - p.131 — Further Reading
+    - p.132 — Exercises
+- p.136 — 6 Scientific Debugging
+  - p.136 — 6 Scientific Debugging
+    - p.136 — How to Become a Debugging Guru
+    - p.136 — The Scientific Method
+    - p.139 — Applying the Scientific Method
+      - p.139 — Debugging sample---Preparation
+      - p.139 — Debugging sample---Hypothesis 1
+      - p.140 — Debugging sample---Hypothesis 2
+      - p.140 — Debugging sample---Hypothesis 3
+      - p.140 — Debugging sample---Hypothesis 4
+    - p.141 — Explicit Debugging
+    - p.141 — Keeping a Logbook
+    - p.143 — Debugging Quick-and-Dirty
+    - p.144 — Algorithmic Debugging
+    - p.147 — Deriving a Hypothesis
+      - p.147 — The Description of the Problem
+      - p.147 — The Program Code
+      - p.147 — The Failing Run
+      - p.148 — Alternate Runs
+      - p.148 — Earlier Hypotheses
+    - p.149 — Reasoning About Programs
+    - p.151 — Concepts
+    - p.151 — Further Reading
+    - p.152 — Exercises
+- p.154 — 7 Deducing Errors
+  - p.154 — 7 Deducing Errors
+    - p.154 — Isolating Value Origins
+    - p.155 — Understanding Control Flow
+    - p.159 — Tracking Dependences
+      - p.159 — Effects of Statements
+      - p.160 — Affected Statements
+      - p.161 — Statement Dependences
+      - p.163 — Following Dependences
+      - p.163 — Leveraging Dependences
+    - p.164 — Slicing Programs
+      - p.164 — Forward Slices
+      - p.165 — Backward Slices
+      - p.165 — Slice Operations
+      - p.167 — Leveraging Slices
+      - p.167 — Executable Slices
+    - p.168 — Deducing Code Smells
+      - p.168 — Reading Uninitialized Variables
+      - p.169 — Unused Values
+      - p.169 — Unreachable Code
+    - p.173 — Limits of Static Analysis
+    - p.177 — Concepts
+    - p.177 — Tools
+    - p.178 — Further Reading
+    - p.178 — Exercises
+- p.181 — 8 Observing Facts
+  - p.181 — 8 Observing Facts
+    - p.181 — Observing State
+    - p.182 — Logging Execution
+      - p.183 — Logging Functions
+      - p.186 — Logging Frameworks
+      - p.188 — Logging with Aspects
+      - p.192 — Logging at the Binary Level
+    - p.194 — Using Debuggers
+      - p.195 — A Debugging Session
+      - p.198 — Controlling Execution
+      - p.198 — Postmortem Debugging
+      - p.199 — Logging Data
+      - p.200 — Invoking Functions
+      - p.200 — Fix and Continue
+      - p.200 — Embedded Debuggers
+      - p.201 — Debugger Caveats
+    - p.202 — Querying Events
+      - p.202 — Watchpoints
+      - p.203 — Uniform Event Queries
+    - p.205 — Hooking into the Interpreter
+    - p.206 — Visualizing State
+    - p.208 — Concepts
+    - p.209 — Tools
+    - p.210 — Further Reading
+    - p.210 — Exercises
+- p.216 — 9 Tracking Origins
+  - p.216 — 9 Tracking Origins
+    - p.216 — Reasoning Backward
+    - p.216 — Exploring Execution History
+    - p.218 — Dynamic Slicing
+    - p.221 — Leveraging Origins
+    - p.224 — Tracking Down Infections
+    - p.225 — Concepts
+    - p.226 — Tools
+    - p.226 — Further Reading
+    - p.226 — Exercises
+- p.228 — 10 Asserting Expectations
+  - p.228 — 10 Asserting Expectations
+    - p.228 — Automating Observation
+    - p.229 — Basic Assertions
+    - p.231 — Asserting Invariants
+    - p.234 — Asserting Correctness
+    - p.237 — Assertions as Specifications
+    - p.238 — From Assertions to Verification
+    - p.240 — Reference Runs
+    - p.243 — System Assertions
+      - p.244 — Validating the Heap with MALLOC_CHECK_
+      - p.244 — Avoiding Buffer Overflows with ELECTRICFENCE
+      - p.245 — Detecting Memory Errors with VALGRIND
+      - p.246 — Language Extensions
+    - p.247 — Checking Production Code
+    - p.249 — Concepts
+    - p.250 — Tools
+    - p.251 — Further Reading
+    - p.252 — Exercises
+- p.257 — 11 Detecting Anomalies
+  - p.257 — 11 Detecting Anomalies
+    - p.257 — Capturing Normal Behavior
+    - p.258 — Comparing Coverage
+    - p.263 — Statistical Debugging
+    - p.264 — Collecting Data in the Field
+    - p.266 — Dynamic Invariants
+    - p.269 — Invariants on-the-Fly
+    - p.270 — From Anomalies to Defects
+    - p.271 — Concepts
+    - p.272 — Tools
+    - p.272 — Further Reading
+    - p.273 — Exercises
+- p.275 — 12 Causes and Effects
+  - p.275 — 12 Causes and Effects
+    - p.275 — Causes and Alternate Worlds
+    - p.276 — Verifying Causes
+    - p.277 — Causality in Practice
+    - p.279 — Finding Actual Causes
+    - p.280 — Narrowing Down Causes
+    - p.281 — A Narrowing Example
+    - p.281 — The Common Context
+    - p.282 — Causes in Debugging
+    - p.283 — Concepts
+    - p.283 — Further Reading
+    - p.284 — Exercises
+- p.286 — 13 Isolating Failure Causes
+  - p.286 — 13 Isolating Failure Causes
+    - p.286 — Isolating Causes Automatically
+    - p.287 — Isolating versus Simplifying
+    - p.289 — An Isolation Algorithm
+    - p.291 — Implementing Isolation
+    - p.293 — Isolating Failure-inducing Input
+    - p.294 — Isolating Failure-inducing Schedules
+    - p.296 — Isolating Failure-inducing Changes
+    - p.302 — Problems and Limitations
+    - p.304 — Concepts
+    - p.304 — Tools
+    - p.304 — Further Reading
+    - p.305 — Exercises
+- p.307 — 14 Isolating Cause--Effect Chains
+  - p.307 — 14 Isolating Cause--Effect Chains
+    - p.307 — Useless Causes
+    - p.309 — Capturing Program States
+    - p.313 — Comparing Program States
+    - p.314 — Isolating Relevant Program States
+    - p.318 — Isolating Cause--Effect Chains
+    - p.322 — Isolating Failure-Inducing Code
+    - p.326 — Issues and Risks
+    - p.328 — Concepts
+    - p.328 — Tools
+    - p.329 — Further Reading
+    - p.329 — Exercises
+- p.331 — 15 Fixing the Defect
+- p.344 — 16 Learning from Mistakes
+  - p.344 — 16 Learning from Mistakes
+    - p.344 — Where the Defects are
+    - p.345 — Mining the Past
+    - p.347 — Where Defects come from
+    - p.348 — Errors during Specification
+      - p.348 — What You Can Do
+      - p.349 — What You Should Focus On
+    - p.350 — Errors during Programming
+      - p.350 — What You Can Do
+      - p.351 — What You Should Focus On
+    - p.352 — Errors during Quality Assurance
+      - p.353 — What You Can Do
+      - p.354 — What You Should Focus On
+    - p.354 — Predicting Problems
+      - p.355 — Predicting Errors from Imports
+      - p.356 — Predicting Errors from Change Frequency
+      - p.356 — A Cache for Bugs
+      - p.357 — Recommendation Systems
+      - p.357 — A Word of Warning
+    - p.358 — Fixing the Process
+    - p.360 — Concepts
+    - p.360 — Further Reading
+    - p.361 — Exercises
+- p.363 — A Formal Definitions
+  - p.363 — A Formal Definitions
+    - p.363 — Delta Debugging
+      - p.363 — Configurations
+      - p.363 — Passing and Failing Run
+      - p.363 — Tests
+      - p.364 — Minimality
+      - p.364 — Simplifying
+      - p.364 — Differences
+      - p.365 — Isolating
+    - p.365 — Memory Graphs
+      - p.365 — Formal Structure
+      - p.367 — Unfolding Data Structures
+      - p.368 — Matching Vertices and Edges
+      - p.368 — Computing the Common Subgraph
+      - p.369 — Computing Graph Differences
+      - p.371 — Applying Partial State Changes
+      - p.372 — Capturing C State
+    - p.374 — Cause--Effect Chains
+- p.376 — Glossary
+  - p.376 — Glossary
+- p.380 — Bibliography
+  - p.380 — Bibliography

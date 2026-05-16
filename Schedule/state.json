@@ -1,0 +1,130 @@
+{
+  "start_date": "2026-05-11",
+  "day": 9,
+  "rates": {
+    "DDIA": 14,
+    "OSTEP": 14,
+    "COD": 11,
+    "N2T": 12,
+    "CC": 16,
+    "TPP": 16,
+    "REF": 14,
+    "WELC": 14,
+    "WPF": 14,
+    "LGO": 10,
+    "DSG": 10,
+    "SAHP": 9,
+    "LDDD": 9,
+    "CLRS": 6,
+    "DBI": 5,
+    "CUDA": 4
+  },
+  "slots": {
+    "T1": {
+      "book": "DDIA",
+      "page": 63,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 1
+    },
+    "T2": {
+      "book": "TPP",
+      "page": 90,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 4
+    },
+    "T3": {
+      "book": "CLRS",
+      "page": 47,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 2
+    },
+    "T4": {
+      "book": "CUDA",
+      "page": 18,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 1
+    }
+  },
+  "books": {
+    "DDIA": {
+      "last_active": 9,
+      "page": 63,
+      "completed": false
+    },
+    "OSTEP": {
+      "last_active": -1,
+      "page": 26,
+      "completed": false
+    },
+    "COD": {
+      "last_active": 5,
+      "page": 61,
+      "completed": false
+    },
+    "N2T": {
+      "last_active": -1,
+      "page": 15,
+      "completed": false
+    },
+    "CC": {
+      "last_active": 5,
+      "page": 85,
+      "completed": false
+    },
+    "TPP": {
+      "last_active": 9,
+      "page": 90,
+      "completed": false
+    },
+    "REF": {
+      "last_active": -1,
+      "page": 13,
+      "completed": false
+    },
+    "WELC": {
+      "last_active": -1,
+      "page": 22,
+      "completed": false
+    },
+    "WPF": {
+      "last_active": -1,
+      "page": 1,
+      "completed": false
+    },
+    "LGO": {
+      "last_active": 5,
+      "page": 61,
+      "completed": false
+    },
+    "CLRS": {
+      "last_active": 9,
+      "page": 47,
+      "completed": false
+    },
+    "SAHP": {
+      "last_active": -1,
+      "page": 1,
+      "completed": false
+    },
+    "LDDD": {
+      "last_active": -1,
+      "page": 7,
+      "completed": false
+    },
+    "DSG": {
+      "last_active": -1,
+      "page": 1,
+      "completed": false
+    },
+    "DBI": {
+      "last_active": 5,
+      "page": 44,
+      "completed": false
+    },
+    "CUDA": {
+      "last_active": 9,
+      "page": 18,
+      "completed": false
+    }
+  }
+}

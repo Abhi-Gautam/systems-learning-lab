@@ -1,4 +1,3 @@
-# SAHP - Software Architecture: The Hard Parts
-## Doubts
+# SAHP Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

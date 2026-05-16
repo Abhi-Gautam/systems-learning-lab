@@ -1,4 +1,3 @@
-# WPF - Why Programs Fail
-## Doubts
+# WPF Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

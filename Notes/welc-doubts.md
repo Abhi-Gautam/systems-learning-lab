@@ -1,4 +1,3 @@
-# WELC - Working Effectively with Legacy Code
-## Doubts
+# WELC Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

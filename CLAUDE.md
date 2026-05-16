@@ -21,7 +21,6 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 | DBI | Database Internals | Databases |
 | CC | Clean Code | Software Engineering |
 | TPP | The Pragmatic Programmer | Software Engineering |
-| MMM | The Mythical Man-Month | Software Engineering |
 | REF | Refactoring | Software Engineering |
 | SAHP | Software Architecture: The Hard Parts | Architecture |
 | WPF | Why Programs Fail | Debugging |
@@ -29,6 +28,7 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 | LDDD | Learning Domain-Driven Design | Architecture |
 | DSG | Distributed Services with Go | Go/Distributed Systems |
 | LGO | Learning Go: An Idiomatic Approach | Go |
+| CLRS | Introduction to Algorithms (3rd Edition) | Algorithms |
 
 ## Book PDFs
 All book PDFs are stored in the root directory with their alias as filename (e.g., `DDIA.pdf`, `N2T.pdf`).

@@ -1,0 +1,162 @@
+# WELC Glossary
+_PDF pages: 458 · TOC entries: 159_
+
+- p.8 — Contents
+- p.14 — Foreword
+- p.16 — Preface
+- p.22 — Introduction
+- p.24 — PART I: The Mechanics of Change
+  - p.26 — Chapter 1: Changing Software
+    - p.26 — Four Reasons to Change Software
+    - p.30 — Risky Change
+  - p.32 — Chapter 2: Working with Feedback
+    - p.35 — What Is Unit Testing?
+    - p.37 — Higher-Level Testing
+    - p.37 — Test Coverings
+    - p.41 — The Legacy Code Change Algorithm
+  - p.44 — Chapter 3: Sensing and Separation
+    - p.46 — Faking Collaborators
+  - p.52 — Chapter 4: The Seam Model
+    - p.52 — A Huge Sheet of Text
+    - p.53 — Seams
+    - p.56 — Seam Types
+  - p.68 — Chapter 5: Tools
+    - p.68 — Automated Refactoring Tools
+    - p.70 — Mock Objects
+    - p.71 — Unit-Testing Harnesses
+    - p.76 — General Test Harnesses
+- p.78 — PART II: Changing Software
+  - p.80 — Chapter 6: I Don’t Have Much Time and I Have to Change It
+    - p.82 — Sprout Method
+    - p.86 — Sprout Class
+    - p.90 — Wrap Method
+    - p.94 — Wrap Class
+    - p.99 — Summary
+  - p.100 — Chapter 7: It Takes Forever to Make a Change
+    - p.100 — Understanding
+    - p.101 — Lag Time
+    - p.102 — Breaking Dependencies
+    - p.108 — Summary
+  - p.110 — Chapter 8: How Do I Add a Feature?
+    - p.111 — Test-Driven Development (TDD)
+    - p.117 — Programming by Difference
+    - p.127 — Summary
+  - p.128 — Chapter 9: I Can’t Get This Class into a Test Harness
+    - p.129 — The Case of the Irritating Parameter
+    - p.136 — The Case of the Hidden Dependency
+    - p.139 — The Case of the Construction Blob
+    - p.141 — The Case of the Irritating Global Dependency
+    - p.150 — The Case of the Horrible Include Dependencies
+    - p.153 — The Case of the Onion Parameter
+    - p.156 — The Case of the Aliased Parameter
+  - p.160 — Chapter 10: I Can’t Run This Method in a Test Harness
+    - p.161 — The Case of the Hidden Method
+    - p.164 — The Case of the “Helpful” Language Feature
+    - p.167 — The Case of the Undetectable Side Effect
+  - p.174 — Chapter 11: I Need to Make a Change. What Methods Should I Test?
+    - p.174 — Reasoning About Effects
+    - p.180 — Reasoning Forward
+    - p.186 — Effect Propagation
+    - p.188 — Tools for Effect Reasoning
+    - p.190 — Learning from Effect Analysis
+    - p.191 — Simplifying Effect Sketches
+  - p.196 — Chapter 12: I Need to Make Many Changes in One Area
+    - p.197 — Interception Points
+    - p.205 — Judging Design with Pinch Points
+    - p.207 — Pinch Point Traps
+  - p.208 — Chapter 13: I Need to Make a Change, but I Don’t Know What Tests to Write
+    - p.209 — Characterization Tests
+    - p.212 — Characterizing Classes
+    - p.213 — Targeted Testing
+    - p.218 — A Heuristic for Writing Characterization Tests
+  - p.220 — Chapter 14: Dependencies on Libraries Are Killing Me
+  - p.222 — Chapter 15: My Application Is All API Calls
+  - p.232 — Chapter 16: I Don’t Understand the Code Well Enough to Change It
+    - p.233 — Notes/Sketching
+    - p.234 — Listing Markup
+    - p.235 — Scratch Refactoring
+    - p.236 — Delete Unused Code
+  - p.238 — Chapter 17: My Application Has No Structure
+    - p.239 — Telling the Story of the System
+    - p.243 — Naked CRC
+    - p.247 — Conversation Scrutiny
+  - p.250 — Chapter 18: My Test Code Is in the Way
+    - p.250 — Class Naming Conventions
+    - p.251 — Test Location
+  - p.254 — Chapter 19: My Project Is Not Object Oriented How Do I Make Safe Changes?
+    - p.255 — An Easy Case
+    - p.255 — A Hard Case
+    - p.259 — Adding New Behavior
+    - p.262 — Taking Advantage of Object Orientation
+    - p.265 — It’s All Object Oriented
+  - p.268 — Chapter 20: This Class Is Too Big and I Don’t Want It to Get Any Bigger
+    - p.272 — Seeing Responsibilities
+    - p.288 — Other Techniques
+    - p.288 — Moving Forward
+    - p.291 — After Extract Class
+  - p.292 — Chapter 21: I’m Changing the Same Code All Over the Place
+    - p.295 — First Steps
+  - p.312 — Chapter 22: I Need to Change a Monster Method and I Can’t Write Tests for It
+    - p.313 — Varieties of Monsters
+    - p.317 — Tackling Monsters with Automated Refactoring Support
+    - p.320 — The Manual Refactoring Challenge
+    - p.327 — Strategy
+  - p.332 — Chapter 23: How Do I Know That I’m Not Breaking Anything?
+    - p.333 — Hyperaware Editing
+    - p.334 — Single-Goal Editing
+    - p.335 — Preserve Signatures
+    - p.338 — Lean on the Compiler
+  - p.342 — Chapter 24: We Feel Overwhelmed. It Isn’t Going to Get Any Better
+- p.346 — PART III: Dependency-Breaking Techniques
+  - p.348 — Chapter 25: Dependency-Breaking Techniques
+    - p.349 — Adapt Parameter
+    - p.353 — Break Out Method Object
+    - p.360 — Definition Completion
+    - p.362 — Encapsulate Global References
+    - p.368 — Expose Static Method
+    - p.371 — Extract and Override Call
+    - p.373 — Extract and Override Factory Method
+    - p.375 — Extract and Override Getter
+    - p.379 — Extract Implementer
+    - p.385 — Extract Interface
+    - p.392 — Introduce Instance Delegator
+    - p.395 — Introduce Static Setter
+    - p.400 — Link Substitution
+    - p.402 — Parameterize Constructor
+    - p.406 — Parameterize Method
+    - p.408 — Primitivize Parameter
+    - p.411 — Pull Up Feature
+    - p.415 — Push Down Dependency
+    - p.419 — Replace Function with Function Pointer
+    - p.422 — Replace Global Reference with Getter
+    - p.424 — Subclass and Override Method
+    - p.427 — Supersede Instance Variable
+    - p.431 — Template Redefinition
+    - p.435 — Text Redefinition
+- p.438 — Appendix: Refactoring
+  - p.438 — Extract Method
+- p.444 — Glossary
+- p.446 — Index
+  - p.446 — A
+  - p.446 — B
+  - p.447 — C
+  - p.448 — D
+  - p.449 — E
+  - p.449 — F
+  - p.450 — G
+  - p.450 — H
+  - p.450 — I
+  - p.451 — J
+  - p.451 — K
+  - p.451 — L
+  - p.451 — M
+  - p.453 — N
+  - p.453 — O
+  - p.453 — P
+  - p.454 — R
+  - p.455 — S
+  - p.456 — T
+  - p.457 — U
+  - p.457 — V
+  - p.457 — W
+  - p.457 — X

@@ -1,0 +1,320 @@
+# LDDD Glossary
+_PDF pages: 340 · TOC entries: 317_
+
+- p.6 — Copyright
+- p.7 — Table of Contents
+- p.15 — Foreword
+- p.17 — Preface
+  - p.18 — Why I Wrote This Book
+  - p.18 — Who Should Read This Book
+  - p.19 — Navigating the Book
+  - p.20 — Example Domain: WolfDesk
+  - p.21 — Conventions Used in This Book
+  - p.21 — Using Code Examples
+  - p.22 — O’Reilly Online Learning
+  - p.23 — How to Contact Us
+  - p.23 — Acknowledgments
+- p.25 — Introduction
+- p.27 — Part I. Strategic Design
+  - p.29 — Chapter 1. Analyzing Business Domains
+    - p.29 — What Is a Business Domain?
+    - p.30 — What Is a Subdomain?
+      - p.30 — Types of Subdomains
+      - p.33 — Comparing Subdomains
+      - p.37 — Identifying Subdomain Boundaries
+    - p.40 — Domain Analysis Examples
+      - p.40 — Gigmaster
+      - p.41 — BusVNext
+    - p.43 — Who Are the Domain Experts?
+    - p.44 — Conclusion
+    - p.44 — Exercises
+  - p.47 — Chapter 2. Discovering Domain Knowledge
+    - p.47 — Business Problems
+    - p.48 — Knowledge Discovery
+    - p.48 — Communication
+    - p.50 — What Is a Ubiquitous Language?
+    - p.51 — Language of the Business
+      - p.51 — Scenarios
+      - p.52 — Consistency
+    - p.53 — Model of the Business Domain
+      - p.53 — What Is a Model?
+      - p.54 — Effective Modeling
+      - p.54 — Modeling the Business Domain
+      - p.55 — Continuous Effort
+      - p.55 — Tools
+      - p.56 — Challenges
+    - p.57 — Conclusion
+    - p.58 — Exercises
+  - p.59 — Chapter 3. Managing Domain Complexity
+    - p.59 — Inconsistent Models
+    - p.61 — What Is a Bounded Context?
+      - p.62 — Model Boundaries
+      - p.63 — Ubiquitous Language Refined
+      - p.63 — Scope of a Bounded Context
+    - p.64 — Bounded Contexts Versus Subdomains
+      - p.65 — Subdomains
+      - p.65 — Bounded Contexts
+      - p.65 — The Interplay Between Subdomains and Bounded Contexts
+    - p.67 — Boundaries
+      - p.67 — Physical Boundaries
+      - p.68 — Ownership Boundaries
+    - p.68 — Bounded Contexts in Real Life
+      - p.69 — Semantic Domains
+      - p.69 — Science
+      - p.70 — Buying a Refrigerator
+    - p.72 — Conclusion
+    - p.72 — Exercises
+  - p.75 — Chapter 4. Integrating Bounded Contexts
+    - p.76 — Cooperation
+      - p.76 — Partnership
+      - p.76 — Shared Kernel
+    - p.79 — Customer–Supplier
+      - p.79 — Conformist
+      - p.80 — Anticorruption Layer
+      - p.81 — Open-Host Service
+    - p.82 — Separate Ways
+      - p.82 — Communication Issues
+      - p.82 — Generic Subdomains
+      - p.82 — Model Differences
+    - p.83 — Context Map
+      - p.84 — Maintenance
+      - p.84 — Limitations
+    - p.85 — Conclusion
+    - p.85 — Exercises
+- p.87 — Part II. Tactical Design
+  - p.89 — Chapter 5. Implementing Simple Business Logic
+    - p.89 — Transaction Script
+      - p.90 — Implementation
+      - p.90 — It’s Not That Easy!
+      - p.94 — When to Use Transaction Script
+    - p.95 — Active Record
+      - p.96 — Implementation
+      - p.97 — When to Use Active Record
+    - p.98 — Be Pragmatic
+    - p.98 — Conclusion
+    - p.98 — Exercises
+  - p.101 — Chapter 6. Tackling Complex Business Logic
+    - p.101 — History
+    - p.102 — Domain Model
+      - p.103 — Implementation
+      - p.103 — Building Blocks
+      - p.120 — Managing Complexity
+    - p.121 — Conclusion
+    - p.122 — Exercises
+  - p.125 — Chapter 7. Modeling the Dimension of Time
+    - p.125 — Event Sourcing
+      - p.130 — Search
+      - p.131 — Analysis
+      - p.133 — Source of Truth
+      - p.133 — Event Store
+    - p.134 — Event-Sourced Domain Model
+      - p.136 — Advantages
+      - p.137 — Disadvantages
+    - p.138 — Frequently Asked Questions
+      - p.138 — Performance
+      - p.140 — Deleting Data
+      - p.140 — Why Can’t I Just…?
+    - p.141 — Conclusion
+    - p.142 — Exercises
+  - p.143 — Chapter 8. Architectural Patterns
+    - p.143 — Business Logic Versus Architectural Patterns
+    - p.144 — Layered Architecture
+      - p.144 — Presentation Layer
+      - p.145 — Business Logic Layer
+      - p.145 — Data Access Layer
+      - p.146 — Communication Between Layers
+      - p.147 — Variation
+      - p.150 — When to Use Layered Architecture
+    - p.151 — Ports & Adapters
+      - p.152 — Terminology
+      - p.152 — Dependency Inversion Principle
+      - p.153 — Integration of Infrastructural Components
+      - p.154 — Variants
+      - p.154 — When to Use Ports & Adapters
+    - p.154 — Command-Query Responsibility Segregation
+      - p.155 — Polyglot Modeling
+      - p.155 — Implementation
+      - p.156 — Projecting Read Models
+      - p.158 — Challenges
+      - p.159 — Model Segregation
+      - p.159 — When to Use CQRS
+    - p.160 — Scope
+    - p.161 — Conclusion
+    - p.161 — Exercises
+  - p.163 — Chapter 9. Communication Patterns
+    - p.163 — Model Translation
+      - p.164 — Stateless Model Translation
+      - p.167 — Stateful Model Translation
+    - p.169 — Integrating Aggregates
+      - p.171 — Outbox
+      - p.173 — Saga
+      - p.176 — Process Manager
+    - p.180 — Conclusion
+    - p.180 — Exercises
+- p.183 — Part III. Applying Domain-Driven Design in Practice
+  - p.185 — Chapter 10. Design Heuristics
+    - p.185 — Heuristic
+    - p.186 — Bounded Contexts
+    - p.187 — Business Logic Implementation Patterns
+    - p.189 — Architectural Patterns
+    - p.190 — Testing Strategy
+      - p.191 — Testing Pyramid
+      - p.191 — Testing Diamond
+      - p.191 — Reversed Testing Pyramid
+    - p.192 — Tactical Design Decision Tree
+    - p.193 — Conclusion
+    - p.193 — Exercises
+  - p.195 — Chapter 11. Evolving Design Decisions
+    - p.195 — Changes in Domains
+      - p.196 — Core to Generic
+      - p.196 — Generic to Core
+      - p.197 — Supporting to Generic
+      - p.197 — Supporting to Core
+      - p.198 — Core to Supporting
+      - p.198 — Generic to Supporting
+    - p.198 — Strategic Design Concerns
+    - p.199 — Tactical Design Concerns
+      - p.200 — Transaction Script to Active Record
+      - p.200 — Active Record to Domain Model
+      - p.202 — Domain Model to Event-Sourced Domain Model
+      - p.202 — Generating Past Transitions
+      - p.203 — Modeling Migration Events
+    - p.204 — Organizational Changes
+      - p.205 — Partnership to Customer–Supplier
+      - p.205 — Customer–Supplier to Separate Ways
+    - p.205 — Domain Knowledge
+    - p.206 — Growth
+      - p.206 — Subdomains
+      - p.207 — Bounded Contexts
+      - p.208 — Aggregates
+    - p.208 — Conclusion
+    - p.209 — Exercises
+  - p.211 — Chapter 12. EventStorming
+    - p.211 — What Is EventStorming?
+    - p.212 — Who Should Participate in EventStorming?
+    - p.212 — What Do You Need for EventStorming?
+    - p.213 — The EventStorming Process
+      - p.213 — Step 1: Unstructured Exploration
+      - p.214 — Step 2: Timelines
+      - p.215 — Step 3: Pain Points
+      - p.216 — Step 4: Pivotal Events
+      - p.216 — Step 5: Commands
+      - p.217 — Step 6: Policies
+      - p.218 — Step 7: Read Models
+      - p.219 — Step 8: External Systems
+      - p.220 — Step 9: Aggregates
+      - p.220 — Step 10: Bounded Contexts
+    - p.221 — Variants
+    - p.222 — When to Use EventStorming
+    - p.222 — Facilitation Tips
+      - p.223 — Watch the Dynamics
+      - p.223 — Remote EventStorming
+    - p.224 — Conclusion
+    - p.224 — Exercises
+  - p.227 — Chapter 13. Domain-Driven Design in the Real World
+    - p.228 — Strategic Analysis
+      - p.228 — Understand the Business Domain
+      - p.229 — Explore the Current Design
+    - p.230 — Modernization Strategy
+      - p.231 — Strategic Modernization
+      - p.233 — Tactical Modernization
+      - p.233 — Cultivate a Ubiquitous Language
+    - p.236 — Pragmatic Domain-Driven Design
+    - p.237 — Selling Domain-Driven Design
+      - p.237 — Undercover Domain-Driven Design
+    - p.239 — Conclusion
+    - p.240 — Exercises
+- p.241 — Part IV. Relationships to Other Methodologies and Patterns
+  - p.243 — Chapter 14. Microservices
+    - p.243 — What Is a Service?
+    - p.244 — What Is a Microservice?
+      - p.245 — Method as a Service:  Perfect Microservices?
+      - p.246 — Design Goal
+      - p.247 — System Complexity
+      - p.248 — Microservices as Deep Services
+      - p.249 — Microservices as Deep Modules
+    - p.251 — Domain-Driven Design and Microservices’ Boundaries
+      - p.251 — Bounded Contexts
+      - p.253 — Aggregates
+      - p.254 — Subdomains
+    - p.255 — Compressing Microservices’ Public Interfaces
+      - p.255 — Open-Host Service
+      - p.256 — Anticorruption Layer
+    - p.257 — Conclusion
+    - p.258 — Exercises
+  - p.259 — Chapter 15. Event-Driven Architecture
+    - p.259 — Event-Driven Architecture
+    - p.260 — Events
+      - p.260 — Events, Commands, and Messages
+      - p.261 — Structure
+      - p.262 — Types of Events
+    - p.267 — Designing Event-Driven Integration
+      - p.267 — Distributed Big Ball of Mud
+      - p.268 — Temporal Coupling
+      - p.269 — Functional Coupling
+      - p.269 — Implementation Coupling
+      - p.269 — Refactoring the Event-Driven Integration
+      - p.271 — Event-Driven Design Heuristics
+    - p.272 — Conclusion
+    - p.273 — Exercises
+  - p.275 — Chapter 16. Data Mesh
+    - p.275 — Analytical Data Model Versus Transactional Data Model
+      - p.276 — Fact Table
+      - p.278 — Dimension Table
+      - p.279 — Analytical Models
+    - p.280 — Analytical Data Management Platforms
+      - p.280 — Data Warehouse
+      - p.283 — Data Lake
+      - p.284 — Challenges of Data Warehouse and Data Lake Architectures
+    - p.285 — Data Mesh
+      - p.285 — Decompose Data Around Domains
+      - p.287 — Data as a Product
+      - p.288 — Enable Autonomy
+      - p.288 — Build an Ecosystem
+      - p.289 — Combining Data Mesh and Domain-Driven Design
+    - p.290 — Conclusion
+    - p.291 — Exercises
+- p.293 — Closing Words
+  - p.293 — Problem
+  - p.294 — Solution
+  - p.295 — Implementation
+  - p.295 — Further Reading
+    - p.295 — Advanced Domain-Driven Design
+    - p.296 — Architectural and Integration Patterns
+    - p.296 — Modernization of Legacy Systems
+    - p.297 — EventStorming
+  - p.297 — Conclusion
+- p.299 — Appendix A. Applying DDD: A Case Study
+  - p.299 — Five Bounded Contexts
+    - p.299 — Business Domain
+    - p.301 — Bounded Context #1: Marketing
+    - p.302 — Bounded Context #2: CRM
+    - p.305 — Bounded Context #3: Event Crunchers
+    - p.306 — Bounded Context #4: Bonuses
+    - p.308 — Bounded Context #5: The Marketing Hub
+  - p.309 — Discussion
+    - p.309 — Ubiquitous Language
+    - p.310 — Subdomains
+    - p.312 — Boundaries of Bounded Contexts
+  - p.313 — Conclusion
+- p.315 — Appendix B. Answers to Exercise Questions
+  - p.315 — Chapter 1
+  - p.316 — Chapter 2
+  - p.316 — Chapter 3
+  - p.317 — Chapter 4
+  - p.317 — Chapter 5
+  - p.318 — Chapter 6
+  - p.318 — Chapter 7
+  - p.318 — Chapter 8
+  - p.319 — Chapter 9
+  - p.319 — Chapter 10
+  - p.319 — Chapter 11
+  - p.320 — Chapter 12
+  - p.320 — Chapter 13
+  - p.320 — Chapter 14
+  - p.320 — Chapter 15
+  - p.321 — Chapter 16
+- p.323 — Bibliography
+- p.325 — Index
+- p.339 — About the Author
+- p.339 — Colophon

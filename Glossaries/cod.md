@@ -1,0 +1,583 @@
+# COD Glossary
+_PDF pages: 1074 · TOC entries: 580_
+
+- p.1 — Front Cover
+- p.6 — Computer Organization and Design
+- p.7 — Copyright Page
+- p.9 — Acknowledgments
+- p.10 — Contents
+- p.16 — Preface
+- p.27 — 1 Computer Abstractions and Technology
+  - p.28 — 1.1 Introduction
+    - p.30 — Traditional Classes of Computing Applications and Their Characteristics
+    - p.31 — Welcome to the Post-PC Era
+    - p.32 — What You Can Learn in This Book
+  - p.36 — 1.2 Eight Great Ideas in Computer Architecture
+    - p.36 — Design for Moore’s Law
+    - p.36 — Use Abstraction to Simplify Design
+    - p.36 — Make the Common Case Fast
+    - p.37 — Performance via Parallelism
+    - p.37 — Performance via Pipelining
+    - p.37 — Performance via Prediction
+    - p.37 — Hierarchy of Memories
+    - p.37 — Dependability via Redundancy
+  - p.38 — 1.3 Below Your Program
+    - p.39 — From a High-Level Language to the Language of Hardware
+  - p.41 — 1.4 Under the Covers
+    - p.43 — Through the Looking Glass
+    - p.44 — Touchscreen
+    - p.44 — Opening the Box
+    - p.47 — A Safe Place for Data
+    - p.48 — Communicating with Other Computers
+  - p.49 — 1.5 Technologies for Building Processors and Memory
+  - p.53 — 1.6 Performance
+    - p.54 — Defining Performance
+    - p.57 — Measuring Performance
+    - p.58 — CPU Performance and Its Factors
+    - p.60 — Instruction Performance
+    - p.61 — The Classic CPU Performance Equation
+  - p.65 — 1.7 The Power Wall
+  - p.68 — 1.8 The Sea Change: The Switch from Uniprocessors to Multiprocessors
+  - p.71 — 1.9 Real Stuff: Benchmarking the Intel Core i7
+    - p.71 — SPEC CPU Benchmark
+    - p.73 — SPEC Power Benchmark
+  - p.74 — 1.10 Fallacies and Pitfalls
+  - p.77 — 1.11 Concluding Remarks
+    - p.78 — Road Map for This Book
+  - p.79 — 1.12 Historical Perspective and Further Reading
+    - p.80 — The First Electronic Computers
+    - p.82 — Commercial Developments
+    - p.88 — Measuring Performance
+    - p.88 — The Quest for an Average Program
+    - p.89 — SPECulating about Performance
+    - p.90 — The Growth of Embedded Computing
+    - p.91 — A Half-Century of Progress
+    - p.92 — Further Reading
+  - p.79 — 1.13 Exercises
+- p.99 — 2 Instructions: Language of the Computer
+  - p.101 — 2.1 Introduction
+  - p.102 — 2.2 Operations of the Computer Hardware
+  - p.106 — 2.3 Operands of the Computer Hardware
+    - p.107 — Memory Operands
+    - p.112 — Constant or Immediate Operands
+  - p.114 — 2.4 Signed and Unsigned Numbers
+    - p.120 — Summary
+  - p.121 — 2.5 Representing Instructions in the Computer
+    - p.123 — LEGv8 Fields
+  - p.129 — 2.6 Logical Operations
+  - p.132 — 2.7 Instructions for Making Decisions
+    - p.134 — Loops
+    - p.137 — Bounds Check Shortcut
+    - p.138 — Case/Switch Statement
+  - p.139 — 2.8 Supporting Procedures in Computer Hardware
+    - p.140 — Using More Registers
+    - p.143 — Nested Procedures
+    - p.145 — Allocating Space for New Data on the Stack
+    - p.146 — Allocating Space for New Data on the Heap
+  - p.149 — 2.9 Communicating with People
+    - p.152 — Characters and Strings in Java
+  - p.154 — 2.10 LEGv8 Addressing for Wide Immediates and Addresses
+    - p.154 — Wide Immediate Operands
+    - p.156 — Addressing in Branches
+    - p.159 — LEGv8 Addressing Mode Summary
+    - p.160 — Decoding Machine Language
+  - p.164 — 2.11 Parallelism and Instructions: Synchronization
+  - p.167 — 2.12 Translating and Starting a Program
+    - p.168 — Compiler
+    - p.168 — Assembler
+    - p.170 — Linker
+    - p.173 — Loader
+    - p.173 — Dynamically Linked Libraries
+    - p.176 — Starting a Java Program
+  - p.176 — 2.13 A C Sort Example to Put it All Together
+    - p.177 — The Procedure swap
+      - p.177 — Register Allocation for swap
+      - p.177 — Code for the Body of the Procedure swap
+      - p.178 — The Full swap Procedure
+    - p.179 — The Procedure sort
+      - p.179 — Register Allocation for sort
+      - p.179 — Code for the Body of the Procedure sort
+      - p.182 — The Procedure Call in sort
+      - p.182 — Passing Parameters in sort
+      - p.182 — Preserving Registers in sort
+      - p.182 — The Full Procedure sort
+  - p.185 — 2.14 Arrays versus Pointers
+    - p.185 — Array Version of Clear
+    - p.187 — Pointer Version of Clear
+    - p.188 — Comparing the Two Versions of Clear
+  - p.189 — 2.15 Advanced Material: Compiling C and Interpreting Java
+    - p.190 — Compiling C
+    - p.191 — The Front End
+    - p.192 — High-Level Optimizations
+    - p.193 — Local and Global Optimizations
+      - p.195 — Global Code Optimizations
+      - p.196 — Implementing Local Optimizations
+      - p.196 — Implementing Global Optimizations
+    - p.199 — Register Allocation
+    - p.201 — Code Generation
+    - p.201 — Optimization Summary
+    - p.203 — Interpreting Java
+    - p.204 — Interpretation
+    - p.207 — Compiling for Java
+    - p.208 — Invoking Methods in Java
+    - p.209 — A Sort Example in Java
+  - p.189 — 2.16 Real Stuff: MIPS Instructions
+  - p.217 — 2.17 Real Stuff: ARMv7 (32-bit) Instructions
+  - p.219 — 2.18 Real Stuff: x86 Instructions
+    - p.219 — Evolution of the Intel x86
+    - p.222 — x86 Registers and Data Addressing Modes
+    - p.223 — x86 Integer Operations
+    - p.226 — x86 Instruction Encoding
+    - p.227 — x86 Conclusion
+  - p.228 — 2.19 Real Stuff: The Rest of the ARMv8 Instruction set
+    - p.229 — Full ARMv8 Integer Arithmetic Logic Instructions
+    - p.231 — Full ARMv8 Integer Data Transfer Instructions
+    - p.233 — Full ARMv8 Branch Instructions
+  - p.234 — 2.20 Fallacies and Pitfalls
+  - p.236 — 2.21 Concluding Remarks
+  - p.238 — 2.22 Historical Perspective and Further Reading
+    - p.239 — Accumulator Architectures
+    - p.240 — General-Purpose Register Architectures
+    - p.241 — Compact Code and Stack Architectures
+    - p.242 — High-Level-Language Computer Architectures
+    - p.242 — Reduced Instruction Set Computer Architectures
+    - p.242 — A Brief History of the ARMv7
+    - p.243 — A Brief History of the x86
+    - p.244 — A Brief History of Programming Languages
+    - p.245 — A Brief History of Compilers
+    - p.246 — Further Reading
+  - p.248 — 2.23 Exercises
+- p.260 — 3 Arithmetic for Computers
+  - p.262 — 3.1 Introduction
+  - p.262 — 3.2 Addition and Subtraction
+    - p.264 — Summary
+  - p.265 — 3.3 Multiplication
+    - p.266 — Sequential Version of the Multiplication Algorithm and Hardware
+    - p.270 — Signed Multiplication
+    - p.270 — Faster Multiplication
+    - p.271 — Multiply in LEGv8
+    - p.271 — Summary
+  - p.271 — 3.4 Division
+    - p.272 — A Division Algorithm and Hardware
+    - p.275 — Signed Division
+    - p.277 — Faster Division
+    - p.277 — Divide in LEGv8
+    - p.277 — Summary
+  - p.279 — 3.5 Floating Point
+    - p.280 — Floating-Point Representation
+    - p.281 — Exceptions and Interrupts
+    - p.281 — IEEE 754 Floating-Point Standard
+    - p.286 — Floating-Point Addition
+    - p.289 — Floating-Point Multiplication
+    - p.294 — Floating-Point Instructions in LEGv8
+    - p.300 — Accurate Arithmetic
+    - p.302 — Summary
+  - p.304 — 3.6 Parallelism and Computer Arithmetic: Subword Parallelism
+  - p.306 — 3.7 Real Stuff: Streaming SIMD Extensions and Advanced Vector Extensions in x86
+  - p.308 — 3.8 Real Stuff: The Rest of the ARMv8 Arithmetic Instructions
+    - p.308 — Full ARMv8 Integer and Floating-point Arithmetic Instructions
+    - p.310 — Full ARMv8 SIMD Instructions
+  - p.312 — 3.9 Going Faster: Subword Parallelism and Matrix Multiply
+  - p.316 — 3.10 Fallacies and Pitfalls
+  - p.319 — 3.11 Concluding Remarks
+  - p.322 — 3.12 Historical Perspective and Further Reading
+    - p.323 — The First Dispute
+    - p.324 — Diversity versus Portability
+    - p.325 — A Backward Step
+    - p.326 — The People Who Built the Bombs
+    - p.327 — Making the World Safe for Floating Point, or Vice Versa
+    - p.329 — The First IEEE 754 Chips
+    - p.331 — IEEE 754 Today
+    - p.332 — Further Reading
+  - p.333 — 3.13 Exercises
+- p.338 — 4 The Processor
+  - p.340 — 4.1 Introduction
+    - p.340 — A Basic LEGv8 Implementation
+    - p.341 — An Overview of the Implementation
+  - p.344 — 4.2 Logic Design Conventions
+    - p.345 — Clocking Methodology
+  - p.347 — 4.3 Building a Datapath
+    - p.351 — Creating a Single Datapath
+  - p.355 — 4.4 A Simple Implementation Scheme
+    - p.355 — The ALU Control
+    - p.357 — Designing the Main Control Unit
+    - p.360 — Operation of the Datapath
+    - p.365 — Finalizing Control
+    - p.367 — Why a Single-Cycle Implementation is not Used Today
+  - p.367 — 4.5 An Overview of Pipelining
+    - p.372 — Designing Instruction Sets for Pipelining
+    - p.372 — Pipeline Hazards
+      - p.372 — Structural Hazard
+      - p.373 — Data Hazards
+    - p.376 — Control Hazards
+    - p.381 — Pipeline Overview Summary
+  - p.381 — 4.6 Pipelined Datapath and Control
+    - p.391 — Graphically Representing Pipelines
+    - p.395 — Pipelined Control
+  - p.400 — 4.7 Data Hazards: Forwarding versus Stalling
+    - p.408 — Data Hazards and Stalls
+  - p.412 — 4.8 Control Hazards
+    - p.412 — Assume Branch Not Taken
+    - p.414 — Reducing the Delay of Branches
+    - p.415 — Dynamic Branch Prediction
+    - p.419 — Pipeline Summary
+  - p.420 — 4.9 Exceptions
+    - p.421 — How Exceptions are Handled in the LEGv8 Architecture
+    - p.422 — Exceptions in a Pipelined Implementation
+  - p.426 — 4.10 Parallelism via Instructions
+    - p.428 — The Concept of Speculation
+    - p.429 — Static Multiple Issue
+      - p.429 — An Example: Static Multiple Issue with the LEGv8 ISA
+    - p.433 — Dynamic Multiple-Issue Processors
+      - p.434 — Dynamic Pipeline Scheduling
+    - p.438 — Energy Efficiency and Advanced Pipelining
+  - p.439 — 4.11 Real Stuff: The ARM Cortex-A53 and Intel Core i7 Pipelines
+    - p.439 — The ARM Cortex-A53
+    - p.442 — The Intel Core i7 920
+    - p.445 — Performance of the Intel Core i7 920
+  - p.447 — 4.12 Going Faster: Instruction-Level Parallelism and Matrix Multiply
+  - p.450 — 4.13 Advanced Topic: An Introduction to Digital Design Using a Hardware Design Language to Describe and Model a Pipeline and Mo ...
+    - p.451 — Using Verilog for Behavioral Specification with Simulation for the Five-Stage Pipeline
+    - p.453 — Implementing Forwarding in Verilog
+    - p.455 — The Behavioral Verilog with Stall Detection
+      - p.457 — Implementing the Branch Hazard Logic in Verilog
+    - p.460 — Using Verilog for Behavioral Specification with Synthesis
+    - p.466 — More Illustrations of Instruction Execution on the Hardware
+      - p.466 — No Hazard Illustrations
+      - p.474 — More Examples
+      - p.475 — Forwarding Illustrations
+      - p.475 — Illustrating Pipelines with Stalls and Forwarding
+  - p.450 — 4.14 Fallacies and Pitfalls
+  - p.481 — 4.15 Concluding Remarks
+  - p.482 — 4.16 Historical Perspective and Further Reading
+    - p.485 — Improving Pipelining Effectiveness and Adding Multiple Issue
+    - p.486 — Compiler Technology for Exploiting ILP
+    - p.487 — Further Reading
+  - p.482 — 4.17 Exercises
+- p.506 — 5 Large and Fast: Exploiting Memory Hierarchy
+  - p.508 — 5.1 Introduction
+  - p.512 — 5.2 Memory Technologies
+    - p.513 — SRAM Technology
+    - p.513 — DRAM Technology
+    - p.515 — Flash Memory
+    - p.515 — Disk Memory
+  - p.517 — 5.3 The Basics of Caches
+    - p.520 — Accessing a Cache
+    - p.526 — Handling Cache Misses
+    - p.527 — Handling Writes
+    - p.529 — An Example Cache: The Intrinsity FastMATH Processor
+    - p.531 — Summary
+  - p.532 — 5.4 Measuring and Improving Cache Performance
+    - p.536 — Reducing Cache Misses by More Flexible Placement of Blocks
+    - p.541 — Locating a Block in the Cache
+    - p.543 — Choosing Which Block to Replace
+    - p.544 — Reducing the Miss Penalty Using Multilevel Caches
+    - p.547 — Software Optimization via Blocking
+    - p.551 — Summary
+  - p.552 — 5.5 Dependable Memory Hierarchy
+    - p.552 — Defining Failure
+    - p.554 — The Hamming Single Error Correcting, Double Error Detecting Code (SEC/DED)
+  - p.558 — 5.6 Virtual Machines
+    - p.560 — Requirements of a Virtual Machine Monitor
+    - p.560 — (Lack of) Instruction Set Architecture Support for Virtual Machines
+    - p.561 — Protection and Instruction Set Architecture
+  - p.561 — 5.7 Virtual Memory
+    - p.566 — Placing a Page and Finding It Again
+    - p.568 — Page Faults
+    - p.570 — Virtual Memory for Large Virtual Addresses
+    - p.572 — What about Writes?
+    - p.572 — Making Address Translation Fast: the TLB
+    - p.574 — The Intrinsity FastMATH TLB
+    - p.577 — Integrating Virtual Memory, TLBs, and Caches
+    - p.579 — Implementing Protection with Virtual Memory
+    - p.581 — Handling TLB Misses and Page Faults
+    - p.583 — Summary
+  - p.585 — 5.8 A Common Framework for Memory Hierarchy
+    - p.586 — Question 1: Where Can a Block Be Placed?
+    - p.587 — Question 2: How Is a Block Found?
+    - p.588 — Question 3: Which Block Should Be Replaced on a Cache Miss?
+    - p.589 — Question 4: What Happens on a Write?
+    - p.590 — The Three Cs: An Intuitive Model for Understanding the Behavior of Memory Hierarchies
+  - p.592 — 5.9 Using a Finite-State Machine to Control a Simple Cache
+    - p.593 — A Simple Cache
+    - p.594 — Finite-State Machines
+    - p.596 — FSM for a Simple Cache Controller
+  - p.597 — 5.10 Parallelism and Memory Hierarchy: Cache Coherence
+    - p.599 — Basic Schemes for Enforcing Coherence
+    - p.599 — Snooping Protocols
+  - p.601 — 5.11 Parallelism and Memory Hierarchy: Redundant Arrays of Inexpensive Disks
+    - p.604 — No Redundancy (RAID 0)
+    - p.605 — Mirroring (RAID 1)
+    - p.605 — Error Detecting and Correcting Code (RAID 2)
+    - p.605 — Bit-Interleaved Parity (RAID 3)
+    - p.605 — Block-Interleaved Parity (RAID 4)
+    - p.606 — Distributed Block-Interleaved Parity (RAID 5)
+    - p.607 — P + Q Redundancy (RAID 6)
+    - p.607 — RAID Summary
+  - p.609 — 5.12 Advanced Material: Implementing Cache Controllers
+    - p.610 — SystemVerilog of a Simple Cache Controller
+    - p.619 — Basic Coherent Cache Implementation Techniques
+    - p.620 — An Example Cache Coherency Protocol
+    - p.625 — Implementing Snoopy Cache Coherence
+  - p.609 — 5.13 Real Stuff: The ARM Cortex-A53 and Intel Core i7 Memory Hierarchies
+    - p.628 — Performance of the Cortex-A53 and Core i7 Memory Hierarchies
+  - p.630 — 5.14 Real Stuff: The Rest of the ARMv8 System and Special Instructions
+  - p.631 — 5.15 Going Faster: Cache Blocking and Matrix Multiply
+  - p.634 — 5.16 Fallacies and Pitfalls
+  - p.639 — 5.17 Concluding Remarks
+  - p.640 — 5.18 Historical Perspective and Further Reading
+    - p.645 — The Development of Memory Hierarchies
+    - p.647 — Disk Storage
+    - p.648 — A Very Brief History of Flash Memory
+    - p.649 — A Brief History of Databases
+    - p.651 — RAID
+    - p.652 — Protection Mechanisms
+    - p.653 — A Brief History of Modern Operating Systems
+    - p.656 — Further Reading
+  - p.640 — 5.19 Exercises
+- p.674 — 6 Parallel Processors from Client to Cloud
+  - p.676 — 6.1 Introduction
+  - p.678 — 6.2 The Difficulty of Creating Parallel Processing Programs
+  - p.683 — 6.3 SISD, MIMD, SIMD, SPMD, and Vector
+    - p.684 — SIMD in x86: Multimedia Extensions
+    - p.684 — Vector
+    - p.686 — Vector versus Scalar
+    - p.687 — Vector versus Multimedia Extensions
+  - p.690 — 6.4 Hardware Multithreading
+  - p.693 — 6.5 Multicore and Other Shared Memory Multiprocessors
+  - p.698 — 6.6 Introduction to Graphics Processing Units
+    - p.699 — An Introduction to the NVIDIA GPU Architecture
+    - p.701 — NVIDIA GPU Memory Structures
+    - p.703 — Putting GPUs into Perspective
+  - p.705 — 6.7 Clusters, Warehouse Scale Computers, and Other Message-Passing Multiprocessors
+    - p.707 — Warehouse-Scale Computers
+  - p.710 — 6.8 Introduction to Multiprocessor Network Topologies
+    - p.712 — Implementing Network Topologies
+  - p.713 — 6.9 Communicating to the Outside World: Cluster Networking
+    - p.716 — The Role of the Operating System in Networking
+    - p.719 — Improving Network Performance
+  - p.723 — 6.10 Multiprocessor Benchmarks and Performance Models
+    - p.725 — Performance Models
+    - p.727 — The Roofline Model
+    - p.728 — Comparing Two Generations of Opterons
+  - p.733 — 6.11 Real Stuff: Benchmarking and Rooflines of the Intel Core i7 960 and the NVIDIA Tesla GPU
+  - p.738 — 6.12 Going Faster: Multiple Processors and Matrix Multiply
+  - p.741 — 6.13 Fallacies and Pitfalls
+  - p.743 — 6.14 Concluding Remarks
+  - p.746 — 6.15 Historical Perspective and Further Reading
+    - p.747 — SIMD Computers: Attractive Idea, Many Attempts, No Lasting Successes
+    - p.749 — Multimedia Extensions as SIMD Extensions to Instruction Sets
+    - p.749 — Other Early Experiments
+    - p.750 — Great Debates in Parallel Processing
+    - p.752 — More Recent Advances and Developments
+    - p.752 — The Development of Bus-Based Coherent Multiprocessors
+    - p.752 — Toward Large-Scale Multiprocessors
+    - p.753 — Clusters
+    - p.754 — Recent Trends in Large-Scale Multiprocessors
+    - p.755 — Looking Further
+    - p.756 — Further Reading
+    - p.746 — References
+  - p.746 — 6.16 Exercises
+- p.771 — Appendix A. The Basics of Logic Design
+  - p.772 — A.1 Introduction
+  - p.773 — A.2 Gates, Truth Tables, and Logic Equations
+    - p.774 — Truth Tables
+    - p.775 — Boolean Algebra
+    - p.777 — Gates
+  - p.778 — A.3 Combinational Logic
+    - p.778 — Decoders
+    - p.779 — Multiplexors
+    - p.780 — Two-Level Logic and PLAs
+    - p.783 — ROMs
+    - p.786 — Don’t Cares
+    - p.787 — Arrays of Logic Elements
+  - p.789 — A.4 Using a Hardware Description Language
+    - p.790 — Datatypes and Operators in Verilog
+    - p.792 — Structure of a Verilog Program
+    - p.792 — Representing Complex Combinational Logic in Verilog
+  - p.795 — A.5 Constructing a Basic Arithmetic Logic Unit
+    - p.795 — A 1-Bit ALU
+    - p.798 — A 64-Bit ALU
+    - p.800 — Tailoring the 64-Bit ALU to LEGv8
+    - p.803 — Defining the LEGv8 ALU in Verilog
+  - p.806 — A.6 Faster Addition: Carry Lookahead
+    - p.807 — Fast Carry Using “Infinite” Hardware
+    - p.807 — Fast Carry Using the First Level of Abstraction: Propagate and Generate
+    - p.809 — Fast Carry Using the Second Level of Abstraction
+    - p.814 — Summary
+  - p.816 — A.7 Clocks
+  - p.818 — A.8 Memory Elements: Flip-Flops, Latches, and Registers
+    - p.819 — Flip-Flops and Latches
+    - p.822 — Register Files
+    - p.824 — Specifying Sequential Logic in Verilog
+  - p.826 — A.9 Memory Elements: SRAMs and DRAMs
+    - p.826 — SRAMs
+    - p.831 — DRAMs
+    - p.833 — Error Correction
+  - p.835 — A.10 Finite-State Machines
+  - p.840 — A.11 Timing Methodologies
+    - p.843 — Level-Sensitive Timing
+    - p.844 — Asynchronous Inputs and Synchronizers
+  - p.846 — A.12 Field Programmable Devices
+  - p.847 — A.13 Concluding Remarks
+    - p.847 — Further Reading
+  - p.848 — A.14 Exercises
+- p.856 — Index
+- p.878 — Appendix B. Graphics and Computing GPUs
+  - p.879 — B.1 Introduction
+    - p.879 — A Brief History of GPU Evolution
+    - p.880 — GPU Graphics Trends
+    - p.880 — Heterogeneous System
+    - p.881 — GPU Evolves into Scalable Parallel Processor
+    - p.881 — Why CUDA and GPU Computing?
+    - p.882 — GPU Unifes Graphics and Computing
+    - p.882 — GPU Visual Computing Applications
+  - p.883 — B.2 GPU System Architectures
+    - p.883 — Heterogeneous CPU–GPU System Architecture
+      - p.883 — The Historical PC (circa 1990)
+      - p.885 — Game Consoles
+    - p.885 — GPU Interfaces and Drivers
+    - p.886 — Graphics Logical Pipeline
+    - p.886 — Mapping Graphics Pipeline to Unified GPU Processors
+    - p.886 — Basic Unified GPU Architecture
+    - p.887 — Processor Array
+  - p.888 — B.3 Programming GPUs
+    - p.889 — Programming Real-Time Graphics
+    - p.889 — Logical Graphics Pipeline
+    - p.890 — Graphics Shader Programs
+    - p.891 — Pixel Shader Example
+    - p.893 — Programming Parallel Computing Applications
+      - p.893 — Data Parallel Problem Decomposition
+    - p.893 — Scalable Parallel Programming with CUDA
+      - p.895 — The CUDA Paradigm
+    - p.899 — Restrictions
+    - p.900 — Implications for Architecture
+  - p.901 — B.4 Multithreaded Multiprocessor Architecture
+    - p.901 — Massive Multithreading
+    - p.902 — Multiprocessor Architecture
+    - p.903 — Single-Instruction Multiple-Thread (SIMT)
+    - p.905 — SIMT Warp Execution and Divergence
+    - p.906 — Managing Threads and Thread Blocks
+    - p.906 — Thread Instructions
+    - p.907 — Instruction Set Architecture (ISA)
+      - p.909 — Memory Access Instructions
+      - p.910 — Barrier Synchronization for Thread Communication
+    - p.910 — Streaming Processor (SP)
+    - p.911 — Special Function Unit (SFU)
+    - p.911 — Comparing with Other Multiprocessors
+    - p.912 — Multithreaded Multiprocessor Conclusion
+  - p.912 — B.5 Parallel Memory System
+    - p.913 — DRAM Considerations
+    - p.914 — Caches
+    - p.914 — MMU
+    - p.915 — Memory Spaces
+    - p.915 — Global memory
+    - p.915 — Shared memory
+    - p.916 — Local Memory
+    - p.916 — Constant Memory
+    - p.916 — Texture Memory
+    - p.917 — Surfaces
+    - p.917 — Load/Store Access
+    - p.917 — ROP
+  - p.917 — B.6 Floating-point Arithmetic
+    - p.918 — Supported Formats
+    - p.918 — Basic Arithmetic
+    - p.918 — Specialized Arithmetic
+      - p.920 — Texture Operations
+    - p.920 — Performance
+    - p.921 — Double precision
+  - p.922 — B.7 Real Stuff: The NVIDIA GeForce 8800
+    - p.922 — Streaming Processor Array (SPA)
+    - p.923 — Texture/Processor Cluster (TPC)
+    - p.924 — Streaming Multiprocessor (SM)
+    - p.925 — Instruction Set
+    - p.925 — Streaming Processor (SP)
+    - p.926 — Special Function Unit (SFU)
+    - p.926 — Rasterization
+    - p.926 — Raster Operations Processor (ROP) and Memory System
+    - p.927 — Scalability
+    - p.927 — Performance
+    - p.927 — Dense Linear Algebra Performance
+    - p.929 — FFT Performance
+    - p.930 — Sorting Performance
+  - p.931 — B.8 Real Stuff: Mapping Applications to GPUs
+    - p.931 — Sparse Matrices
+    - p.934 — Caching in Shared Memory
+    - p.936 — Scan and Reduction
+    - p.939 — Radix Sort
+    - p.941 — N-Body Applications on a GPU
+      - p.941 — N-Body Mathematics
+      - p.943 — Optimization for GPU Execution
+      - p.943 — Using Shared Memory
+    - p.944 — Using Multiple Threads per Body
+      - p.945 — Performance Comparison
+      - p.946 — Results
+  - p.948 — B.9 Fallacies and Pitfalls
+  - p.952 — B.10 Concluding Remarks
+    - p.952 — Acknowledgments
+  - p.953 — B.11 Historical Perspective and Further Reading
+    - p.953 — Graphics Pipeline Evolution
+    - p.953 — Fixed-Function Graphics Pipelines
+    - p.954 — Evolution of Programmable Real-Time Graphics
+    - p.955 — Unified Graphics and Computing Processors
+    - p.955 — GPGPU: an Intermediate Step
+    - p.956 — GPU Computing
+    - p.956 — Scalable GPUs
+    - p.957 — Recent Developments
+    - p.957 — Future Trends
+  - p.957 — Further Reading
+- p.961 — Appendix C. Mapping Control to Hardware
+  - p.962 — C.1 Introduction
+  - p.963 — C.2 Implementing Combinational Control Units
+    - p.963 — Mapping the ALU Control Function to Gates
+    - p.966 — Mapping the Main Control Function to Gates
+  - p.967 — C.3 Implementing Finite-State Machine Control
+    - p.974 — A ROM Implementation
+    - p.979 — A PLA Implementation
+  - p.981 — C.4 Implementing the Next-State Function with a Sequencer
+    - p.986 — Optimizing the Control Implementation
+  - p.987 — C.5 Translating a Microprogram to Hardware
+    - p.990 — Organizing the Control to Reduce the Logic
+  - p.991 — C.6 Concluding Remarks
+  - p.992 — C.7 Exercises
+- p.994 — Appendix D. A Survey of RISC Architectures for Desktop, Server, and Embedded Computers
+  - p.995 — D.1 Introduction
+  - p.997 — D.2 Addressing Modes and Instruction Formats
+  - p.1001 — D.3 Instructions: the MIPS Core Subset
+    - p.1001 — MIPS Core Instructions
+    - p.1002 — Compare and Conditional Branch
+  - p.1008 — D.4 Instructions: Multimedia Extensions of the Desktop/Server RISCs
+  - p.1011 — D.5 Instructions: Digital Signal-Processing Extensions of the Embedded RISCs
+  - p.1012 — D.6 Instructions: Common Extensions to MIPS Core
+  - p.1017 — D.7 Instructions Unique to MIPS-64
+    - p.1017 — Nonaligned Data Transfers
+    - p.1017 — Remaining Instructions
+  - p.1019 — D.8 Instructions Unique to Alpha
+    - p.1020 — Remaining Instructions
+  - p.1021 — D.9 Instructions Unique to SPARC v9
+    - p.1021 — Register Windows
+    - p.1022 — Fast Traps
+    - p.1022 — Support for LISP and Smalltalk
+    - p.1023 — Overlapped Integer and Floating-Point Operations
+    - p.1023 — Remaining Instructions
+  - p.1024 — D.10 Instructions Unique to PowerPC
+    - p.1024 — Branch Registers: Link and Counter
+    - p.1025 — Remaining Instructions
+  - p.1026 — D.11 Instructions Unique to PA-RISC 2.0
+    - p.1026 — Nullification
+    - p.1026 — A Cornucopia of Conditional Branches
+    - p.1026 — Synthesized Multiply and Divide
+    - p.1027 — Decimal Operations
+    - p.1027 — Remaining Instructions
+  - p.1028 — D.12 Instructions Unique to ARM
+    - p.1029 — Remaining Instructions
+  - p.1030 — D.13 Instructions Unique to Thumb
+  - p.1031 — D.14 Instructions Unique to SuperH
+  - p.1032 — D.15 Instructions Unique to M32R
+  - p.1032 — D.16 Instructions Unique to MIPS-16
+  - p.1035 — D.17 Concluding Remarks
+  - p.1037 — Further Reading
+- p.1039 — Answers to Check Yourself
+- p.1043 — Glossary
+- p.1057 — Further Reading
+- p.1074 — Back Cover

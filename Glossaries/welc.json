@@ -1,0 +1,801 @@
+{
+  "alias": "WELC",
+  "pdf_pages": 458,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Contents",
+      "page": 8
+    },
+    {
+      "level": 1,
+      "title": "Foreword",
+      "page": 14
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 16
+    },
+    {
+      "level": 1,
+      "title": "Introduction",
+      "page": 22
+    },
+    {
+      "level": 1,
+      "title": "PART I: The Mechanics of Change",
+      "page": 24
+    },
+    {
+      "level": 2,
+      "title": "Chapter 1: Changing Software",
+      "page": 26
+    },
+    {
+      "level": 3,
+      "title": "Four Reasons to Change Software",
+      "page": 26
+    },
+    {
+      "level": 3,
+      "title": "Risky Change",
+      "page": 30
+    },
+    {
+      "level": 2,
+      "title": "Chapter 2: Working with Feedback",
+      "page": 32
+    },
+    {
+      "level": 3,
+      "title": "What Is Unit Testing?",
+      "page": 35
+    },
+    {
+      "level": 3,
+      "title": "Higher-Level Testing",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "Test Coverings",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "The Legacy Code Change Algorithm",
+      "page": 41
+    },
+    {
+      "level": 2,
+      "title": "Chapter 3: Sensing and Separation",
+      "page": 44
+    },
+    {
+      "level": 3,
+      "title": "Faking Collaborators",
+      "page": 46
+    },
+    {
+      "level": 2,
+      "title": "Chapter 4: The Seam Model",
+      "page": 52
+    },
+    {
+      "level": 3,
+      "title": "A Huge Sheet of Text",
+      "page": 52
+    },
+    {
+      "level": 3,
+      "title": "Seams",
+      "page": 53
+    },
+    {
+      "level": 3,
+      "title": "Seam Types",
+      "page": 56
+    },
+    {
+      "level": 2,
+      "title": "Chapter 5: Tools",
+      "page": 68
+    },
+    {
+      "level": 3,
+      "title": "Automated Refactoring Tools",
+      "page": 68
+    },
+    {
+      "level": 3,
+      "title": "Mock Objects",
+      "page": 70
+    },
+    {
+      "level": 3,
+      "title": "Unit-Testing Harnesses",
+      "page": 71
+    },
+    {
+      "level": 3,
+      "title": "General Test Harnesses",
+      "page": 76
+    },
+    {
+      "level": 1,
+      "title": "PART II: Changing Software",
+      "page": 78
+    },
+    {
+      "level": 2,
+      "title": "Chapter 6: I Don’t Have Much Time and I Have to Change It",
+      "page": 80
+    },
+    {
+      "level": 3,
+      "title": "Sprout Method",
+      "page": 82
+    },
+    {
+      "level": 3,
+      "title": "Sprout Class",
+      "page": 86
+    },
+    {
+      "level": 3,
+      "title": "Wrap Method",
+      "page": 90
+    },
+    {
+      "level": 3,
+      "title": "Wrap Class",
+      "page": 94
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 99
+    },
+    {
+      "level": 2,
+      "title": "Chapter 7: It Takes Forever to Make a Change",
+      "page": 100
+    },
+    {
+      "level": 3,
+      "title": "Understanding",
+      "page": 100
+    },
+    {
+      "level": 3,
+      "title": "Lag Time",
+      "page": 101
+    },
+    {
+      "level": 3,
+      "title": "Breaking Dependencies",
+      "page": 102
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 108
+    },
+    {
+      "level": 2,
+      "title": "Chapter 8: How Do I Add a Feature?",
+      "page": 110
+    },
+    {
+      "level": 3,
+      "title": "Test-Driven Development (TDD)",
+      "page": 111
+    },
+    {
+      "level": 3,
+      "title": "Programming by Difference",
+      "page": 117
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 127
+    },
+    {
+      "level": 2,
+      "title": "Chapter 9: I Can’t Get This Class into a Test Harness",
+      "page": 128
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Irritating Parameter",
+      "page": 129
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Hidden Dependency",
+      "page": 136
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Construction Blob",
+      "page": 139
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Irritating Global Dependency",
+      "page": 141
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Horrible Include Dependencies",
+      "page": 150
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Onion Parameter",
+      "page": 153
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Aliased Parameter",
+      "page": 156
+    },
+    {
+      "level": 2,
+      "title": "Chapter 10: I Can’t Run This Method in a Test Harness",
+      "page": 160
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Hidden Method",
+      "page": 161
+    },
+    {
+      "level": 3,
+      "title": "The Case of the “Helpful” Language Feature",
+      "page": 164
+    },
+    {
+      "level": 3,
+      "title": "The Case of the Undetectable Side Effect",
+      "page": 167
+    },
+    {
+      "level": 2,
+      "title": "Chapter 11: I Need to Make a Change. What Methods Should I Test?",
+      "page": 174
+    },
+    {
+      "level": 3,
+      "title": "Reasoning About Effects",
+      "page": 174
+    },
+    {
+      "level": 3,
+      "title": "Reasoning Forward",
+      "page": 180
+    },
+    {
+      "level": 3,
+      "title": "Effect Propagation",
+      "page": 186
+    },
+    {
+      "level": 3,
+      "title": "Tools for Effect Reasoning",
+      "page": 188
+    },
+    {
+      "level": 3,
+      "title": "Learning from Effect Analysis",
+      "page": 190
+    },
+    {
+      "level": 3,
+      "title": "Simplifying Effect Sketches",
+      "page": 191
+    },
+    {
+      "level": 2,
+      "title": "Chapter 12: I Need to Make Many Changes in One Area",
+      "page": 196
+    },
+    {
+      "level": 3,
+      "title": "Interception Points",
+      "page": 197
+    },
+    {
+      "level": 3,
+      "title": "Judging Design with Pinch Points",
+      "page": 205
+    },
+    {
+      "level": 3,
+      "title": "Pinch Point Traps",
+      "page": 207
+    },
+    {
+      "level": 2,
+      "title": "Chapter 13: I Need to Make a Change, but I Don’t Know What Tests to Write",
+      "page": 208
+    },
+    {
+      "level": 3,
+      "title": "Characterization Tests",
+      "page": 209
+    },
+    {
+      "level": 3,
+      "title": "Characterizing Classes",
+      "page": 212
+    },
+    {
+      "level": 3,
+      "title": "Targeted Testing",
+      "page": 213
+    },
+    {
+      "level": 3,
+      "title": "A Heuristic for Writing Characterization Tests",
+      "page": 218
+    },
+    {
+      "level": 2,
+      "title": "Chapter 14: Dependencies on Libraries Are Killing Me",
+      "page": 220
+    },
+    {
+      "level": 2,
+      "title": "Chapter 15: My Application Is All API Calls",
+      "page": 222
+    },
+    {
+      "level": 2,
+      "title": "Chapter 16: I Don’t Understand the Code Well Enough to Change It",
+      "page": 232
+    },
+    {
+      "level": 3,
+      "title": "Notes/Sketching",
+      "page": 233
+    },
+    {
+      "level": 3,
+      "title": "Listing Markup",
+      "page": 234
+    },
+    {
+      "level": 3,
+      "title": "Scratch Refactoring",
+      "page": 235
+    },
+    {
+      "level": 3,
+      "title": "Delete Unused Code",
+      "page": 236
+    },
+    {
+      "level": 2,
+      "title": "Chapter 17: My Application Has No Structure",
+      "page": 238
+    },
+    {
+      "level": 3,
+      "title": "Telling the Story of the System",
+      "page": 239
+    },
+    {
+      "level": 3,
+      "title": "Naked CRC",
+      "page": 243
+    },
+    {
+      "level": 3,
+      "title": "Conversation Scrutiny",
+      "page": 247
+    },
+    {
+      "level": 2,
+      "title": "Chapter 18: My Test Code Is in the Way",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Class Naming Conventions",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Test Location",
+      "page": 251
+    },
+    {
+      "level": 2,
+      "title": "Chapter 19: My Project Is Not Object Oriented How Do I Make Safe Changes?",
+      "page": 254
+    },
+    {
+      "level": 3,
+      "title": "An Easy Case",
+      "page": 255
+    },
+    {
+      "level": 3,
+      "title": "A Hard Case",
+      "page": 255
+    },
+    {
+      "level": 3,
+      "title": "Adding New Behavior",
+      "page": 259
+    },
+    {
+      "level": 3,
+      "title": "Taking Advantage of Object Orientation",
+      "page": 262
+    },
+    {
+      "level": 3,
+      "title": "It’s All Object Oriented",
+      "page": 265
+    },
+    {
+      "level": 2,
+      "title": "Chapter 20: This Class Is Too Big and I Don’t Want It to Get Any Bigger",
+      "page": 268
+    },
+    {
+      "level": 3,
+      "title": "Seeing Responsibilities",
+      "page": 272
+    },
+    {
+      "level": 3,
+      "title": "Other Techniques",
+      "page": 288
+    },
+    {
+      "level": 3,
+      "title": "Moving Forward",
+      "page": 288
+    },
+    {
+      "level": 3,
+      "title": "After Extract Class",
+      "page": 291
+    },
+    {
+      "level": 2,
+      "title": "Chapter 21: I’m Changing the Same Code All Over the Place",
+      "page": 292
+    },
+    {
+      "level": 3,
+      "title": "First Steps",
+      "page": 295
+    },
+    {
+      "level": 2,
+      "title": "Chapter 22: I Need to Change a Monster Method and I Can’t Write Tests for It",
+      "page": 312
+    },
+    {
+      "level": 3,
+      "title": "Varieties of Monsters",
+      "page": 313
+    },
+    {
+      "level": 3,
+      "title": "Tackling Monsters with Automated Refactoring Support",
+      "page": 317
+    },
+    {
+      "level": 3,
+      "title": "The Manual Refactoring Challenge",
+      "page": 320
+    },
+    {
+      "level": 3,
+      "title": "Strategy",
+      "page": 327
+    },
+    {
+      "level": 2,
+      "title": "Chapter 23: How Do I Know That I’m Not Breaking Anything?",
+      "page": 332
+    },
+    {
+      "level": 3,
+      "title": "Hyperaware Editing",
+      "page": 333
+    },
+    {
+      "level": 3,
+      "title": "Single-Goal Editing",
+      "page": 334
+    },
+    {
+      "level": 3,
+      "title": "Preserve Signatures",
+      "page": 335
+    },
+    {
+      "level": 3,
+      "title": "Lean on the Compiler",
+      "page": 338
+    },
+    {
+      "level": 2,
+      "title": "Chapter 24: We Feel Overwhelmed. It Isn’t Going to Get Any Better",
+      "page": 342
+    },
+    {
+      "level": 1,
+      "title": "PART III: Dependency-Breaking Techniques",
+      "page": 346
+    },
+    {
+      "level": 2,
+      "title": "Chapter 25: Dependency-Breaking Techniques",
+      "page": 348
+    },
+    {
+      "level": 3,
+      "title": "Adapt Parameter",
+      "page": 349
+    },
+    {
+      "level": 3,
+      "title": "Break Out Method Object",
+      "page": 353
+    },
+    {
+      "level": 3,
+      "title": "Definition Completion",
+      "page": 360
+    },
+    {
+      "level": 3,
+      "title": "Encapsulate Global References",
+      "page": 362
+    },
+    {
+      "level": 3,
+      "title": "Expose Static Method",
+      "page": 368
+    },
+    {
+      "level": 3,
+      "title": "Extract and Override Call",
+      "page": 371
+    },
+    {
+      "level": 3,
+      "title": "Extract and Override Factory Method",
+      "page": 373
+    },
+    {
+      "level": 3,
+      "title": "Extract and Override Getter",
+      "page": 375
+    },
+    {
+      "level": 3,
+      "title": "Extract Implementer",
+      "page": 379
+    },
+    {
+      "level": 3,
+      "title": "Extract Interface",
+      "page": 385
+    },
+    {
+      "level": 3,
+      "title": "Introduce Instance Delegator",
+      "page": 392
+    },
+    {
+      "level": 3,
+      "title": "Introduce Static Setter",
+      "page": 395
+    },
+    {
+      "level": 3,
+      "title": "Link Substitution",
+      "page": 400
+    },
+    {
+      "level": 3,
+      "title": "Parameterize Constructor",
+      "page": 402
+    },
+    {
+      "level": 3,
+      "title": "Parameterize Method",
+      "page": 406
+    },
+    {
+      "level": 3,
+      "title": "Primitivize Parameter",
+      "page": 408
+    },
+    {
+      "level": 3,
+      "title": "Pull Up Feature",
+      "page": 411
+    },
+    {
+      "level": 3,
+      "title": "Push Down Dependency",
+      "page": 415
+    },
+    {
+      "level": 3,
+      "title": "Replace Function with Function Pointer",
+      "page": 419
+    },
+    {
+      "level": 3,
+      "title": "Replace Global Reference with Getter",
+      "page": 422
+    },
+    {
+      "level": 3,
+      "title": "Subclass and Override Method",
+      "page": 424
+    },
+    {
+      "level": 3,
+      "title": "Supersede Instance Variable",
+      "page": 427
+    },
+    {
+      "level": 3,
+      "title": "Template Redefinition",
+      "page": 431
+    },
+    {
+      "level": 3,
+      "title": "Text Redefinition",
+      "page": 435
+    },
+    {
+      "level": 1,
+      "title": "Appendix: Refactoring",
+      "page": 438
+    },
+    {
+      "level": 2,
+      "title": "Extract Method",
+      "page": 438
+    },
+    {
+      "level": 1,
+      "title": "Glossary",
+      "page": 444
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 446
+    },
+    {
+      "level": 2,
+      "title": "A",
+      "page": 446
+    },
+    {
+      "level": 2,
+      "title": "B",
+      "page": 446
+    },
+    {
+      "level": 2,
+      "title": "C",
+      "page": 447
+    },
+    {
+      "level": 2,
+      "title": "D",
+      "page": 448
+    },
+    {
+      "level": 2,
+      "title": "E",
+      "page": 449
+    },
+    {
+      "level": 2,
+      "title": "F",
+      "page": 449
+    },
+    {
+      "level": 2,
+      "title": "G",
+      "page": 450
+    },
+    {
+      "level": 2,
+      "title": "H",
+      "page": 450
+    },
+    {
+      "level": 2,
+      "title": "I",
+      "page": 450
+    },
+    {
+      "level": 2,
+      "title": "J",
+      "page": 451
+    },
+    {
+      "level": 2,
+      "title": "K",
+      "page": 451
+    },
+    {
+      "level": 2,
+      "title": "L",
+      "page": 451
+    },
+    {
+      "level": 2,
+      "title": "M",
+      "page": 451
+    },
+    {
+      "level": 2,
+      "title": "N",
+      "page": 453
+    },
+    {
+      "level": 2,
+      "title": "O",
+      "page": 453
+    },
+    {
+      "level": 2,
+      "title": "P",
+      "page": 453
+    },
+    {
+      "level": 2,
+      "title": "R",
+      "page": 454
+    },
+    {
+      "level": 2,
+      "title": "S",
+      "page": 455
+    },
+    {
+      "level": 2,
+      "title": "T",
+      "page": 456
+    },
+    {
+      "level": 2,
+      "title": "U",
+      "page": 457
+    },
+    {
+      "level": 2,
+      "title": "V",
+      "page": 457
+    },
+    {
+      "level": 2,
+      "title": "W",
+      "page": 457
+    },
+    {
+      "level": 2,
+      "title": "X",
+      "page": 457
+    }
+  ]
+}

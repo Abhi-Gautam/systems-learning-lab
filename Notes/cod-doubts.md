@@ -1,4 +1,3 @@
-# COD - Computer Organization and Design (ARM Edition)
-## Doubts & Clarifications
+# COD Doubts
 
----
+_Open questions raised mid-reading. Status: Open / Resolved / Moved to Notes._

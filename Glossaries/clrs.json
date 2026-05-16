@@ -1,0 +1,261 @@
+{
+  "alias": "CLRS",
+  "pdf_pages": 1313,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Contents",
+      "page": 6
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 14
+    },
+    {
+      "level": 1,
+      "title": "I Foundations",
+      "page": 23
+    },
+    {
+      "level": 2,
+      "title": "1 The Role of Algorithms in Computing",
+      "page": 26
+    },
+    {
+      "level": 2,
+      "title": "2 Getting Started",
+      "page": 37
+    },
+    {
+      "level": 2,
+      "title": "3 Growth of Functions",
+      "page": 64
+    },
+    {
+      "level": 2,
+      "title": "4 Divide-and-Conquer",
+      "page": 86
+    },
+    {
+      "level": 2,
+      "title": "5 Probabilistic Analysis and Randomized Algorithms",
+      "page": 135
+    },
+    {
+      "level": 1,
+      "title": "II Sorting and Order Statistics",
+      "page": 167
+    },
+    {
+      "level": 2,
+      "title": "6 Heapsort",
+      "page": 172
+    },
+    {
+      "level": 2,
+      "title": "7 Quicksort",
+      "page": 191
+    },
+    {
+      "level": 2,
+      "title": "8 Sorting in Linear Time",
+      "page": 212
+    },
+    {
+      "level": 2,
+      "title": "9 Medians and Order Statistics",
+      "page": 234
+    },
+    {
+      "level": 1,
+      "title": "III Data Structures",
+      "page": 249
+    },
+    {
+      "level": 2,
+      "title": "10 Elementary Data Structures",
+      "page": 253
+    },
+    {
+      "level": 2,
+      "title": "11 Hash Tables",
+      "page": 274
+    },
+    {
+      "level": 2,
+      "title": "12 Binary Search Trees",
+      "page": 307
+    },
+    {
+      "level": 2,
+      "title": "13 Red-Black Trees",
+      "page": 329
+    },
+    {
+      "level": 2,
+      "title": "14 Augmenting Data Structures",
+      "page": 360
+    },
+    {
+      "level": 1,
+      "title": "IV Advanced Design and Analysis Techniques",
+      "page": 377
+    },
+    {
+      "level": 2,
+      "title": "15 Dynamic Programming",
+      "page": 380
+    },
+    {
+      "level": 2,
+      "title": "16 Greedy Algorithms",
+      "page": 435
+    },
+    {
+      "level": 2,
+      "title": "17 Amortized Analysis",
+      "page": 472
+    },
+    {
+      "level": 1,
+      "title": "V Advanced Data Structures",
+      "page": 501
+    },
+    {
+      "level": 2,
+      "title": "18 B-Trees",
+      "page": 505
+    },
+    {
+      "level": 2,
+      "title": "19 Fibonacci Heaps",
+      "page": 526
+    },
+    {
+      "level": 2,
+      "title": "20 van Emde Boas Trees",
+      "page": 552
+    },
+    {
+      "level": 2,
+      "title": "21 Data Structures for Disjoint Sets",
+      "page": 582
+    },
+    {
+      "level": 1,
+      "title": "VI Graph Algorithms",
+      "page": 607
+    },
+    {
+      "level": 2,
+      "title": "22 Elementary Graph Algorithms",
+      "page": 610
+    },
+    {
+      "level": 2,
+      "title": "23 Minimum Spanning Trees",
+      "page": 645
+    },
+    {
+      "level": 2,
+      "title": "24 Single-Source Shortest Paths",
+      "page": 664
+    },
+    {
+      "level": 2,
+      "title": "25 All-Pairs Shortest Paths",
+      "page": 705
+    },
+    {
+      "level": 2,
+      "title": "26 Maximum Flow",
+      "page": 729
+    },
+    {
+      "level": 1,
+      "title": "VII Selected Topics",
+      "page": 789
+    },
+    {
+      "level": 2,
+      "title": "27 Multithreaded Algorithms",
+      "page": 793
+    },
+    {
+      "level": 2,
+      "title": "28 Matrix Operations",
+      "page": 834
+    },
+    {
+      "level": 2,
+      "title": "29 Linear Programming",
+      "page": 864
+    },
+    {
+      "level": 2,
+      "title": "30 Polynomials and the FFT",
+      "page": 919
+    },
+    {
+      "level": 2,
+      "title": "31 Number-Theoretic Algorithms",
+      "page": 947
+    },
+    {
+      "level": 2,
+      "title": "32 String Matching",
+      "page": 1006
+    },
+    {
+      "level": 2,
+      "title": "33 Computational Geometry",
+      "page": 1035
+    },
+    {
+      "level": 2,
+      "title": "34 NP-Completeness",
+      "page": 1069
+    },
+    {
+      "level": 2,
+      "title": "35 Approximation Algorithms",
+      "page": 1127
+    },
+    {
+      "level": 1,
+      "title": "VIII Appendix: Mathematical Background",
+      "page": 1163
+    },
+    {
+      "level": 2,
+      "title": "A Summations",
+      "page": 1166
+    },
+    {
+      "level": 2,
+      "title": "B Sets, Etc.",
+      "page": 1179
+    },
+    {
+      "level": 2,
+      "title": "C Counting and Probability",
+      "page": 1204
+    },
+    {
+      "level": 2,
+      "title": "D Matrices",
+      "page": 1238
+    },
+    {
+      "level": 1,
+      "title": "Bibliography",
+      "page": 1252
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 1272
+    }
+  ]
+}

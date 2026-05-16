@@ -1,0 +1,387 @@
+# CC Glossary
+_PDF pages: 462 · TOC entries: 384_
+
+- p.1 — Clean Code
+- p.8 — Contents
+- p.20 — Foreword
+- p.26 — Introduction
+- p.30 — On the Cover
+- p.32 — Chapter 1: Clean Code
+  - p.33 — There Will Be Code
+  - p.34 — Bad Code
+  - p.35 — The Total Cost of Owning a Mess
+    - p.36 — The Grand Redesign in the Sky
+    - p.36 — Attitude
+    - p.37 — The Primal Conundrum
+    - p.37 — The Art of Clean Code?
+    - p.38 — What Is Clean Code?
+  - p.43 — Schools of Thought
+  - p.44 — We Are Authors
+  - p.45 — The Boy Scout Rule
+  - p.46 — Prequel and Principles
+  - p.46 — Conclusion
+  - p.46 — Bibliography
+- p.48 — Chapter 2: Meaningful Names
+  - p.48 — Introduction
+  - p.49 — Use Intention-Revealing Names
+  - p.50 — Avoid Disinformation
+  - p.51 — Make Meaningful Distinctions
+  - p.52 — Use Pronounceable Names
+  - p.53 — Use Searchable Names
+  - p.54 — Avoid Encodings
+    - p.54 — Hungarian Notation
+    - p.55 — Member Prefixes
+    - p.55 — Interfaces and Implementations
+  - p.56 — Avoid Mental Mapping
+  - p.56 — Class Names
+  - p.56 — Method Names
+  - p.57 — Don't Be Cute
+  - p.57 — Pick One Word per Concept
+  - p.57 — Don't Pun
+  - p.58 — Use Solution Domain Names
+  - p.58 — Use Problem Domain Names
+  - p.58 — Add Meaningful Context
+  - p.60 — Don't Add Gratuitous Context
+  - p.61 — Final Words
+- p.62 — Chapter 3: Functions
+  - p.65 — Small!
+    - p.66 — Blocks and Indenting
+  - p.66 — Do One Thing
+    - p.67 — Sections within Functions
+  - p.67 — One Level of Abstraction per Function
+    - p.68 — Reading Code from Top to Bottom: The Stepdown Rule
+  - p.68 — Switch Statements
+  - p.70 — Use Descriptive Names
+  - p.71 — Function Arguments
+    - p.72 — Common Monadic Forms
+    - p.72 — Flag Arguments
+    - p.73 — Dyadic Functions
+    - p.73 — Triads
+    - p.74 — Argument Objects
+    - p.74 — Argument Lists
+    - p.74 — Verbs and Keywords
+  - p.75 — Have No Side Effects
+    - p.76 — Output Arguments
+  - p.76 — Command Query Separation
+  - p.77 — Prefer Exceptions to Returning Error Codes
+    - p.77 — Extract Try/Catch Blocks
+    - p.78 — Error Handling Is One Thing
+    - p.78 — The Error.java Dependency Magnet
+  - p.79 — Don't Repeat Yourself
+  - p.79 — Structured Programming
+  - p.80 — How Do You Write Functions Like This?
+  - p.80 — Conclusion
+  - p.81 — SetupTeardownIncluder
+  - p.83 — Bibliography
+- p.84 — Chapter 4: Comments
+  - p.86 — Comments Do Not Make Up for Bad Code
+  - p.86 — Explain Yourself in Code
+  - p.86 — Good Comments
+    - p.86 — Legal Comments
+    - p.87 — Informative Comments
+    - p.87 — Explanation of Intent
+    - p.88 — Clarification
+    - p.89 — Warning of Consequences
+    - p.89 — TODO Comments
+    - p.90 — Amplification
+    - p.90 — Javadocs in Public APIs
+  - p.90 — Bad Comments
+    - p.90 — Mumbling
+    - p.91 — Redundant Comments
+    - p.94 — Misleading Comments
+    - p.94 — Mandated Comments
+    - p.94 — Journal Comments
+    - p.95 — Noise Comments
+    - p.97 — Scary Noise
+    - p.98 — Don't Use a Comment When You Can Use a Function or a Variable
+    - p.98 — Position Markers
+    - p.98 — Closing Brace Comments
+    - p.99 — Attributions and Bylines
+    - p.99 — Commented-Out Code
+    - p.100 — HTML Comments
+    - p.100 — Nonlocal Information
+    - p.101 — Too Much Information
+    - p.101 — Inobvious Connection
+    - p.101 — Function Headers
+    - p.102 — Javadocs in Nonpublic Code
+    - p.102 — Example
+  - p.105 — Bibliography
+- p.106 — Chapter 5: Formatting
+  - p.107 — The Purpose of Formatting
+  - p.107 — Vertical Formatting
+    - p.108 — The Newspaper Metaphor
+    - p.109 — Vertical Openness Between Concepts
+    - p.110 — Vertical Density
+    - p.111 — Vertical Distance
+    - p.115 — Vertical Ordering
+  - p.116 — Horizontal Formatting
+    - p.117 — Horizontal Openness and Density
+    - p.118 — Horizontal Alignment
+    - p.119 — Indentation
+    - p.121 — Dummy Scopes
+  - p.121 — Team Rules
+  - p.121 — Uncle Bob's Formatting Rules
+- p.124 — Chapter 6: Objects and Data Structures
+  - p.124 — Data Abstraction
+  - p.126 — Data/Object Anti-Symmetry
+  - p.128 — The Law of Demeter
+    - p.129 — Train Wrecks
+    - p.130 — Hybrids
+    - p.130 — Hiding Structure
+  - p.131 — Data Transfer Objects
+    - p.132 — Active Record
+  - p.132 — Conclusion
+  - p.132 — Bibliography
+- p.134 — Chapter 7: Error Handling
+  - p.135 — Use Exceptions Rather Than Return Codes
+  - p.136 — Write Your Try-Catch-Finally Statement First
+  - p.137 — Use Unchecked Exceptions
+  - p.138 — Provide Context with Exceptions
+  - p.138 — Define Exception Classes in Terms of a Caller's Needs
+  - p.140 — Define the Normal Flow
+  - p.141 — Don't Return Null
+  - p.142 — Don't Pass Null
+  - p.143 — Conclusion
+  - p.143 — Bibliography
+- p.144 — Chapter 8: Boundaries
+  - p.145 — Using Third-Party Code
+  - p.147 — Exploring and Learning Boundaries
+  - p.147 — Learning log4j
+  - p.149 — Learning Tests Are Better Than Free
+  - p.149 — Using Code That Does Not Yet Exist
+  - p.151 — Clean Boundaries
+  - p.151 — Bibliography
+- p.152 — Chapter 9: Unit Tests
+  - p.153 — The Three Laws of TDD
+  - p.154 — Keeping Tests Clean
+    - p.155 — Tests Enable the -ilities
+  - p.155 — Clean Tests
+    - p.158 — Domain-Specific Testing Language
+    - p.158 — A Dual Standard
+  - p.161 — One Assert per Test
+    - p.162 — Single Concept per Test
+  - p.163 — F.I.R.S.T.
+  - p.164 — Conclusion
+  - p.164 — Bibliography
+- p.166 — Chapter 10: Classes
+  - p.167 — Class Organization
+    - p.167 — Encapsulation
+  - p.167 — Classes Should Be Small!
+    - p.169 — The Single Responsibility Principle
+    - p.171 — Cohesion
+    - p.172 — Maintaining Cohesion Results in Many Small Classes
+  - p.178 — Organizing for Change
+    - p.180 — Isolating from Change
+  - p.182 — Bibliography
+- p.184 — Chapter 11: Systems
+  - p.185 — How Would You Build a City?
+  - p.185 — Separate Constructing a System from Using It
+    - p.186 — Separation of Main
+    - p.186 — Factories
+    - p.188 — Dependency Injection
+  - p.188 — Scaling Up
+    - p.191 — Cross-Cutting Concerns
+  - p.192 — Java Proxies
+  - p.194 — Pure Java AOP Frameworks
+  - p.197 — AspectJ Aspects
+  - p.197 — Test Drive the System Architecture
+  - p.198 — Optimize Decision Making
+  - p.199 — Use Standards Wisely, When They Add Demonstrable Value
+  - p.199 — Systems Need Domain-Specific Languages
+  - p.200 — Conclusion
+  - p.200 — Bibliography
+- p.202 — Chapter 12: Emergence
+  - p.202 — Getting Clean via Emergent Design
+  - p.203 — Simple Design Rule 1: Runs All the Tests
+  - p.203 — Simple Design Rules 2–4: Refactoring
+  - p.204 — No Duplication
+  - p.206 — Expressive
+  - p.207 — Minimal Classes and Methods
+  - p.207 — Conclusion
+  - p.207 — Bibliography
+- p.208 — Chapter 13: Concurrency
+  - p.209 — Why Concurrency?
+    - p.210 — Myths and Misconceptions
+  - p.211 — Challenges
+  - p.211 — Concurrency Defense Principles
+    - p.212 — Single Responsibility Principle
+    - p.212 — Corollary: Limit the Scope of Data
+    - p.212 — Corollary: Use Copies of Data
+    - p.213 — Corollary: Threads Should Be as Independent as Possible
+  - p.213 — Know Your Library
+    - p.213 — Thread-Safe Collections
+  - p.214 — Know Your Execution Models
+    - p.215 — Producer-Consumer
+    - p.215 — Readers-Writers
+    - p.215 — Dining Philosophers
+  - p.216 — Beware Dependencies Between Synchronized Methods
+  - p.216 — Keep Synchronized Sections Small
+  - p.217 — Writing Correct Shut-Down Code Is Hard
+  - p.217 — Testing Threaded Code
+    - p.218 — Treat Spurious Failures as Candidate Threading Issues
+    - p.218 — Get Your Nonthreaded Code Working First
+    - p.218 — Make Your Threaded Code Pluggable
+    - p.218 — Make Your Threaded Code Tunable
+    - p.219 — Run with More Threads Than Processors
+    - p.219 — Run on Different Platforms
+    - p.219 — Instrument Your Code to Try and Force Failures
+    - p.220 — Hand-Coded
+    - p.220 — Automated
+  - p.221 — Conclusion
+  - p.222 — Bibliography
+- p.224 — Chapter 14: Successive Refinement
+  - p.225 — Args Implementation
+    - p.231 — How Did I Do This?
+  - p.232 — Args: The Rough Draft
+    - p.243 — So I Stopped
+    - p.243 — On Incrementalism
+  - p.245 — String Arguments
+  - p.281 — Conclusion
+- p.282 — Chapter 15: JUnit Internals
+  - p.283 — The JUnit Framework
+  - p.296 — Conclusion
+- p.298 — Chapter 16: Refactoring SerialDate
+  - p.299 — First, Make It Work
+  - p.301 — Then Make It Right
+  - p.315 — Conclusion
+  - p.315 — Bibliography
+- p.316 — Chapter 17: Smells and Heuristics
+  - p.317 — Comments
+    - p.317 — C1: Inappropriate Information
+    - p.317 — C2: Obsolete Comment
+    - p.317 — C3: Redundant Comment
+    - p.318 — C4: Poorly Written Comment
+    - p.318 — C5: Commented-Out Code
+  - p.318 — Environment
+    - p.318 — E1: Build Requires More Than One Step
+    - p.318 — E2: Tests Require More Than One Step
+  - p.319 — Functions
+    - p.319 — F1: Too Many Arguments
+    - p.319 — F2: Output Arguments
+    - p.319 — F3: Flag Arguments
+    - p.319 — F4: Dead Function
+  - p.319 — General
+    - p.319 — G1: Multiple Languages in One Source File
+    - p.319 — G2: Obvious Behavior Is Unimplemented
+    - p.320 — G3: Incorrect Behavior at the Boundaries
+    - p.320 — G4: Overridden Safeties
+    - p.320 — G5: Duplication
+    - p.321 — G6: Code at Wrong Level of Abstraction
+    - p.322 — G7: Base Classes Depending on Their Derivatives
+    - p.322 — G8: Too Much Information
+    - p.323 — G9: Dead Code
+    - p.323 — G10: Vertical Separation
+    - p.323 — G11: Inconsistency
+    - p.324 — G12: Clutter
+    - p.324 — G13: Artificial Coupling
+    - p.324 — G14: Feature Envy
+    - p.325 — G15: Selector Arguments
+    - p.326 — G16: Obscured Intent
+    - p.326 — G17: Misplaced Responsibility
+    - p.327 — G18: Inappropriate Static
+    - p.327 — G19: Use Explanatory Variables
+    - p.328 — G20: Function Names Should Say What They Do
+    - p.328 — G21: Understand the Algorithm
+    - p.329 — G22: Make Logical Dependencies Physical
+    - p.330 — G23: Prefer Polymorphism to If/Else or Switch/Case
+    - p.330 — G24: Follow Standard Conventions
+    - p.331 — G25: Replace Magic Numbers with Named Constants
+    - p.332 — G26: Be Precise
+    - p.332 — G27: Structure over Convention
+    - p.332 — G28: Encapsulate Conditionals
+    - p.333 — G29: Avoid Negative Conditionals
+    - p.333 — G30: Functions Should Do One Thing
+    - p.333 — G31: Hidden Temporal Couplings
+    - p.334 — G32: Don't Be Arbitrary
+    - p.335 — G33: Encapsulate Boundary Conditions
+    - p.335 — G34: Functions Should Descend Only One Level of Abstraction
+    - p.337 — G35: Keep Congurable Data at High Levels
+    - p.337 — G36: Avoid Transitive Navigation
+  - p.338 — Java
+    - p.338 — J1: Avoid Long Import Lists by Using Wildcards
+    - p.338 — J2: Don't Inherit Constants
+    - p.339 — J3: Constants versus Enums
+  - p.340 — Names
+    - p.340 — N1: Choose Descriptive Names
+    - p.342 — N2: Choose Names at the Appropriate Level of Abstraction
+    - p.342 — N3: Use Standard Nomenclature Where Possible
+    - p.343 — N4: Unambiguous Names
+    - p.343 — N5: Use Long Names for Long Scopes
+    - p.343 — N6: Avoid Encodings
+    - p.344 — N7: Names Should Describe Side-Effects
+  - p.344 — Tests
+    - p.344 — T1: Insufficient Tests
+    - p.344 — T2: Use a Coverage Tool!
+    - p.344 — T3: Don't Skip Trivial Tests
+    - p.344 — T4: An Ignored Test Is a Question about an Ambiguity
+    - p.345 — T5: Test Boundary Conditions
+    - p.345 — T6: Exhaustively Test Near Bugs
+    - p.345 — T7: Patterns of Failure Are Revealing
+    - p.345 — T8: Test Coverage Patterns Can Be Revealing
+    - p.345 — T9: Tests Should Be Fast
+  - p.345 — Conclusion
+  - p.346 — Bibliography
+- p.348 — Appendix A: Concurrency II
+  - p.348 — Client/Server Example
+    - p.348 — The Server
+    - p.350 — Adding Threading
+    - p.350 — Server Observations
+    - p.352 — Conclusion
+  - p.352 — Possible Paths of Execution
+    - p.353 — Number of Paths
+    - p.354 — Digging Deeper
+    - p.357 — Conclusion
+  - p.357 — Knowing Your Library
+    - p.357 — Executor Framework
+    - p.358 — Nonblocking Solutions
+    - p.359 — Nonthread-Safe Classes
+  - p.360 — Dependencies Between Methods Can Break Concurrent Code
+    - p.361 — Tolerate the Failure
+    - p.361 — Client-Based Locking
+    - p.363 — Server-Based Locking
+  - p.364 — Increasing Throughput
+    - p.365 — Single-Thread Calculation of Throughput
+    - p.366 — Multithread Calculation of Throughput
+  - p.366 — Deadlock
+    - p.367 — Mutual Exclusion
+    - p.368 — Lock & Wait
+    - p.368 — No Preemption
+    - p.368 — Circular Wait
+    - p.368 — Breaking Mutual Exclusion
+    - p.369 — Breaking Lock & Wait
+    - p.369 — Breaking Preemption
+    - p.369 — Breaking Circular Wait
+  - p.370 — Testing Multithreaded Code
+  - p.373 — Tool Support for Testing Thread-Based Code
+  - p.373 — Conclusion
+  - p.374 — Tutorial: Full Code Examples
+    - p.374 — Client/Server Nonthreaded
+    - p.377 — Client/Server Using Threads
+- p.380 — Appendix B: org.jfree.date.SerialDate
+- p.440 — Appendix C: Cross References of Heuristics
+- p.442 — Epilogue
+- p.444 — Index
+  - p.444 — A
+  - p.445 — B
+  - p.446 — C
+  - p.448 — D
+  - p.450 — E
+  - p.450 — F
+  - p.451 — G
+  - p.452 — H
+  - p.452 — I
+  - p.453 — J
+  - p.453 — K
+  - p.453 — L
+  - p.454 — M
+  - p.455 — N
+  - p.455 — O
+  - p.456 — P
+  - p.457 — Q
+  - p.457 — R
+  - p.458 — S
+  - p.460 — T
+  - p.461 — U
+  - p.461 — V
+  - p.462 — W
+  - p.462 — X

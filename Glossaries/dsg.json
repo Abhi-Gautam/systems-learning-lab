@@ -1,0 +1,556 @@
+{
+  "alias": "DSG",
+  "pdf_pages": 245,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Cover",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "title": "Table of Contents",
+      "page": 7
+    },
+    {
+      "level": 1,
+      "title": "Acknowledgments",
+      "page": 10
+    },
+    {
+      "level": 1,
+      "title": "Introduction",
+      "page": 12
+    },
+    {
+      "level": 2,
+      "title": "Who This Book Is For",
+      "page": 13
+    },
+    {
+      "level": 2,
+      "title": "What’s in This Book",
+      "page": 13
+    },
+    {
+      "level": 2,
+      "title": "Online Resources",
+      "page": 14
+    },
+    {
+      "level": 1,
+      "title": "Part I—Get Started",
+      "page": 15
+    },
+    {
+      "level": 2,
+      "title": "1. Let's Go",
+      "page": 16
+    },
+    {
+      "level": 3,
+      "title": "How JSON over HTTP Services Fits into Distributed Systems",
+      "page": 17
+    },
+    {
+      "level": 3,
+      "title": "Set Up the Project",
+      "page": 18
+    },
+    {
+      "level": 3,
+      "title": "Build a Commit Log Prototype",
+      "page": 19
+    },
+    {
+      "level": 3,
+      "title": "Build a JSON over HTTP Server",
+      "page": 20
+    },
+    {
+      "level": 3,
+      "title": "Run Your Server",
+      "page": 23
+    },
+    {
+      "level": 3,
+      "title": "Test Your API",
+      "page": 24
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 24
+    },
+    {
+      "level": 2,
+      "title": "2. Structure Data with Protocol Buffers",
+      "page": 25
+    },
+    {
+      "level": 3,
+      "title": "Why Use Protocol Buffers?",
+      "page": 26
+    },
+    {
+      "level": 3,
+      "title": "Install the Protocol Buffer Compiler",
+      "page": 28
+    },
+    {
+      "level": 3,
+      "title": "Define Your Domain Types as Protocol Buffers",
+      "page": 29
+    },
+    {
+      "level": 3,
+      "title": "Compile Protocol Buffers",
+      "page": 31
+    },
+    {
+      "level": 3,
+      "title": "Work with the Generated Code",
+      "page": 32
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 33
+    },
+    {
+      "level": 2,
+      "title": "3. Write a Log Package",
+      "page": 34
+    },
+    {
+      "level": 3,
+      "title": "The Log Is a Powerful Tool",
+      "page": 34
+    },
+    {
+      "level": 3,
+      "title": "How Logs Work",
+      "page": 36
+    },
+    {
+      "level": 3,
+      "title": "Build a Log",
+      "page": 37
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 62
+    },
+    {
+      "level": 1,
+      "title": "Part II—Network",
+      "page": 63
+    },
+    {
+      "level": 2,
+      "title": "4. Serve Requests with gRPC",
+      "page": 64
+    },
+    {
+      "level": 3,
+      "title": "What Is gRPC?",
+      "page": 64
+    },
+    {
+      "level": 3,
+      "title": "Goals When Building a Service",
+      "page": 65
+    },
+    {
+      "level": 3,
+      "title": "Define a gRPC Service",
+      "page": 67
+    },
+    {
+      "level": 3,
+      "title": "Compile with the gRPC Plugin",
+      "page": 69
+    },
+    {
+      "level": 3,
+      "title": "Implement a gRPC Server",
+      "page": 69
+    },
+    {
+      "level": 3,
+      "title": "Register Your Server",
+      "page": 77
+    },
+    {
+      "level": 3,
+      "title": "Test a gRPC Server and Client",
+      "page": 77
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 82
+    },
+    {
+      "level": 2,
+      "title": "5. Secure Your Services",
+      "page": 83
+    },
+    {
+      "level": 3,
+      "title": "Secure Services in Three Steps",
+      "page": 84
+    },
+    {
+      "level": 3,
+      "title": "Authenticate the Server with TLS",
+      "page": 86
+    },
+    {
+      "level": 3,
+      "title": "Authenticate the Client with Mutual TLS Authentication",
+      "page": 94
+    },
+    {
+      "level": 3,
+      "title": "Authorize with Access Control Lists",
+      "page": 96
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 106
+    },
+    {
+      "level": 2,
+      "title": "6. Observe Your Systems",
+      "page": 107
+    },
+    {
+      "level": 3,
+      "title": "Three Types of Telemetry Data",
+      "page": 107
+    },
+    {
+      "level": 3,
+      "title": "Make Your Service Observable",
+      "page": 111
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 117
+    },
+    {
+      "level": 1,
+      "title": "Part III—Distribute",
+      "page": 118
+    },
+    {
+      "level": 2,
+      "title": "7. Server-to-Server Service Discovery",
+      "page": 119
+    },
+    {
+      "level": 3,
+      "title": "Why Use Service Discovery?",
+      "page": 119
+    },
+    {
+      "level": 3,
+      "title": "Embed Service Discovery",
+      "page": 120
+    },
+    {
+      "level": 3,
+      "title": "Discover Services with Serf",
+      "page": 122
+    },
+    {
+      "level": 3,
+      "title": "Request Discovered Services and Replicate Logs",
+      "page": 129
+    },
+    {
+      "level": 3,
+      "title": "Test Discovery and the Service End-to-End",
+      "page": 140
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 144
+    },
+    {
+      "level": 2,
+      "title": "8. Coordinate Your Services with Consensus",
+      "page": 146
+    },
+    {
+      "level": 3,
+      "title": "What Is Raft and How Does It Work?",
+      "page": 146
+    },
+    {
+      "level": 3,
+      "title": "Implement Raft in Our Service",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Multiplex to Run Multiple Services on One Port",
+      "page": 168
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 174
+    },
+    {
+      "level": 2,
+      "title": "9. Discover Servers and Load Balance from the Client",
+      "page": 175
+    },
+    {
+      "level": 3,
+      "title": "Three Load-Balancing Strategies",
+      "page": 175
+    },
+    {
+      "level": 3,
+      "title": "Load Balance on the Client in gRPC",
+      "page": 176
+    },
+    {
+      "level": 3,
+      "title": "Make Servers Discoverable",
+      "page": 178
+    },
+    {
+      "level": 3,
+      "title": "Resolve the Servers",
+      "page": 181
+    },
+    {
+      "level": 3,
+      "title": "Route and Balance Requests with Pickers",
+      "page": 187
+    },
+    {
+      "level": 3,
+      "title": "Test Discovery and Balancing End-to-End",
+      "page": 192
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 193
+    },
+    {
+      "level": 1,
+      "title": "Part IV—Deploy",
+      "page": 194
+    },
+    {
+      "level": 2,
+      "title": "10. Deploy Applications with Kubernetes Locally",
+      "page": 195
+    },
+    {
+      "level": 3,
+      "title": "What Is Kubernetes?",
+      "page": 195
+    },
+    {
+      "level": 3,
+      "title": "Install kubectl",
+      "page": 196
+    },
+    {
+      "level": 3,
+      "title": "Use Kind for Local Development and Continuous Integration",
+      "page": 197
+    },
+    {
+      "level": 3,
+      "title": "Write an Agent Command-Line Interface",
+      "page": 198
+    },
+    {
+      "level": 3,
+      "title": "Build Your Docker Image",
+      "page": 203
+    },
+    {
+      "level": 3,
+      "title": "Configure and Deploy Your Service with Helm",
+      "page": 204
+    },
+    {
+      "level": 3,
+      "title": "Advertise Raft on the Fully Qualified Domain Name",
+      "page": 215
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 219
+    },
+    {
+      "level": 2,
+      "title": "11. Deploy Applications with Kubernetes to the Cloud",
+      "page": 220
+    },
+    {
+      "level": 3,
+      "title": "Create a Google Kubernetes Engine Cluster",
+      "page": 221
+    },
+    {
+      "level": 3,
+      "title": "Create Custom Controllers with Metacontroller",
+      "page": 223
+    },
+    {
+      "level": 3,
+      "title": "Deploy to the Internet",
+      "page": 229
+    },
+    {
+      "level": 3,
+      "title": "What You Learned",
+      "page": 229
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– SYMBOLS –",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– DIGITS –",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– A –",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– B –",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– C –",
+      "page": 230
+    },
+    {
+      "level": 2,
+      "title": "– D –",
+      "page": 232
+    },
+    {
+      "level": 2,
+      "title": "– E –",
+      "page": 232
+    },
+    {
+      "level": 2,
+      "title": "– F –",
+      "page": 233
+    },
+    {
+      "level": 2,
+      "title": "– G –",
+      "page": 233
+    },
+    {
+      "level": 2,
+      "title": "– H –",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "– I –",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "– J –",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "– K –",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "– L –",
+      "page": 234
+    },
+    {
+      "level": 2,
+      "title": "– M –",
+      "page": 235
+    },
+    {
+      "level": 2,
+      "title": "– N –",
+      "page": 235
+    },
+    {
+      "level": 2,
+      "title": "– O –",
+      "page": 235
+    },
+    {
+      "level": 2,
+      "title": "– P –",
+      "page": 236
+    },
+    {
+      "level": 2,
+      "title": "– R –",
+      "page": 236
+    },
+    {
+      "level": 2,
+      "title": "– S –",
+      "page": 237
+    },
+    {
+      "level": 2,
+      "title": "– T –",
+      "page": 238
+    },
+    {
+      "level": 2,
+      "title": "– U –",
+      "page": 239
+    },
+    {
+      "level": 2,
+      "title": "– V –",
+      "page": 239
+    },
+    {
+      "level": 2,
+      "title": "– W –",
+      "page": 239
+    },
+    {
+      "level": 2,
+      "title": "– Z –",
+      "page": 239
+    }
+  ]
+}

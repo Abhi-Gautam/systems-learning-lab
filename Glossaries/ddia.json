@@ -1,0 +1,1056 @@
+{
+  "alias": "DDIA",
+  "pdf_pages": 613,
+  "entries": [
+    {
+      "level": 1,
+      "title": "Copyright",
+      "page": 4
+    },
+    {
+      "level": 1,
+      "title": "Table of Contents",
+      "page": 9
+    },
+    {
+      "level": 1,
+      "title": "Preface",
+      "page": 15
+    },
+    {
+      "level": 2,
+      "title": "Who Should Read This Book?",
+      "page": 16
+    },
+    {
+      "level": 2,
+      "title": "Scope of This Book",
+      "page": 17
+    },
+    {
+      "level": 2,
+      "title": "Outline of This Book",
+      "page": 18
+    },
+    {
+      "level": 2,
+      "title": "References and Further Reading",
+      "page": 19
+    },
+    {
+      "level": 2,
+      "title": "O’Reilly Safari",
+      "page": 19
+    },
+    {
+      "level": 2,
+      "title": "How to Contact Us",
+      "page": 20
+    },
+    {
+      "level": 2,
+      "title": "Acknowledgments",
+      "page": 20
+    },
+    {
+      "level": 1,
+      "title": "Part I. Foundations of Data Systems",
+      "page": 23
+    },
+    {
+      "level": 2,
+      "title": "Chapter 1. Reliable, Scalable, and Maintainable Applications",
+      "page": 25
+    },
+    {
+      "level": 3,
+      "title": "Thinking About Data Systems",
+      "page": 26
+    },
+    {
+      "level": 3,
+      "title": "Reliability",
+      "page": 28
+    },
+    {
+      "level": 4,
+      "title": "Hardware Faults",
+      "page": 29
+    },
+    {
+      "level": 4,
+      "title": "Software Errors",
+      "page": 30
+    },
+    {
+      "level": 4,
+      "title": "Human Errors",
+      "page": 31
+    },
+    {
+      "level": 4,
+      "title": "How Important Is Reliability?",
+      "page": 32
+    },
+    {
+      "level": 3,
+      "title": "Scalability",
+      "page": 32
+    },
+    {
+      "level": 4,
+      "title": "Describing Load",
+      "page": 33
+    },
+    {
+      "level": 4,
+      "title": "Describing Performance",
+      "page": 35
+    },
+    {
+      "level": 4,
+      "title": "Approaches for Coping with Load",
+      "page": 39
+    },
+    {
+      "level": 3,
+      "title": "Maintainability",
+      "page": 40
+    },
+    {
+      "level": 4,
+      "title": "Operability: Making Life Easy for Operations",
+      "page": 41
+    },
+    {
+      "level": 4,
+      "title": "Simplicity: Managing Complexity",
+      "page": 42
+    },
+    {
+      "level": 4,
+      "title": "Evolvability: Making Change Easy",
+      "page": 43
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 44
+    },
+    {
+      "level": 2,
+      "title": "Chapter 2. Data Models and Query Languages",
+      "page": 49
+    },
+    {
+      "level": 3,
+      "title": "Relational Model Versus Document Model",
+      "page": 50
+    },
+    {
+      "level": 4,
+      "title": "The Birth of NoSQL",
+      "page": 51
+    },
+    {
+      "level": 4,
+      "title": "The Object-Relational Mismatch",
+      "page": 51
+    },
+    {
+      "level": 4,
+      "title": "Many-to-One and Many-to-Many Relationships",
+      "page": 55
+    },
+    {
+      "level": 4,
+      "title": "Are Document Databases Repeating History?",
+      "page": 58
+    },
+    {
+      "level": 4,
+      "title": "Relational Versus Document Databases Today",
+      "page": 60
+    },
+    {
+      "level": 3,
+      "title": "Query Languages for Data",
+      "page": 64
+    },
+    {
+      "level": 4,
+      "title": "Declarative Queries on the Web",
+      "page": 66
+    },
+    {
+      "level": 4,
+      "title": "MapReduce Querying",
+      "page": 68
+    },
+    {
+      "level": 3,
+      "title": "Graph-Like Data Models",
+      "page": 71
+    },
+    {
+      "level": 4,
+      "title": "Property Graphs",
+      "page": 72
+    },
+    {
+      "level": 4,
+      "title": "The Cypher Query Language",
+      "page": 74
+    },
+    {
+      "level": 4,
+      "title": "Graph Queries in SQL",
+      "page": 75
+    },
+    {
+      "level": 4,
+      "title": "Triple-Stores and SPARQL",
+      "page": 77
+    },
+    {
+      "level": 4,
+      "title": "The Foundation: Datalog",
+      "page": 82
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 85
+    },
+    {
+      "level": 2,
+      "title": "Chapter 3. Storage and Retrieval",
+      "page": 91
+    },
+    {
+      "level": 3,
+      "title": "Data Structures That Power Your Database",
+      "page": 92
+    },
+    {
+      "level": 4,
+      "title": "Hash Indexes",
+      "page": 94
+    },
+    {
+      "level": 4,
+      "title": "SSTables and LSM-Trees",
+      "page": 98
+    },
+    {
+      "level": 4,
+      "title": "B-Trees",
+      "page": 101
+    },
+    {
+      "level": 4,
+      "title": "Comparing B-Trees and LSM-Trees",
+      "page": 105
+    },
+    {
+      "level": 4,
+      "title": "Other Indexing Structures",
+      "page": 107
+    },
+    {
+      "level": 3,
+      "title": "Transaction Processing or Analytics?",
+      "page": 112
+    },
+    {
+      "level": 4,
+      "title": "Data Warehousing",
+      "page": 113
+    },
+    {
+      "level": 4,
+      "title": "Stars and Snowflakes: Schemas for Analytics",
+      "page": 115
+    },
+    {
+      "level": 3,
+      "title": "Column-Oriented Storage",
+      "page": 117
+    },
+    {
+      "level": 4,
+      "title": "Column Compression",
+      "page": 119
+    },
+    {
+      "level": 4,
+      "title": "Sort Order in Column Storage",
+      "page": 121
+    },
+    {
+      "level": 4,
+      "title": "Writing to Column-Oriented Storage",
+      "page": 123
+    },
+    {
+      "level": 4,
+      "title": "Aggregation: Data Cubes and Materialized Views",
+      "page": 123
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 125
+    },
+    {
+      "level": 2,
+      "title": "Chapter 4. Encoding and Evolution",
+      "page": 133
+    },
+    {
+      "level": 3,
+      "title": "Formats for Encoding Data",
+      "page": 134
+    },
+    {
+      "level": 4,
+      "title": "Language-Specific Formats",
+      "page": 135
+    },
+    {
+      "level": 4,
+      "title": "JSON, XML, and Binary Variants",
+      "page": 136
+    },
+    {
+      "level": 4,
+      "title": "Thrift and Protocol Buffers",
+      "page": 139
+    },
+    {
+      "level": 4,
+      "title": "Avro",
+      "page": 144
+    },
+    {
+      "level": 4,
+      "title": "The Merits of Schemas",
+      "page": 149
+    },
+    {
+      "level": 3,
+      "title": "Modes of Dataflow",
+      "page": 150
+    },
+    {
+      "level": 4,
+      "title": "Dataflow Through Databases",
+      "page": 151
+    },
+    {
+      "level": 4,
+      "title": "Dataflow Through Services: REST and RPC",
+      "page": 153
+    },
+    {
+      "level": 4,
+      "title": "Message-Passing Dataflow",
+      "page": 158
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 161
+    },
+    {
+      "level": 1,
+      "title": "Part II. Distributed Data",
+      "page": 167
+    },
+    {
+      "level": 2,
+      "title": "Chapter 5. Replication",
+      "page": 173
+    },
+    {
+      "level": 3,
+      "title": "Leaders and Followers",
+      "page": 174
+    },
+    {
+      "level": 4,
+      "title": "Synchronous Versus Asynchronous Replication",
+      "page": 175
+    },
+    {
+      "level": 4,
+      "title": "Setting Up New Followers",
+      "page": 177
+    },
+    {
+      "level": 4,
+      "title": "Handling Node Outages",
+      "page": 178
+    },
+    {
+      "level": 4,
+      "title": "Implementation of Replication Logs",
+      "page": 180
+    },
+    {
+      "level": 3,
+      "title": "Problems with Replication Lag",
+      "page": 183
+    },
+    {
+      "level": 4,
+      "title": "Reading Your Own Writes",
+      "page": 184
+    },
+    {
+      "level": 4,
+      "title": "Monotonic Reads",
+      "page": 186
+    },
+    {
+      "level": 4,
+      "title": "Consistent Prefix Reads",
+      "page": 187
+    },
+    {
+      "level": 4,
+      "title": "Solutions for Replication Lag",
+      "page": 189
+    },
+    {
+      "level": 3,
+      "title": "Multi-Leader Replication",
+      "page": 190
+    },
+    {
+      "level": 4,
+      "title": "Use Cases for Multi-Leader Replication",
+      "page": 190
+    },
+    {
+      "level": 4,
+      "title": "Handling Write Conflicts",
+      "page": 193
+    },
+    {
+      "level": 4,
+      "title": "Multi-Leader Replication Topologies",
+      "page": 197
+    },
+    {
+      "level": 3,
+      "title": "Leaderless Replication",
+      "page": 199
+    },
+    {
+      "level": 4,
+      "title": "Writing to the Database When a Node Is Down",
+      "page": 199
+    },
+    {
+      "level": 4,
+      "title": "Limitations of Quorum Consistency",
+      "page": 203
+    },
+    {
+      "level": 4,
+      "title": "Sloppy Quorums and Hinted Handoff",
+      "page": 205
+    },
+    {
+      "level": 4,
+      "title": "Detecting Concurrent Writes",
+      "page": 206
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 214
+    },
+    {
+      "level": 2,
+      "title": "Chapter 6. Partitioning",
+      "page": 221
+    },
+    {
+      "level": 3,
+      "title": "Partitioning and Replication",
+      "page": 222
+    },
+    {
+      "level": 3,
+      "title": "Partitioning of Key-Value Data",
+      "page": 223
+    },
+    {
+      "level": 4,
+      "title": "Partitioning by Key Range",
+      "page": 224
+    },
+    {
+      "level": 4,
+      "title": "Partitioning by Hash of Key",
+      "page": 225
+    },
+    {
+      "level": 4,
+      "title": "Skewed Workloads and Relieving Hot Spots",
+      "page": 227
+    },
+    {
+      "level": 3,
+      "title": "Partitioning and Secondary Indexes",
+      "page": 228
+    },
+    {
+      "level": 4,
+      "title": "Partitioning Secondary Indexes by Document",
+      "page": 228
+    },
+    {
+      "level": 4,
+      "title": "Partitioning Secondary Indexes by Term",
+      "page": 230
+    },
+    {
+      "level": 3,
+      "title": "Rebalancing Partitions",
+      "page": 231
+    },
+    {
+      "level": 4,
+      "title": "Strategies for Rebalancing",
+      "page": 232
+    },
+    {
+      "level": 4,
+      "title": "Operations: Automatic or Manual Rebalancing",
+      "page": 235
+    },
+    {
+      "level": 3,
+      "title": "Request Routing",
+      "page": 236
+    },
+    {
+      "level": 4,
+      "title": "Parallel Query Execution",
+      "page": 238
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 238
+    },
+    {
+      "level": 2,
+      "title": "Chapter 7. Transactions",
+      "page": 243
+    },
+    {
+      "level": 3,
+      "title": "The Slippery Concept of a Transaction",
+      "page": 244
+    },
+    {
+      "level": 4,
+      "title": "The Meaning of ACID",
+      "page": 245
+    },
+    {
+      "level": 4,
+      "title": "Single-Object and Multi-Object Operations",
+      "page": 250
+    },
+    {
+      "level": 3,
+      "title": "Weak Isolation Levels",
+      "page": 255
+    },
+    {
+      "level": 4,
+      "title": "Read Committed",
+      "page": 256
+    },
+    {
+      "level": 4,
+      "title": "Snapshot Isolation and Repeatable Read",
+      "page": 259
+    },
+    {
+      "level": 4,
+      "title": "Preventing Lost Updates",
+      "page": 264
+    },
+    {
+      "level": 4,
+      "title": "Write Skew and Phantoms",
+      "page": 268
+    },
+    {
+      "level": 3,
+      "title": "Serializability",
+      "page": 273
+    },
+    {
+      "level": 4,
+      "title": "Actual Serial Execution",
+      "page": 274
+    },
+    {
+      "level": 4,
+      "title": "Two-Phase Locking (2PL)",
+      "page": 279
+    },
+    {
+      "level": 4,
+      "title": "Serializable Snapshot Isolation (SSI)",
+      "page": 283
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 288
+    },
+    {
+      "level": 2,
+      "title": "Chapter 8. The Trouble with Distributed Systems",
+      "page": 295
+    },
+    {
+      "level": 3,
+      "title": "Faults and Partial Failures",
+      "page": 296
+    },
+    {
+      "level": 4,
+      "title": "Cloud Computing and Supercomputing",
+      "page": 297
+    },
+    {
+      "level": 3,
+      "title": "Unreliable Networks",
+      "page": 299
+    },
+    {
+      "level": 4,
+      "title": "Network Faults in Practice",
+      "page": 301
+    },
+    {
+      "level": 4,
+      "title": "Detecting Faults",
+      "page": 302
+    },
+    {
+      "level": 4,
+      "title": "Timeouts and Unbounded Delays",
+      "page": 303
+    },
+    {
+      "level": 4,
+      "title": "Synchronous Versus Asynchronous Networks",
+      "page": 306
+    },
+    {
+      "level": 3,
+      "title": "Unreliable Clocks",
+      "page": 309
+    },
+    {
+      "level": 4,
+      "title": "Monotonic Versus Time-of-Day Clocks",
+      "page": 310
+    },
+    {
+      "level": 4,
+      "title": "Clock Synchronization and Accuracy",
+      "page": 311
+    },
+    {
+      "level": 4,
+      "title": "Relying on Synchronized Clocks",
+      "page": 313
+    },
+    {
+      "level": 4,
+      "title": "Process Pauses",
+      "page": 317
+    },
+    {
+      "level": 3,
+      "title": "Knowledge, Truth, and Lies",
+      "page": 322
+    },
+    {
+      "level": 4,
+      "title": "The Truth Is Defined by the Majority",
+      "page": 322
+    },
+    {
+      "level": 4,
+      "title": "Byzantine Faults",
+      "page": 326
+    },
+    {
+      "level": 4,
+      "title": "System Model and Reality",
+      "page": 328
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 332
+    },
+    {
+      "level": 2,
+      "title": "Chapter 9. Consistency and Consensus",
+      "page": 343
+    },
+    {
+      "level": 3,
+      "title": "Consistency Guarantees",
+      "page": 344
+    },
+    {
+      "level": 3,
+      "title": "Linearizability",
+      "page": 346
+    },
+    {
+      "level": 4,
+      "title": "What Makes a System Linearizable?",
+      "page": 347
+    },
+    {
+      "level": 4,
+      "title": "Relying on Linearizability",
+      "page": 352
+    },
+    {
+      "level": 4,
+      "title": "Implementing Linearizable Systems",
+      "page": 354
+    },
+    {
+      "level": 4,
+      "title": "The Cost of Linearizability",
+      "page": 357
+    },
+    {
+      "level": 3,
+      "title": "Ordering Guarantees",
+      "page": 361
+    },
+    {
+      "level": 4,
+      "title": "Ordering and Causality",
+      "page": 361
+    },
+    {
+      "level": 4,
+      "title": "Sequence Number Ordering",
+      "page": 365
+    },
+    {
+      "level": 4,
+      "title": "Total Order Broadcast",
+      "page": 370
+    },
+    {
+      "level": 3,
+      "title": "Distributed Transactions and Consensus",
+      "page": 374
+    },
+    {
+      "level": 4,
+      "title": "Atomic Commit and Two-Phase Commit (2PC)",
+      "page": 376
+    },
+    {
+      "level": 4,
+      "title": "Distributed Transactions in Practice",
+      "page": 382
+    },
+    {
+      "level": 4,
+      "title": "Fault-Tolerant Consensus",
+      "page": 386
+    },
+    {
+      "level": 4,
+      "title": "Membership and Coordination Services",
+      "page": 392
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 395
+    },
+    {
+      "level": 1,
+      "title": "Part III. Derived Data",
+      "page": 407
+    },
+    {
+      "level": 2,
+      "title": "Chapter 10. Batch Processing",
+      "page": 411
+    },
+    {
+      "level": 3,
+      "title": "Batch Processing with Unix Tools",
+      "page": 413
+    },
+    {
+      "level": 4,
+      "title": "Simple Log Analysis",
+      "page": 413
+    },
+    {
+      "level": 4,
+      "title": "The Unix Philosophy",
+      "page": 416
+    },
+    {
+      "level": 3,
+      "title": "MapReduce and Distributed Filesystems",
+      "page": 419
+    },
+    {
+      "level": 4,
+      "title": "MapReduce Job Execution",
+      "page": 421
+    },
+    {
+      "level": 4,
+      "title": "Reduce-Side Joins and Grouping",
+      "page": 425
+    },
+    {
+      "level": 4,
+      "title": "Map-Side Joins",
+      "page": 430
+    },
+    {
+      "level": 4,
+      "title": "The Output of Batch Workflows",
+      "page": 433
+    },
+    {
+      "level": 4,
+      "title": "Comparing Hadoop to Distributed Databases",
+      "page": 436
+    },
+    {
+      "level": 3,
+      "title": "Beyond MapReduce",
+      "page": 441
+    },
+    {
+      "level": 4,
+      "title": "Materialization of Intermediate State",
+      "page": 441
+    },
+    {
+      "level": 4,
+      "title": "Graphs and Iterative Processing",
+      "page": 446
+    },
+    {
+      "level": 4,
+      "title": "High-Level APIs and Languages",
+      "page": 448
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 451
+    },
+    {
+      "level": 2,
+      "title": "Chapter 11. Stream Processing",
+      "page": 461
+    },
+    {
+      "level": 3,
+      "title": "Transmitting Event Streams",
+      "page": 462
+    },
+    {
+      "level": 4,
+      "title": "Messaging Systems",
+      "page": 463
+    },
+    {
+      "level": 4,
+      "title": "Partitioned Logs",
+      "page": 468
+    },
+    {
+      "level": 3,
+      "title": "Databases and Streams",
+      "page": 473
+    },
+    {
+      "level": 4,
+      "title": "Keeping Systems in Sync",
+      "page": 474
+    },
+    {
+      "level": 4,
+      "title": "Change Data Capture",
+      "page": 476
+    },
+    {
+      "level": 4,
+      "title": "Event Sourcing",
+      "page": 479
+    },
+    {
+      "level": 4,
+      "title": "State, Streams, and Immutability",
+      "page": 481
+    },
+    {
+      "level": 3,
+      "title": "Processing Streams",
+      "page": 486
+    },
+    {
+      "level": 4,
+      "title": "Uses of Stream Processing",
+      "page": 487
+    },
+    {
+      "level": 4,
+      "title": "Reasoning About Time",
+      "page": 490
+    },
+    {
+      "level": 4,
+      "title": "Stream Joins",
+      "page": 494
+    },
+    {
+      "level": 4,
+      "title": "Fault Tolerance",
+      "page": 498
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 501
+    },
+    {
+      "level": 2,
+      "title": "Chapter 12. The Future of Data Systems",
+      "page": 511
+    },
+    {
+      "level": 3,
+      "title": "Data Integration",
+      "page": 512
+    },
+    {
+      "level": 4,
+      "title": "Combining Specialized Tools by Deriving Data",
+      "page": 512
+    },
+    {
+      "level": 4,
+      "title": "Batch and Stream Processing",
+      "page": 516
+    },
+    {
+      "level": 3,
+      "title": "Unbundling Databases",
+      "page": 521
+    },
+    {
+      "level": 4,
+      "title": "Composing Data Storage Technologies",
+      "page": 521
+    },
+    {
+      "level": 4,
+      "title": "Designing Applications Around Dataflow",
+      "page": 526
+    },
+    {
+      "level": 4,
+      "title": "Observing Derived State",
+      "page": 531
+    },
+    {
+      "level": 3,
+      "title": "Aiming for Correctness",
+      "page": 537
+    },
+    {
+      "level": 4,
+      "title": "The End-to-End Argument for Databases",
+      "page": 538
+    },
+    {
+      "level": 4,
+      "title": "Enforcing Constraints",
+      "page": 543
+    },
+    {
+      "level": 4,
+      "title": "Timeliness and Integrity",
+      "page": 546
+    },
+    {
+      "level": 4,
+      "title": "Trust, but Verify",
+      "page": 550
+    },
+    {
+      "level": 3,
+      "title": "Doing the Right Thing",
+      "page": 555
+    },
+    {
+      "level": 4,
+      "title": "Predictive Analytics",
+      "page": 555
+    },
+    {
+      "level": 4,
+      "title": "Privacy and Tracking",
+      "page": 558
+    },
+    {
+      "level": 3,
+      "title": "Summary",
+      "page": 565
+    },
+    {
+      "level": 1,
+      "title": "Glossary",
+      "page": 575
+    },
+    {
+      "level": 1,
+      "title": "Index",
+      "page": 581
+    },
+    {
+      "level": 1,
+      "title": "About the Author",
+      "page": 613
+    },
+    {
+      "level": 1,
+      "title": "Colophon",
+      "page": 613
+    }
+  ]
+}
