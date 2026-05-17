@@ -4,6 +4,175 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-20] Insertion Sort Cost Analysis, Order of Growth, and Divide-and-Conquer (Merge Sort) — How CLRS Goes From Code to Asymptotic Bound · pp.47–62 · Ch.2 §2.2 (full cost derivation) → §2.3 Designing Algorithms (Divide-and-Conquer → Merge Sort → Analysis)
+
+### TL;DR
+CLRS makes the move from "code that runs" to "complexity class" rigorous by **costing every line individually**, summing over the worst-case loop trip counts, then keeping only the dominant term — turning a literal `c₁·n + c₂·(n-1) + …` into a clean `Θ(n²)`. With that machinery in hand it introduces **divide-and-conquer** via merge sort, whose recurrence `T(n) = 2T(n/2) + Θ(n)` resolves to `Θ(n lg n)` — beating insertion sort asymptotically but losing the constant-factor race for small n.
+
+### Intuition — "this is like…"
+Insertion sort is **how you sort a hand of playing cards** — pick up the next card, slide it leftward into its slot. Merge sort is **how a tournament bracket consolidates winners** — sort halves independently, then walk two sorted streams in lockstep, taking the smaller head each step. The point of CLRS Ch. 2 is that these intuitions can be turned into *provable* `Θ(n²)` vs `Θ(n lg n)` bounds by a mechanical procedure.
+
+### Mechanics
+
+#### 1. The line-by-line cost model
+
+CLRS does this once explicitly, then never again — every later analysis is a shortcut to skip this work.
+
+| Pseudocode line | Cost | Times executed |
+|---|---|---|
+| `1: for j = 2 to A.length` | c₁ | n |
+| `2: key = A[j]` | c₂ | n − 1 |
+| `3: // comment` | 0 | n − 1 |
+| `4: i = j − 1` | c₄ | n − 1 |
+| `5: while i > 0 and A[i] > key` | c₅ | Σ tⱼ |
+| `6: A[i+1] = A[i]` | c₆ | Σ (tⱼ − 1) |
+| `7: i = i − 1` | c₇ | Σ (tⱼ − 1) |
+| `8: A[i+1] = key` | c₈ | n − 1 |
+
+Total: `T(n) = c₁n + c₂(n−1) + c₄(n−1) + c₅·Σtⱼ + c₆·Σ(tⱼ−1) + c₇·Σ(tⱼ−1) + c₈(n−1)`
+
+The whole drama is in **what tⱼ is** — the number of inner-while iterations on pass j. Best, worst, and average cases differ only in tⱼ.
+
+#### 2. Best / worst / average — the three regimes
+
+| Case | Input shape | tⱼ | Closed form | Class |
+|---|---|---|---|---|
+| **Best** | already sorted | 1 always | linear `an + b` | **Θ(n)** |
+| **Worst** | reverse sorted | tⱼ = j | quadratic `an² + bn + c` | **Θ(n²)** |
+| **Average** | random | E[tⱼ] = j/2 | quadratic with halved constants | **Θ(n²)** |
+
+The crucial sum used in the worst case:
+```
+Σ_{j=2..n} j  = n(n+1)/2 − 1
+Σ_{j=2..n} (j−1) = n(n−1)/2
+```
+
+Substituted in:
+```
+T_worst(n) = (c₅/2 + c₆/2 + c₇/2)·n²
+           + (c₁ + c₂ + c₄ + c₅/2 − c₆/2 − c₇/2 + c₈)·n
+           − (c₂ + c₄ + c₅ + c₈)
+         = a·n² + b·n + c        ← clearly quadratic
+```
+
+#### 3. Why we can ignore everything but n²
+
+The **order-of-growth** abstraction throws out:
+- Lower-order terms (`bn`, `c`) — dominated as n grows
+- Leading constants (`a`) — depend on machine, compiler, line cost; irrelevant to algorithm choice
+
+```
+For n = 10⁶:
+   a·n²      = a · 10¹²        ← dominates
+   b·n       = b · 10⁶         ← 10⁶ × smaller
+   c         = constant        ← 10¹² × smaller
+```
+
+So insertion sort is **Θ(n²)** — full stop.
+
+#### 4. The RAM model — what "one step" actually means
+
+CLRS's cost-counting assumes a **Random-Access Machine** with these properties:
+
+| RAM-model assumption | Reality on real CPUs |
+|---|---|
+| Any memory access = 1 step | L1 hit ~4 cycles, L2 ~12, L3 ~40, DRAM ~200 — **50× spread ignored** |
+| Arithmetic on word-sized int = 1 step | True on 64-bit ALU |
+| No instruction-level parallelism | Modern CPUs retire ~4 IPC; SIMD does 4–16 ops/cycle |
+| No branch cost | Branch mispredict ~15 cycles flushed pipeline |
+| No cache | Sequential scan ~10× faster than random access on same `n` |
+
+> **Why the model survives anyway**: for big-O comparisons between algorithms on the same machine, the constants cancel in ratio. RAM-model `O(n²)` vs `O(n lg n)` will *still* show that gap on real hardware — just shifted by hardware constants. The model fails when comparing algorithms whose hardware-friendliness differs sharply (e.g., quicksort's cache-friendliness lets it beat heapsort despite identical asymptotics).
+
+#### 5. Divide-and-Conquer (§2.3) — the template
+
+```
+   ┌─────────┐
+   │ Divide  │ ─► problem of size n  →  k subproblems of size n/k
+   └─────────┘
+        │
+   ┌─────────┐
+   │ Conquer │ ─► solve each subproblem recursively (base case: small enough to solve directly)
+   └─────────┘
+        │
+   ┌─────────┐
+   │ Combine │ ─► merge solutions to get the full answer
+   └─────────┘
+```
+
+Merge sort instantiates: divide = split in half (free, O(1)), conquer = recurse on each half, combine = MERGE (Θ(n) two-pointer walk over sorted halves).
+
+#### 6. MERGE — the two-pointer combine step
+
+```
+   L: [2, 4, 5, 7]  R: [1, 3, 6, 8]
+       ▲                ▲
+       │                │
+       ├────► compare ◄─┤   ← take smaller, advance that pointer
+       ▼
+   output: [1]
+   then [1, 2], [1, 2, 3], [1, 2, 3, 4], ...
+```
+
+Sentinels (∞ at the end of each half) eliminate the boundary check inside the inner loop. Each element copied exactly once → Θ(n) total work for the combine step.
+
+#### 7. The recurrence and its solution
+
+```
+T(n) = Θ(1)              if n = 1
+T(n) = 2·T(n/2) + Θ(n)   if n > 1
+                ^^^^^^
+                divide+conquer       combine (MERGE is linear)
+```
+
+Visualized as the recursion tree:
+```
+   level 0:                n                              cost: n
+                          / \
+   level 1:           n/2   n/2                           cost: 2·(n/2) = n
+                      / \   / \
+   level 2:        n/4 n/4 n/4 n/4                        cost: 4·(n/4) = n
+                       ...
+   level lg n:    1 1 1 ... 1   (n leaves)                cost: n·1 = n
+                  ──────────────────────────────────
+                  Total: lg n levels × n per level = n lg n
+```
+
+So **T(n) = Θ(n lg n)**. Formalized via the Master Theorem in Ch. 4.
+
+#### 8. Insertion sort vs merge sort — when does each win?
+
+| n | Insertion sort (n²) | Merge sort (n lg n) | Winner |
+|---|---|---|---|
+| 8 | ~64 ops | ~24 ops | Merge sort (asymptotically) — but constants! |
+| 32 | ~1024 | ~160 | Merge sort |
+| 1000 | 10⁶ | ~10⁴ | Merge sort by 100× |
+| 10⁶ | 10¹² (≈hours) | ~2·10⁷ (≈ms) | Merge sort by 10⁵× |
+| n ≤ ~30 (real CPUs) | wins (constants + cache + no malloc) | loses for small n | **Insertion sort** |
+
+> This is why real sort implementations (`std::sort`, Timsort, pdqsort) use **insertion sort below a threshold (~16–32)** and merge sort / introsort above. CLRS hints at this with Problem 2-1.
+
+### Where this shows up in real systems
+- **Timsort (Python, Java)**: merge sort variant with insertion-sort base case at small runs. Exploits already-sorted subarrays (where insertion sort hits Θ(n) best case).
+- **GNU `std::sort` (introsort)**: quicksort + heapsort fallback + insertion sort base case. Same threshold trick.
+- **Database sort spills**: external merge sort with k-way merge — same divide-and-conquer template, k > 2 for I/O efficiency.
+- **MapReduce / Spark**: the map+shuffle+reduce skeleton is divide-and-conquer at distributed-systems scale. The reduce side often runs a merge identical to CLRS's MERGE on k sorted streams.
+
+### Diagnostic questions
+1. *"Why is the best case for insertion sort Θ(n) not Θ(1)?"* — Even if the array is sorted, the outer `for j = 2..n` loop runs n − 1 times. The inner while just exits immediately each time. Constant work per outer iteration × n iterations = Θ(n). (Wrong: "no work needed for sorted input" — the algorithm still has to *check* each element.)
+2. *"If merge sort is Θ(n lg n) and insertion sort is Θ(n²), why does anyone use insertion sort?"* — Constants. Insertion sort has tiny per-element constants (a few register ops, in-place, no recursion, no heap), and for n ≲ 30 the n² penalty is smaller than merge sort's overhead. Also: it's stable, in-place, online (can sort as data arrives). (Wrong: "merge sort is always faster" — only asymptotically.)
+3. *"What does the RAM model NOT capture?"* — Cache hierarchy (L1/L2/L3/DRAM ratios), branch prediction, ILP, SIMD, GPU/parallel cores, NUMA, virtual memory cost. Two algorithms with identical RAM-model complexity can differ by 10× on real hardware due to cache friendliness alone. (Wrong: "RAM model is wrong" — it's a useful abstraction that captures algorithm structure, just not constant factors.)
+4. *"Why is the MERGE step Θ(n) and not Θ(n lg n)?"* — Each of the n elements is examined exactly once and copied exactly once during a single merge. The lg n factor comes from the *number of times merge is called recursively* (the tree depth), not from any single merge call. Conflating these is the most common analysis bug. (Wrong: "merging involves comparison so log factor" — no, comparisons are constant per element.)
+5. *"Can I trust the RAM model for an algorithm running on a GPU?"* — Not really. GPUs have explicit memory hierarchies (shared, global), SIMT divergence costs, and bandwidth-bound regimes that the RAM model ignores. Use the **PRAM model** or, more practically, the **roofline model** (Williams, Waterman, Patterson, 2009). (Wrong: "yes, complexity is complexity" — algorithm constants on GPU can be 100× off RAM-model predictions.)
+
+### See also
+- CLRS Ch. 4 — Master Theorem; formalizes solving `T(n) = aT(n/b) + f(n)`.
+- COD Ch. 5 (memory hierarchy) — the layer the RAM model abstracts away. Real cache effects are why "asymptotically slower" can mean "actually faster".
+- DBI 2026-05-20 (B-Tree setup) — the disk version of the same hierarchy-aware argument: BST loses on disk because the RAM model breaks at the seek/transfer boundary.
+- TPP 2026-05-20 (Estimating) — the human analogue: estimate before measuring, then refine.
+
+---
+
 ## [2026-05-19] Loop-Invariant Termination, Pseudocode Conventions (Full), and the RAM Model — How CLRS Defines "Cost" · pp.41–46 · Ch.2 §2.1 (close) → §2.2 Analyzing Algorithms
 
 ### TL;DR

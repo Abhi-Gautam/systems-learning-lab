@@ -1,4 +1,0 @@
-# CUDA - CUDA Programming
-## Notes
-
----

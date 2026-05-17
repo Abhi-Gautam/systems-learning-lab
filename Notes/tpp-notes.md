@@ -4,6 +4,144 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-20] Estimating (Full Chapter): Units, Where Estimates Come From, PERT, and "Iterate the Schedule with the Code" · pp.90–115 · Ch.13 §Estimating (continued from p.89: Units → Where Do Estimates Come From → Estimating Project Schedules → PERT → What to Say When Asked → close) → Ch.14 Pragmatic Projects (open)
+
+### TL;DR
+The chapter argues that estimating well is **not** about being accurate — it's about **picking units that *communicate* the confidence you actually have**, building a model good enough to test against reality fast, and **iterating the schedule alongside the code** so the estimate is always grounded in measured velocity rather than wishful thinking. The big move: don't try to predict project duration upfront; **deliver a thin slice, measure, then re-estimate** — a feedback loop, not a prophecy.
+
+### Intuition — "this is like…"
+Estimating a software project is like estimating how long a road trip will take when you don't know the route, the car, or the weather. The *wrong* answer is to study atlases for a week and produce "9 hours 42 minutes." The *right* answer is to say "about a day," start driving, and after 90 minutes check how far you got — then re-estimate based on actual data. Each leg of the trip recalibrates the prediction.
+
+### Mechanics
+
+#### 1. Choose units that signal your confidence
+
+| Duration | Quote in | Why |
+|---|---|---|
+| 1–15 days | days | listener expects accuracy within a day |
+| 3–8 weeks | weeks | "5 weeks" doesn't promise the specific Friday |
+| 8–30 weeks | months | "6 months" buys a ±4-week window |
+| 30+ weeks | think hard before answering | beyond the horizon of reliable estimation |
+
+> **"125 working days" implies a precision you don't have.** Convert to "about six months" — same magnitude, honest about the error bar. This is *Fermi estimation* applied to schedules: the answer's *units* encode the confidence interval.
+
+#### 2. Where do estimates actually come from?
+
+In order of cost-effectiveness:
+
+```
+   1. Ask someone who's done it       ← always try first
+                ↓
+   2. Build a model of the problem    ← simplify until tractable
+                ↓
+   3. Break model into components     ← estimate each, sum + propagate uncertainty
+                ↓
+   4. Multiply your estimate, then    ← humans systematically underestimate
+      multiply by your "ego factor"
+```
+
+The **model** is the heart of it. You're not estimating the actual system — you're estimating a **simplified model** of the system. Two skills are essential:
+- Knowing what to leave out (corners, edge cases, polish — captured by a multiplier)
+- Knowing what to include (the dominant cost driver — usually NOT what looks complicated)
+
+#### 3. PERT: Program Evaluation and Review Technique
+
+Each task gets three numbers, then an expected value and variance:
+
+```
+   Expected duration μ = (o + 4m + p) / 6
+   Variance         σ² = ((p − o) / 6)²
+
+   where:
+     o = optimistic estimate (best case)
+     m = most likely estimate
+     p = pessimistic estimate
+```
+
+| Reason PERT works | What it counters |
+|---|---|
+| Forces you to think about variance, not just mean | "What could go wrong?" otherwise unasked |
+| Weighted toward `m` (×4) but anchored by `o, p` | Pure most-likely is too optimistic |
+| Variance composes (sums when tasks are independent) | Gives you a project-level error bar, not just one number |
+
+For a project of N tasks: total expected = Σμᵢ; total variance = Σσᵢ²; total std-dev = √(Σσᵢ²). The 95% confidence range is roughly **μ_total ± 2·σ_total**.
+
+> **The composition matters**: variances *sum* for independent tasks. Ten tasks each ±1 day combine to ±√10 ≈ ±3.2 days, not ±10 days. This is why breaking the project down *reduces* the headline uncertainty (variance pools).
+
+#### 4. The estimation/schedule feedback loop
+
+The chapter's most actionable diagram:
+
+```
+   ┌──────────────────┐
+   │ Check requirements│
+   └────────┬─────────┘
+            │
+   ┌────────▼─────────┐
+   │ Analyze risk     │
+   └────────┬─────────┘
+            │
+   ┌────────▼─────────┐
+   │ Design / Implement│
+   │ Integrate / Test  │
+   └────────┬─────────┘
+            │
+   ┌────────▼─────────┐
+   │ Validate against │
+   │ users            │
+   └────────┬─────────┘
+            │
+   ┌────────▼─────────┐
+   │ ← Loop back ←    │ ← update the schedule based on what actually happened
+   └──────────────────┘
+```
+
+Each iteration produces both code *and* a refined estimate. The schedule isn't a contract written in week 1; it's a **regression model** that gets more data every sprint.
+
+#### 5. What to say when asked "how long will it take?"
+
+| The question | Wrong answer | Right answer |
+|---|---|---|
+| "How long?" right now | "Two weeks" (off the cuff) | "I'll get back to you in a few hours/days" |
+| Pressured for instant number | Capitulate to a guess | "Let me model it and call you back" |
+| Asked again after iterating | Same number, defensively | Updated number with the new data |
+
+The chapter calls this **Tip 18: Estimate to Avoid Surprises** — surprises destroy trust, predictable variance does not. Saying "we slipped 10% this iteration, on track to slip 10% by end" is fine; saying "everything's great" then dropping a 4-week delay in week 12 is a career-ender.
+
+#### 6. Ch. 14 Pragmatic Projects — opening (just enough to bridge)
+
+The next chapter (which this chunk opens) is about how **teams** apply pragmatic practices: pragmatic teams, ubiquitous automation, ruthless testing, all evolved from the individual practices in chapters 1–13. The framing: *individual habits + team rituals = project-scale outcomes*. We'll get the full mechanics next session.
+
+| Individual (Ch. 1–13) | Team (Ch. 14+) |
+|---|---|
+| DRY in your code | DRY across the team's codebases |
+| Tracer bullets in a feature | Tracer bullets through deployment + ops |
+| Your estimate | Team velocity |
+| Your refactor | Team-wide automated tests + CI |
+
+### Where this shows up in real systems
+- **Agile velocity tracking**: story points / sprint = a measured-velocity estimator. Direct descendant of "iterate the schedule with the code."
+- **PERT in industrial PM**: still the basis of Microsoft Project, Primavera P6, and most CPM tools. Used heavily in construction, aerospace, defense scheduling.
+- **Google's "T-shirt sizing"**: S/M/L/XL replaces hour-precision with confidence-precision. Same idea as TPP's unit table — match the precision of your number to the precision of your knowledge.
+- **Joel on Software's "Evidence-Based Scheduling"**: each developer's estimate gets a Monte Carlo simulation against their historical accuracy ratio. PERT taken to its logical conclusion.
+- **SRE error budgets**: SLO + error budget = a *measured* (not estimated) reliability target with explicit variance. Same philosophy applied to operations.
+
+### Diagnostic questions
+1. *"Why is 'about six months' more honest than '125 working days' for the same project?"* — Because the unit you pick is itself a claim about your confidence interval. Days implies ±1 day; months implies ±1 month. If you don't actually know the answer to ±1 day, claiming days is lying with precision. (Wrong: "they're the same magnitude" — yes, but the listener interprets the *unit* as a confidence signal.)
+2. *"Why does breaking a project into smaller tasks reduce overall schedule uncertainty?"* — Because independent task variances *add as squares* (σ² sums), so combined std-dev is √(Σσᵢ²) — sublinear in the number of tasks. Ten ±1-day tasks combine to ±3.2 days, not ±10. (Wrong: "smaller tasks are easier to estimate" — true, but the deeper reason is the variance composition.)
+3. *"Why is asking someone who's done it before the *first* technique, not modeling?"* — Because the answer is already calibrated against reality. A model is a *guess* about reality; another human's experience is *measurement*. Models are necessary when no precedent exists, but never the first choice if precedent does. (Wrong: "modeling is more rigorous" — rigor doesn't beat measurement.)
+4. *"How is the estimation feedback loop different from 'just doing agile sprints'?"* — Sprints are the *cadence*; the loop is the *epistemic stance*. The point is that the schedule is updated *with* the code, with each sprint producing a refined estimate. Many teams sprint but never re-baseline the schedule, defeating the purpose. (Wrong: "agile = no estimating" — TPP says the opposite; agile requires *more* frequent estimation, not less.)
+5. *"What's wrong with saying 'two weeks' off the top of your head when asked?"* — You've now anchored expectations on a number you produced without a model. When the real answer comes in at 4 weeks, you've slipped 100% — even if 4 weeks would have been fine had you said "4 weeks" from the start. Always buy time to build a model. (Wrong: "give your best guess" — your best guess in the absence of a model is wrong with high variance; better to defer.)
+
+### See also
+- TPP 2026-05-19 (Tracer Bullets, Prototypes, Domain Languages, Estimating opening) — direct prequel; this entry completes the Estimating chapter.
+- TPP Ch. 14+ (Pragmatic Projects) — team-scale application of these individual practices.
+- CLRS 2026-05-20 (Cost Analysis & Recurrences) — formal version of "model the work, estimate by summing parts." PERT is to schedules what asymptotic analysis is to algorithms.
+- DDIA capacity planning chapters (Ch. 1, 11) — load estimation in distributed systems; same Fermi-estimation skill applied to throughput, latency, storage.
+- WPF (Why Programs Fail) — the natural complement: estimating *bug discovery* timelines.
+
+---
+
 ## [2026-05-19] Tracer Bullets, Prototypes, Domain Languages, and Estimating — The Four-Chapter Risk-Reduction Arc · pp.74–89 · Ch.2 §10 (Tracer Bullets, cont.) → §11 Prototypes and Post-it Notes → §12 Domain Languages → §13 Estimating (start)
 
 ### TL;DR

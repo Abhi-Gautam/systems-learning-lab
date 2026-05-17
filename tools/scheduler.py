@@ -44,7 +44,7 @@ DEFAULT_RATES = {
     # T3 (25 min): mixed depth
     "LGO": 10, "DSG": 10, "SAHP": 9, "LDDD": 9, "CLRS": 6,
     # T4 (15 min)
-    "DBI": 5, "CUDA": 4,
+    "DBI": 5,
 }
 
 # Initial book on each slot (Day 0).
@@ -55,11 +55,15 @@ TIER_BOOKS = {
     "T1": ["DDIA", "OSTEP", "COD", "N2T"],
     "T2": ["CC", "TPP", "REF", "WELC", "WPF"],
     "T3": ["LGO", "CLRS", "SAHP", "LDDD", "DSG"],
-    "T4": ["DBI", "CUDA"],
+    "T4": ["DBI"],
 }
 
 # Books gated behind another book's completion.
 GATES = {"DSG": "LGO"}
+
+# Sticky books: never yield off their slot until completed; also preferred over
+# non-sticky candidates when their tier picks a new book.
+STICKY_BOOKS = {"N2T", "COD"}
 
 # Quantum policy
 SOFT_YIELD_DAY = 5  # earliest day a chapter-end can trigger yield
@@ -68,10 +72,12 @@ HARD_CAP_DAY = 10   # forced yield at this day
 
 # ---------- glossary helpers ----------
 
-FRONT_MATTER = ("front cover", "preface", "contents", "copyright", "acknowledg",
-                "foreword", "dedication", "about the", "title page", "trademarks",
-                "to everyone", "to educators", "to students", "final words",
-                "references\n", "halftitle", "frontmatter")
+FRONT_MATTER = ("front cover", "cover", "preface", "contents", "table of contents",
+                "copyright", "acknowledg", "foreword", "dedication", "about the",
+                "title page", "trademarks", "to everyone", "to educators",
+                "to students", "final words", "references\n", "halftitle",
+                "frontmatter", "endorsement", "errata", "introduction\n",
+                "list of figures", "list of tables", "publisher")
 
 
 def is_front_matter(title: str) -> bool:
@@ -215,13 +221,15 @@ def pick_next(tier: str, state: SchedulerState, on_slot_books: set[str]) -> str 
     candidates = eligible_in_tier(tier, state, on_slot_books)
     if not candidates:
         return None
-    # aging: smallest last_active wins (longest idle). Tie-break by TIER_BOOKS order.
-    return min(candidates, key=lambda b: (state.books[b].last_active, TIER_BOOKS[tier].index(b)))
+    # sticky books first, then aging (smallest last_active = longest idle), tie-break by tier order
+    return min(candidates, key=lambda b: (b not in STICKY_BOOKS, state.books[b].last_active, TIER_BOOKS[tier].index(b)))
 
 
 def should_yield(slot: SlotState, glossary: dict) -> bool:
     if slot.book is None:
         return False
+    if slot.book in STICKY_BOOKS:
+        return False  # sticky books leave only via finished_book branch
     if slot.days_on_slot >= HARD_CAP_DAY and slot.chapters_done_this_quantum >= 1:
         return True
     if slot.days_on_slot >= SOFT_YIELD_DAY and slot.chapters_done_this_quantum >= 1:
@@ -282,7 +290,11 @@ def advance_one_day(state: SchedulerState, actual_ends: dict[str, int] | None = 
             nxt = pick_next(tier, state, on_slot)
             day_record["slots"][tier]["eviction"] = f"book complete → {nxt or '(tier exhausted)'}"
             if nxt:
-                state.slots[tier] = SlotState(book=nxt, page=state.books[nxt].page)
+                start_page = state.books[nxt].page
+                if state.books[nxt].last_active == -1:
+                    start_page = max(start_page, first_chapter_page(load_glossary(nxt)))
+                    state.books[nxt].page = start_page
+                state.slots[tier] = SlotState(book=nxt, page=start_page)
                 state.books[nxt].last_active = state.day
             else:
                 state.slots[tier] = SlotState(book=None, page=0)
@@ -291,7 +303,11 @@ def advance_one_day(state: SchedulerState, actual_ends: dict[str, int] | None = 
             nxt = pick_next(tier, state, on_slot)
             if nxt and nxt != slot.book:
                 day_record["slots"][tier]["yield"] = f"{slot.book} → {nxt}"
-                state.slots[tier] = SlotState(book=nxt, page=state.books[nxt].page)
+                start_page = state.books[nxt].page
+                if state.books[nxt].last_active == -1:
+                    start_page = max(start_page, first_chapter_page(load_glossary(nxt)))
+                    state.books[nxt].page = start_page
+                state.slots[tier] = SlotState(book=nxt, page=start_page)
                 state.books[nxt].last_active = state.day
             # if only this book remains in tier, keep it (reset quantum counter)
             else:

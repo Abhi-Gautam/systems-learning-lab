@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 GLOSSARY_DIR = ROOT / "Glossaries"
 
 ALIASES = [
-    "DDIA", "OSTEP", "CUDA", "N2T", "COD", "DBI",
+    "DDIA", "OSTEP", "N2T", "COD", "DBI",
     "CC", "TPP", "REF", "SAHP", "WPF", "WELC",
     "LDDD", "DSG", "LGO", "CLRS",
 ]

@@ -4,6 +4,166 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-20] Data Locality, Convergence, Query Languages, MapReduce, and Graph Models — How DDIA Maps the Full Data-Model Landscape · pp.63–87 · Ch.2 (Data Locality → Convergence → Query Languages: Declarative vs Imperative → MapReduce as Middle Ground → Graph Data Models → Property Graphs → Cypher)
+
+### TL;DR
+Doc-database wins on **locality** for tree-shaped data but loses it the moment you need joins or partial updates; meanwhile relational stores like **Spanner** can fake locality by *interleaving* child rows under their parents — so the document-vs-relational line is blurrier than the marketing says. The deeper axis is **declarative vs imperative query languages**: SQL lets the planner pick the path (and re-pick when statistics change), MapReduce forces you to spell out the algorithm. Graph models become the *right* tool only when relationships outnumber and outchange the entities — at which point property graphs (Neo4j/Cypher) or triple stores (Datomic/SPARQL) crush the relational join-explosion.
+
+### Intuition — "this is like…"
+Think of three filing systems for a company's HR records:
+
+| Approach | Looks like | Best for | Pain point |
+|---|---|---|---|
+| **Document** | Each employee = one fat JSON file in a folder | Reading the whole record | Updating shared data (org chart) means rewriting many files |
+| **Relational** | Normalized tables, joins on every read | Anything with shared lookups (roles, departments) | Random I/O for a "full picture" read |
+| **Graph** | Pinboard with strings between people, projects, skills | "Who has worked with whom on X, transitively?" | Awkward for bulk data dumps |
+
+Each is optimal for *one* dominant access pattern. The mistake is treating the choice as ideological.
+
+### Mechanics
+
+#### 1. Data locality — the document win, and its limits
+
+```
+   Document store (one read)              Relational store (multiple reads)
+   ┌──────────────────────────────┐     ┌─────┐  ┌─────┐  ┌──────┐  ┌────────┐
+   │ user {                       │     │users│  │roles│  │addr. │  │ skills │
+   │   id, name, email,           │     │ ... │  │ ... │  │ ...  │  │ ...    │
+   │   roles: [...],              │     └──┬──┘  └──┬──┘  └──┬───┘  └───┬────┘
+   │   addresses: [...],          │        └────┬───┴────────┴──────────┘
+   │   skills: [...]              │             │ JOIN
+   │ }                            │           multiple page reads
+   └──────────────────────────────┘
+```
+
+**Document advantage applies only if** you need most of the document on most reads. Three break-points:
+
+| Anti-pattern | What goes wrong |
+|---|---|
+| Reading only a small field of a 5 MB document | DB still loads the whole doc; 99% waste |
+| Updating a small field | Rewrites the whole document (only same-size encodings can be in-place) |
+| Documents that grow unboundedly | Repeated rewrites cause fragmentation; perf degrades nonlinearly |
+
+> **The Spanner trick**: relational rows can be physically *interleaved* — a `users` row immediately followed on disk by all its `orders`, `addresses`, etc. You keep the relational schema but get document-style locality. Same in Oracle's table clusters, in Cassandra/HBase column families. *"Document vs Relational" is largely a physical-layout choice masquerading as a data-model choice.*
+
+#### 2. Convergence — both models grew toward the middle
+
+| Originally Document, gained | Originally Relational, gained |
+|---|---|
+| Joins (MongoDB `$lookup`) | JSON column types (Postgres `jsonb`, MySQL `JSON`) |
+| Secondary indexes | Schemaless columns / arbitrary key access |
+| Transactions across docs | XML/JSON path indexes |
+| Aggregation pipelines | Row-level extensions, custom types |
+
+By 2026 the "war" is largely vestigial. Use case wins.
+
+#### 3. Declarative vs Imperative query languages — the chapter's most important conceptual split
+
+```
+   Imperative (e.g., IMS, MapReduce, hand-written JS over Mongo)
+   ┌──────────────────────────────────────────────┐
+   │ for each animal:                             │
+   │   if animal.family == "Sharks":              │
+   │     result.append(animal)                    │
+   └──────────────────────────────────────────────┘
+   ↑ you say HOW. Re-runs the same instructions even if the DB has a perfect index.
+
+   Declarative (SQL, Cypher, SPARQL)
+   ┌──────────────────────────────────────────────┐
+   │ SELECT * FROM animals WHERE family='Sharks'; │
+   └──────────────────────────────────────────────┘
+   ↑ you say WHAT. The query planner picks index, scan order, parallelism.
+```
+
+| Property | Imperative | Declarative |
+|---|---|---|
+| Code length | longer | shorter |
+| Hides implementation? | no | yes |
+| Re-optimizes when stats change? | no (you rewrote it) | yes (planner re-plans) |
+| Parallelizes naturally? | no | yes (the planner can split) |
+| Debuggable? | "easy" (just trace) | needs `EXPLAIN` |
+
+> The **"declarative scales because the planner picks parallelism"** argument is the SQL-on-Hadoop reason: Hive/Presto won the war against hand-written MapReduce *not because MapReduce was bad*, but because writing parallel-correct MapReduce by hand is brutal and the planner can do it from SQL.
+
+#### 4. MapReduce as a middle ground
+
+```
+   map(doc):                         reduce(key, values):
+     emit(doc.year, doc.count)         emit(key, sum(values))
+        │                                   │
+        ▼                                   ▼
+   parallel across N workers       parallel across reducers
+        │                                   │
+        └────────  shuffle by key  ─────────┘
+```
+
+- **Pure-functional contract**: `map` and `reduce` must be deterministic and side-effect free (so the framework can re-run failed tasks).
+- **Why it's "between"**: more declarative than raw code (the framework does the shuffle), less declarative than SQL (you still spell out the algorithm).
+- **What killed it as a query language**: declarative wrappers (Hive, Pig, Spark SQL) generate MapReduce plans automatically — and do it better than humans.
+
+#### 5. Graph data models — when relationships dominate
+
+The chapter introduces **two formal flavors**:
+
+| Flavor | Stores | Query language | Example DB |
+|---|---|---|---|
+| **Property graph** | nodes, edges, properties on both | Cypher, Gremlin | Neo4j, JanusGraph |
+| **Triple store** | (subject, predicate, object) triples | SPARQL, Datalog | Datomic, Apache Jena |
+
+```
+   Property graph:                       Triple store:
+   ┌───────┐    LIVES_IN    ┌───────┐    (Alice, livesIn, London)
+   │ Alice │ ─────────────► │London │    (Alice, worksAt, Acme)
+   │ age:30│                │country│    (Acme,  basedIn, NYC)
+   └───┬───┘                │  : UK │    (London, country, UK)
+       │ WORKS_AT           └───────┘
+       ▼
+   ┌───────┐
+   │ Acme  │
+   └───────┘
+```
+
+**Why graphs win on certain queries**: a "friends of friends within 4 hops" in SQL is 4 self-joins on a `friendships` table — query planner death. In Cypher: `MATCH (a)-[:KNOWS*1..4]->(b)`.
+
+#### 6. Schema flexibility recurring theme
+
+```
+   Schema-on-write              Schema-on-read
+   (relational, "typed")        (document, "dynamic")
+   ┌──────────────────┐         ┌──────────────────┐
+   │ ALTER TABLE      │         │ Application code │
+   │  ADD COLUMN x    │         │  reads field x   │
+   │ + backfill data  │         │  if present,     │
+   │ + redeploy code  │         │  else default    │
+   └──────────────────┘         └──────────────────┘
+   migration is upfront         migration is lazy
+   schema enforced by DB        schema enforced by code (or not)
+```
+
+Same trade-off as static-vs-dynamic typing in languages.
+
+### Where this shows up in real systems
+- **Spanner / CockroachDB**: interleaved tables give document-locality on a relational substrate. F1 (Spanner's SQL frontend) reads a parent + children in one storage hit.
+- **Postgres JSONB**: lets you stop fighting and use a relational table with a flexible column. GIN indexes on JSON paths give you indexed access into the dynamic part.
+- **Neo4j on a social graph**: 4-hop traversal in milliseconds; in SQL the same is unbounded.
+- **BigQuery / Snowflake**: SQL planner over columnar storage. Declarative wins overwhelmingly at OLAP scale — no one writes hand-MapReduce for analytics anymore.
+- **GraphQL**: not a graph database; it's a *query language* that happens to walk relations like a graph would. Borrows the declarative idea from SQL and the nested-result idea from documents.
+
+### Diagnostic questions
+1. *"If document stores have locality, why are 5 MB documents an anti-pattern?"* — Because the DB still loads the whole document on every access, regardless of which field you wanted. Locality cuts seeks but doesn't cut transferred bytes. Big documents amortize badly. (Wrong: "only reads the field you ask for" — that's projection at the API layer; the storage engine reads the whole doc.)
+2. *"Why does declarative SQL parallelize but hand-written MapReduce often doesn't?"* — The planner *can* split `SELECT … WHERE …` across cores/nodes safely because the semantics are set-based; hand-written MapReduce hard-codes one map-shuffle-reduce shape that may not be the cheapest plan. SQL gives the planner room to choose. (Wrong: "MapReduce is parallel by definition" — yes, but the framework can't reorder your map function or push predicates down.)
+3. *"When does a graph database beat a relational one?"* — When the dominant queries are *variable-depth* traversals (k-hop, transitive closure, path-finding) and when the *kinds* of relationships keep changing (you don't want to add a table per relationship type). For star-schema OLAP, relational still wins. (Wrong: "graphs are for social networks" — too narrow; they're for any relationship-dense, schema-mutable domain.)
+4. *"Why does Spanner show that 'document vs relational' is partly a false choice?"* — Because the *physical* locality benefit (records of one logical entity on adjacent pages) is orthogonal to the *logical* model (schema, joins, queries). Spanner has full SQL and document-grade locality. The two axes are independent. (Wrong: "Spanner is just a fast SQL DB" — the interleaving feature is the structural answer to the doc-store locality argument.)
+5. *"What's the operational risk of schema-on-read?"* — Every read becomes a try/catch on field shape. Code accumulates `if 'x' in doc and doc['x'] is not None`. A field renamed three years ago still exists in old documents; you can't ALTER it away. Migration cost is *deferred forever*, not *paid once upfront*. (Wrong: "schema-on-read has no cost" — it has the cost, paid in code complexity over time.)
+
+### See also
+- DDIA Ch.3 — Storage and Retrieval. The layer where these data models meet the disk.
+- DBI 2026-05-20 (Files/Pages/Indexes/B-Tree) — the storage-engine ground floor every one of these models sits on.
+- N2T Ch.5 (memory hierarchy) — locality argument recurs one layer down: cache lines are to L1 what pages are to disk what documents are to relational rows.
+- DDIA 2026-05-19 (Relational vs Document vs Network) — the immediate prequel; this entry extends it with locality + query languages + graphs.
+
+---
+
 ## [2026-05-19] Relational vs Document vs Network — The Three Data Models, Their History, and Why The Debate Keeps Repeating · pp.49–62 · Ch.2 Opening → Relational vs Document Model → Many-to-Many → Repeating History → Schema-on-Read vs Schema-on-Write
 
 ### TL;DR

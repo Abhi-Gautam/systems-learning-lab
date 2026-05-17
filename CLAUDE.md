@@ -15,7 +15,6 @@ Claude acts as a **teacher and doubt-clearer** for this reading list. Two primar
 |-------|------|----------|
 | DDIA | Designing Data-Intensive Applications | Systems |
 | OSTEP | Operating Systems: Three Easy Pieces | Systems |
-| CUDA | CUDA Programming Book | Systems |
 | N2T | Nand2Tetris | Hardware/Architecture |
 | COD | Computer Organization and Design (ARM Edition) | Hardware/Architecture |
 | DBI | Database Internals | Databases |

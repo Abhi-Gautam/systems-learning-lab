@@ -11,9 +11,6 @@ Sections marked **conditional** may be skipped when not applicable (insert a one
 ### TL;DR
 3 sentences. Written last, placed first. Re-scan budget: 30 seconds.
 
-### History — "why does this exist?"
-3–4 lines. The problem the world had before this idea, the breakthrough that introduced it (year + system/person where possible), and one line on what it displaced. Skip with `*(n/a — no notable origin story)*` only when truly unhistorical.
-
 ### Intuition — "this is like…"
 One short analogy paragraph. Anchor before mechanics.
 
@@ -41,7 +38,7 @@ Cross-references to other books / earlier entries.
 
 | Section | Always present? |
 |---|---|
-| TL;DR · History · Intuition · Mechanics · Where this shows up · Diagnostic Qs · See also | **Yes** |
+| TL;DR · Intuition · Mechanics · Where this shows up · Diagnostic Qs · See also | **Yes** |
 | If-you-were-the-X | When topic has an agentive subject |
 | Cross-language view | When concept has a code form |
 | Worked example (inside Mechanics) | When quantitative |

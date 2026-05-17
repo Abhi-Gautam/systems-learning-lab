@@ -4,6 +4,348 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-21] B-Tree Mechanics — Node Format, Separator Keys, Fanout, Lookup/Insert/Delete with Splits and Merges · pp.66–90 · Ch.2 B-Tree Basics (FTL recap → On-Disk Structures → Ubiquitous B-Trees → B-Tree Hierarchy → Separator Keys → B-Tree Lookup → Node Splits → Node Merges)
+
+### TL;DR
+A B-Tree is a **disk-tuned n-ary search tree** where each node fits in one disk page and stores up to **N − 1 keys + N child pointers**, giving fanout N in the hundreds-to-thousands. Lookups walk **height ≈ log_N(total_keys)** — for a billion keys with fanout 500, that's just **3–4 page reads**, vs ~30 for a BST. Inserts and deletes preserve the tree's invariants by **splitting** overflowing nodes (the median key floats up to the parent) and **merging** under-full sibling nodes (or **rotating** keys between them). Every concrete B-Tree variant (B+Tree, B*Tree, Bw-Tree) is just a tweak on this template.
+
+### Intuition — "this is like…"
+A BST is a **single-floor library** where every book has its own room — to find a book you might walk 30 doors. A B-Tree is a **multi-shelf bookcase** where each shelf holds 500 books in sorted order, with the title of the *next* shelf written between shelves — you find the right shelf in 3 hops, then scan locally. The point is to amortize the *expensive thing* (walking to a new shelf = disk seek) over many *cheap things* (scanning books on a shelf = in-memory comparisons after the page is loaded).
+
+### Mechanics
+
+#### 1. Node anatomy
+
+A B-Tree node is one page on disk. Schematically:
+
+```
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ header │ k₁ │ k₂ │ k₃ │ ... │ kₙ₋₁ │ free space  │← slot dir ← │
+   │        │ p₀ │ p₁ │ p₂ │ p₃ │ ... │ pₙ          │             │
+   └─────────────────────────────────────────────────────────────────┘
+            ↑                                       ↑
+            n−1 keys (sorted)                       n child pointers
+              ↑
+              kᵢ is a SEPARATOR: every key in subtree pᵢ < kᵢ < every key in subtree pᵢ₊₁
+```
+
+| Field | Purpose |
+|---|---|
+| `header` | node type (internal/leaf), key count, sibling pointers (in B+Tree leaves) |
+| keys `k₁..kₙ₋₁` | sorted, used as separators |
+| pointers `p₀..pₙ` | child page IDs (internal) or value pointers/embedded values (leaves) |
+| slot directory | maps logical slot → byte offset, allowing variable-length keys without shifting |
+
+#### 2. Fanout = the entire reason B-Trees exist
+
+Fanout `N = (page_size − header) / (key_size + pointer_size)`. Concrete numbers:
+
+| Page size | Key + ptr | Fanout N | Height for 10⁹ keys (log_N(10⁹)) | Reads per lookup |
+|---|---|---|---|---|
+| 4 KB | 16 B (8 key + 8 ptr) | ~250 | log₂₅₀(10⁹) ≈ 3.7 | 4 |
+| 8 KB | 16 B | ~500 | log₅₀₀(10⁹) ≈ 3.3 | 3–4 |
+| 16 KB | 16 B | ~1000 | log₁₀₀₀(10⁹) ≈ 3.0 | 3 |
+| BST (fanout 2) | n/a | 2 | log₂(10⁹) ≈ 30 | **30** (each a seek) |
+
+> **The 10× difference is *all* fanout**. The B-Tree is not faster per-comparison than a BST — it's faster because the CPU work inside a page is essentially free compared to the seek that fetched the page. Fanout converts seeks into local scans.
+
+#### 3. The two flavors: B-Tree vs B+Tree
+
+| Aspect | Classic B-Tree | B+Tree (what everyone actually uses) |
+|---|---|---|
+| Where values live | in any node (internal or leaf) | **only in leaves** |
+| Internal nodes hold | keys + values + child pointers | keys + child pointers only |
+| Range scans | traverse tree → emit | **walk linked leaves left→right** |
+| Lookup ends | possibly at internal node | always at a leaf |
+| Internal-node fanout | reduced by value size | **higher** (no values) → shorter tree |
+
+```
+   B+Tree shape (the real-world default):
+
+                  ┌─────[ 40 │ 80 ]─────┐                  internal: separator keys only
+                  │       │       │
+            ┌────┘       │        └────┐
+            ▼            ▼             ▼
+        [10│25│40]   [50│65│80]   [85│92│99]               internal level (if more levels)
+            │            │             │
+            ▼            ▼             ▼
+        leaf───────►  leaf───────►  leaf                   leaves linked left-to-right
+        {k,v}          {k,v}         {k,v}                 leaves hold the actual values
+```
+
+Linked leaves are the secret weapon: range scans like `SELECT * WHERE date BETWEEN x AND y` become a single descent to the start, then a sequential walk — no re-traversing the tree.
+
+#### 4. Lookup — walk the separators
+
+```
+   Find key K = 67:
+     current = root
+     while current is internal:
+         find the smallest separator k_i in `current` such that K < k_i
+         current = child pointer p_i  (or last pointer if K >= all separators)
+     scan current (a leaf) for K
+```
+
+In our shape above: K=67 → root: 40 ≤ 67 ≤ 80, descend p₁ → [50,65,80] internal: 65 ≤ 67 ≤ 80, descend p₂ → leaf → linear scan finds 67. Three reads total.
+
+> **In-page search**: once the page is in memory, you can binary-search the keys (Θ(log N) per page). Binary search inside a page is essentially free vs the page read — the chapter's point is that **you don't care about the in-page constant**, you care about the *number of pages touched*.
+
+#### 5. Insert — splits propagate upward
+
+Three cases:
+
+```
+   Case A: leaf has space → just insert sorted, done.
+
+   Case B: leaf is full → SPLIT
+   ────────────────────────────────────────────────────────────────
+   before:   parent
+              │
+              ▼
+            [10│25│40│50│65│80]   ← full leaf (assume max 6 keys)
+   insert 35:
+            [10│25│35│40│50│65│80]  ← 7 keys, overflow
+
+   split at median:    [10│25│35]  ───linked──► [40│50│65│80]
+                            ▲                         ▲
+                            └────┐               ┌────┘
+                                 ▼               ▼
+                                 parent: insert separator 40
+
+   Case C: parent now overflows → recursively split parent.
+           If split reaches root → root splits → tree grows one level.
+```
+
+**Tree growth is bottom-up**: this is the *only* way a B-Tree gets taller. So height grows by 1 only when the *root* splits, which is rare — for fanout 500 the root splits once per ~500 inserts at the root level, which corresponds to billions of leaf inserts at lower levels.
+
+#### 6. Delete — under-flow, merge, or rotate
+
+```
+   After delete, if a leaf is < min_keys (typ. ⌈N/2⌉):
+
+   Option 1: ROTATE — borrow one key from a sibling through the parent
+   ────────────────────────────────────────────────────────────────────
+            parent:  [...│40│...]
+                          │
+                ┌─────────┴─────────┐
+                ▼                   ▼
+           [10│25]              [50│65│80]
+                                       ↑ borrow 50 leftward
+            ↓ result:
+           [10│25│40]           [65│80]
+            ↑ separator becomes parent's old 40
+            parent: [...│50│...] (new separator)
+
+
+   Option 2: MERGE — combine with sibling, pull separator down
+   ────────────────────────────────────────────────────────────────────
+            parent:  [...│40│...]
+                          │
+                ┌─────────┴─────────┐
+                ▼                   ▼
+           [10│25]              [50]
+                ↓ merge
+           [10│25│40│50]   (note 40 came down from parent)
+            ↑ parent loses 40 → may itself underflow → recursive merge
+```
+
+> **Merges can propagate upward and shrink the tree.** Root with only one child becomes its own child — tree height drops by one. Symmetric to insert's growth.
+
+#### 7. The invariants every B-Tree maintains
+
+| Invariant | Why |
+|---|---|
+| All leaves at the same depth | Worst-case lookup time is uniform |
+| Every node (except root) has ⌈N/2⌉ ≤ keys ≤ N − 1 | Bounded fill ratio → bounded height |
+| Root has ≥ 1 key (if not empty) | Standard handling |
+| Keys within a node are sorted | Enables binary search per page |
+| For an internal node with keys k₁..kₘ and children c₀..cₘ: every key in cᵢ is in (kᵢ, kᵢ₊₁) | Tree is searchable |
+
+The **min-fill rule** (⌈N/2⌉) is what limits the storage waste — at worst, a B-Tree is half-full and uses 2× the optimal disk space.
+
+#### 8. Worked numerical example — million keys, real costs
+
+| Parameter | Value |
+|---|---|
+| Page size | 8 KB |
+| Avg entry size | 32 B (16 B key + 16 B value or ptr) |
+| Fanout N | ~250 |
+| Number of keys | 10⁶ |
+| Tree height | log₂₅₀(10⁶) ≈ 2.5 → **3 levels** |
+| Random-key lookup cost (SSD) | 3 × ~100 µs = **300 µs** |
+| Random-key lookup cost (HDD, no buffer) | 3 × ~10 ms = **30 ms** |
+| Same problem in a BST (height 20) | 20 × 10 ms = **200 ms HDD** — 7× worse |
+
+In practice the upper levels of a B-Tree are pinned in the buffer pool, so a "cold" lookup is really 1 disk read (the leaf), not 3. That's why Postgres can do 100K+ point lookups per second on a hot B-Tree even though each touches a multi-GB table.
+
+### Where this shows up in real systems
+- **PostgreSQL B-tree indexes** — classic B+Tree with 8 KB pages; the planner uses index-only scans when no payload columns are needed.
+- **MySQL InnoDB primary index** — IOT-style B+Tree; values are the entire row. Secondary indexes hold PK, leading to two B-tree walks per secondary lookup (see DBI 2026-05-20).
+- **MongoDB WiredTiger** — B+Tree (default storage engine). Leaves linked for range scans.
+- **SQLite** — B-Tree per table; pages typically 4 KB. The whole DB is one file with embedded B-Trees.
+- **Filesystem indexes** — NTFS, ext4 directory indexes, HFS+ catalog tree, XFS metadata — all variants of B-Tree. The Linux kernel maintains generic `<linux/rbtree.h>` for in-memory but `lib/btree.c` for disk-resident.
+- **Bw-Tree** (Microsoft) — lock-free, immutable B-Tree with delta chains; pioneered for SSD where in-place updates are expensive.
+
+### Diagnostic questions
+1. *"Why does B-Tree height almost never exceed 4 in practice?"* — Because fanout is in the hundreds and tree size is bounded by physical reality. For fanout N=500 and 4 levels: N⁴ = 6.25 × 10¹⁰ leaf slots — bigger than most databases. Most tables fit in 3 levels. (Wrong: "the algorithm enforces it" — no, the algorithm enforces *balanced* depth; the *value* of the depth is a function of fanout × size, both physical.)
+2. *"What's the difference between a split and a rotation?"* — A split happens on insert into a full node (creates a new node, pushes a separator up). A rotation happens on delete when a sibling has spare keys (borrow one through the parent without changing parent count). Rotations are cheaper (one parent update, no new node). (Wrong: "rotations are for balancing" — that's BSTs; B-Trees stay balanced structurally.)
+3. *"Why are B+Tree leaves linked left-to-right?"* — For range scans. `WHERE date BETWEEN x AND y` descends to the leaf containing x, then walks linked-leaf pointers until y. Without the links you'd have to re-traverse the tree for each next leaf. (Wrong: "for deletion" — not specifically.)
+4. *"What happens if the root has only one child?"* — The single child is promoted to root and the old root is deallocated; tree shrinks one level. Mirror of root-split. (Wrong: "nothing — it's a valid B-Tree" — true, but wasteful; standard implementations collapse this.)
+5. *"Why does fanout matter more than per-page search efficiency?"* — Because the dominant cost is the *number of disk pages touched*, not the CPU work per page. Once a page is in memory, binary search through 500 keys is ~10 comparisons in nanoseconds. The 100 µs to read the page from SSD dwarfs that. Fanout reduces page count; per-page search affects negligible constants. (Wrong: "binary search per page makes it faster" — true but irrelevant to the asymptotic win.)
+
+### See also
+- DBI 2026-05-20 (Files, Pages, Indexes, HDD/SSD) — the hardware + file-layout layer this B-Tree sits on.
+- DDIA Ch.3 (upcoming) — B-Trees vs LSM-trees from the storage-engine choice perspective.
+- CLRS 2026-05-20 (Merge Sort) — same divide-and-conquer logic at the algorithm level; B-Tree splits/merges are the persistent-data analogue of merge sort's combine step.
+- N2T 2026-05-21 (Hack Machine Language) — far below this layer: the addressable memory unit (a 16-bit word) Hack uses is what a B-Tree node is built out of, scaled to a page.
+
+---
+
+## [2026-05-20] Files, Pages, Indexes, B-Tree Setup, and the Hardware Underneath — Why Storage Engines Look the Way They Do · pp.44–65 · Ch.1 close (Webtable physical layout → Data/Index Files → Buffering·Immutability·Ordering → Summary) → Ch.2 open (BST recap → Balancing → Disk-fit properties → HDDs → SSDs)
+
+### TL;DR
+A storage engine is **specialized files + indexes** sitting on top of hardware whose physical units (sector / page / block) and access costs (seek vs sequential, program vs erase) leak upward into every design decision above. The chapter's punchline is that every B-Tree variant, every LSM, every Bw-Tree is just a different point in a 3-variable space — **{buffering · mutability · ordering}** — chosen to fit how the underlying device wants to be talked to.
+
+### Intuition — "this is like…"
+The OS gives you a filesystem; the DB throws it away and builds its own. Why? Because the filesystem speaks "files of bytes" but the DB needs to speak "pages of records," and because the *disk* speaks "sectors of 512 B–4 KB" with brutal asymmetry between seek and scan. The DB is a translator that takes a logical query down through three reformatting layers — **record → page → block → sector** — and back up again. Each layer's quirks (block-aligned writes, erase-before-program, sequential cheaper than random) constrains the layer above.
+
+### Mechanics
+
+#### 1. File organization — three families
+
+| Family | Order on disk | Read by key | Range scan | Insert cost | Real example |
+|---|---|---|---|---|---|
+| **Heap file** | insertion order | needs separate index | terrible without index | cheap (append) | Postgres tables |
+| **Hash-organized** | hash(key) bucket | O(1) avg | terrible (no order) | cheap; rebalance on grow | DBM, some KV stores |
+| **Index-organized (IOT)** | key order | one lookup | excellent (sequential) | expensive (in-place shift) | MySQL InnoDB primary, SQLite |
+
+> **Why IOTs save a seek**: index leaf already *holds* the record. Heap files need `index lookup → follow pointer → data file seek` = 2 logical seeks. IOTs collapse it to 1.
+
+#### 2. Page / record layout (logical)
+
+```
+   File on disk
+   ┌───────────────────────────────────────────────────────┐
+   │  Page 0  │  Page 1  │  Page 2  │ ... │  Page N-1     │   each page = 1+ disk blocks
+   └───────────────────────────────────────────────────────┘
+
+   One page (e.g., 8 KB)
+   ┌──────────────────────────────────────────────────────┐
+   │ header │ slot dir → ← record3 │ record2 │ record1    │   "slotted page": records grow left,
+   │        │ [s1][s2][s3]│   ...   │         │           │   slot dir grows right; gap shrinks
+   └──────────────────────────────────────────────────────┘
+```
+
+- **Tombstones**: deletes don't shrink in-place. A tombstone {key, ts, "deleted"} marks the record dead. GC later compacts pages. Why? In-place delete would force shifting every following record's slot offset — expensive, and worse, it would corrupt readers mid-flight without locks.
+
+#### 3. Index taxonomy
+
+| Axis | Options | Meaning |
+|---|---|---|
+| Primary vs secondary | primary = on PK, secondary = any other column | Every table has ≤1 primary, many secondaries |
+| Clustered vs non-clustered | clustered = data lives in key order on disk | Range scans cheap iff clustered |
+| What leaves hold | direct offset / primary key / actual record | InnoDB secondaries hold **PK**, not file offset → 2 lookups per secondary read |
+
+**MySQL InnoDB secondary-index walk** (read `WHERE email = 'x'`):
+```
+  ┌── secondary idx on email ──┐         ┌── primary idx on id (IOT) ──┐
+  │  walk B-tree by email      │ → PK →  │  walk B-tree by id          │ → row
+  └───── ~log(N) seeks ────────┘         └──── another ~log(N) seeks ──┘
+```
+
+vs Postgres heap-table secondary index: one B-tree walk → CTID → one heap-page fetch. The InnoDB choice (PK indirection) trades read cost for not having to update every secondary index when the data row physically moves.
+
+#### 4. The 3-variable design space (the chapter's load-bearing idea)
+
+| Variable | "Yes" picks | "No" picks | Example |
+|---|---|---|---|
+| **Buffer in memory before write?** | LSM (memtable), Lazy B-Tree | classic in-place B-Tree | LSM amortizes; B-Tree pays per-op |
+| **Immutable files?** | LSM, Bw-Tree, Bitcask, WiscKey | classic B-Tree | Immutable → append-only writes (SSD-friendly), but read amplification |
+| **Ordered on disk?** | B-Tree, sorted LSM levels, IOT | Bitcask (insertion order) | Ordered → range scans cheap; unordered → faster writes |
+
+Every storage engine you know is a point in this {0,1}³ cube. B-Tree = (no, no, yes). LSM = (yes, yes, yes). Bitcask = (no, yes, no). Bw-Tree = (yes, yes, yes) but with delta chains.
+
+#### 5. B-Trees motivated by hardware (Ch.2 open)
+
+The chapter walks BST → balanced BST → "why this fails on disk" → B-Tree, and the failure modes are *all hardware*:
+
+| Property of BST | Why it loses on disk |
+|---|---|
+| Fanout = 2 | Tree height = log₂N. For N=10⁹ that's ~30 seeks. At ~10 ms/seek on HDD = **300 ms per lookup** |
+| Random allocation | New nodes scattered across disk; pointer-chase pays full seek every level |
+| Tiny node | One node ≪ one block; 99% of each block read is wasted I/O |
+| Rotation on balance | Each rotation rewrites multiple nodes, each costing a seek |
+
+B-Tree fixes all four: **fanout = block_size / entry_size** (~100–1000), so height drops to ~3–4 even for billions of keys. We'll see the actual node format in the next chunk.
+
+#### 6. The hardware floor — HDD vs SSD (the *low-level* part)
+
+**HDD physical hierarchy:**
+```
+   Platter ──► Track ──► Sector (512 B classic, 4 KB Advanced Format)
+   ▲
+   Head positions over track via arm + rotation
+```
+- **Seek time** = arm move (~3–10 ms) + rotational latency (½ × 60 / RPM, e.g., 7200 RPM → 4.2 ms avg)
+- **Sequential throughput**: ~100–200 MB/s
+- **Random IOPS**: ~100–200/s on a single 7200 RPM drive
+- **Why this drives DB design**: 1 seek ≈ reading **1 MB sequentially**. Pack densely, avoid pointer-chasing.
+
+**SSD physical hierarchy** (this is where the cell-level detail matters):
+
+```
+   Die
+   └── Plane(s)
+       └── Block ────► smallest ERASE unit (typ. 64–512 pages = 256 KB–4 MB)
+           └── Page ─► smallest READ/PROGRAM unit (typ. 4–16 KB)
+               └── Cell (string of 32–64 cells)
+                   └── bits: SLC=1, MLC=2, TLC=3, QLC=4
+```
+
+| Operation | Granularity | Latency (typ.) | Constraint |
+|---|---|---|---|
+| Read | page (4–16 KB) | 25–100 µs | none |
+| Program (write) | page | 200–500 µs | **only into pre-erased cells** |
+| Erase | **block** (256 KB+) | 1.5–3 ms | must erase whole block before re-programming |
+
+**The asymmetry is the key**: you cannot overwrite. To "update" a single byte:
+1. Read the whole block into RAM (or onto a spare block)
+2. Erase the block (the slow step)
+3. Re-program the entire block with the modified page
+
+This is what the **FTL (Flash Translation Layer)** hides. It maintains a logical→physical page map so writes always go to *already-erased* pages, while old physical pages are marked invalid and reclaimed by **garbage collection** later — exactly analogous to the tombstone+GC pattern at the DB level. The DB's preference for **immutable, append-only** files (LSM, Bitcask) is *hardware-shaped*: it matches what the FTL is already doing internally.
+
+| Operation pattern | HDD-friendly? | SSD-friendly? |
+|---|---|---|
+| Random reads | ✗ (seek) | ✓ (no moving parts) |
+| Random writes | ✗✗ (seek + rotational) | ✗ (write amplification: 1 logical write → many physical writes due to erase-block GC) |
+| Sequential writes | ✓ | ✓✓ (best case — minimal WAF) |
+| Sequential reads | ✓ | ✓ |
+
+> **Write amplification factor (WAF)** = physical bytes written / logical bytes written. On poorly-tuned random workloads WAF can exceed 10×, eating SSD lifetime (each cell has finite program/erase cycles: SLC ~100K, TLC ~3K, QLC ~1K).
+
+### Where this shows up in real systems
+- **Postgres heap + B-tree secondary**: heap is insertion-ordered file; every secondary index stores `(key, CTID)` where CTID = (page#, slot#). HOT updates exist precisely to avoid invalidating secondary indexes when a row updates without changing indexed columns.
+- **MySQL InnoDB**: primary index *is* the table (IOT). Secondary indexes store PK not row pointer — so secondary lookups always pay a primary-index traversal. PK choice matters enormously (random UUIDs = bad locality; auto-increment = good).
+- **RocksDB / Cassandra / LevelDB**: LSM = {buffered: yes, immutable: yes, ordered: yes}. Memtable buffers; SSTables are immutable; compaction merges in sorted order. Built for SSDs.
+- **Bitcask (Riak)**: {buffered: no, immutable: yes, ordered: no}. Pure append-log, in-memory hash index over offsets. Astonishingly fast writes, but full dataset's *keys* must fit in RAM.
+- **Modern NVMe**: the page/erase-block asymmetry still exists but is hidden behind ~100 µs latencies. The DB-level designs (LSM, copy-on-write B-trees) remain optimal because they minimize WAF.
+
+### Diagnostic questions
+1. *"Why can't I just update a record in place on an SSD?"* — Because flash cells must be erased before re-programmed, and erase granularity is a *block* (256 KB+), not a page. Updating one byte means rewriting an entire block. (Wrong answer: "you can, SSDs allow random writes" — no, the *FTL* fakes that; the hardware can't.)
+2. *"Why is B-Tree fanout always ~hundreds, never 2?"* — Because the node size is tuned to the disk page (4–16 KB), and one node holds (page_size / entry_size) entries. Fanout 2 = tree height ~30; fanout 500 = height ~3, even for billions of keys. The disk only pays per-seek, not per-byte-within-a-seek. (Wrong: "more comparisons per node" — that's CPU work, which is ~1000× cheaper than the seek it saves.)
+3. *"Why does deleting a row not free disk space immediately?"* — Tombstone semantics: the page entry is marked deleted, GC reclaims later. Doing it inline would require shifting every following record's slot offset, breaking any in-flight reads and ballooning latency. (Wrong: "Postgres bug" — it's a deliberate MVCC design.)
+4. *"Why do InnoDB secondary indexes store the PK and not a row pointer?"* — Because when a row physically moves (page split, compaction), every secondary index would need a pointer update. Storing PK means secondary indexes are invariant under physical motion, at the cost of a primary-index walk on every secondary lookup. (Wrong: "primary index is smaller" — Postgres uses pointers and is faster on secondary reads.)
+5. *"Why does LSM win on write-heavy workloads on SSD?"* — Buffered + immutable + ordered: writes are batched in memtable, flushed as immutable SSTables (purely sequential writes), so WAF is low and the SSD's FTL stays happy. B-Trees do in-place updates → random writes → high WAF → SSD wear. (Wrong: "LSM is always faster" — read amplification is real; cold reads can touch many SSTables.)
+
+### See also
+- DDIA 2026-05-19 (Document vs Relational) — DBI is the storage-engine layer underneath those data models.
+- DDIA Ch.3 (upcoming) — Storage and Retrieval; same territory from the systems-design angle.
+- N2T Ch.5 / COD Ch.5 — memory hierarchy. Same locality argument one level higher: cache lines (64 B) are to L1 what pages are to disk.
+- OSTEP Ch.36–43 (I/O, FFS, log-structured FS) — the FS layer the DB chose to bypass; LFS in particular pioneered the append-only, immutable approach DBs later adopted.
+
+---
+
 ## [2026-05-15] Column-Oriented Storage — Layout, Compression, and the CPU Vectorization Win · pp.39–43 · Ch.1 § Column-Oriented Data Layout → § Wide Column Stores
 
 ### TL;DR

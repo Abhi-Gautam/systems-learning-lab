@@ -108,3 +108,63 @@ When user says "move to notes" after a doubt is resolved:
 1. Copy the doubt entry's explanation to the corresponding notes file
 2. Update the doubt's status to "Moved to Notes"
 3. Keep the original doubt entry intact
+
+## Deep Explanation Mode
+
+The user has two study modes:
+
+1. **Day-by-day lab mode**: follow the planned lab/curriculum sequence.
+2. **Concept/doubt mode**: the user brings a concept from current reading that
+   did not make sense. In this mode, answer as a teacher and do not change code,
+   files, notes, or lab artifacts unless the user explicitly asks for that.
+
+For concept/doubt mode, first decide whether the user has already reached the
+needed prerequisite in the current learning path.
+
+- If the prerequisite has been covered, answer directly but still use concrete
+  low-level mechanics.
+- If the prerequisite has not been covered, build the missing ladder from
+  scratch before using the term.
+- Do not name-drop mechanisms without unpacking them. Terms such as `Smi`,
+  `HeapNumber`, `overflow page`, `slot directory`, `WAL`, `buffer pool`, `deopt`,
+  and `inline cache` must be explained with what they are, why they exist, where
+  they live, and what changes step by step.
+- Prefer causal traces over summaries. The answer should show what happens at
+  each layer, not just state the final concept.
+
+For silicon/runtime questions, use this answer shape:
+
+```text
+source code
+→ parser/compiler representation
+→ bytecode/interpreter or compiled code
+→ runtime value representation
+→ stack/register/heap location
+→ mutation/type-change cases
+→ cost model
+```
+
+For database questions, use this answer shape:
+
+```text
+logical operation
+→ encoded bytes
+→ record/cell layout
+→ page layout
+→ page read/write path
+→ overflow/chunk behavior if relevant
+→ buffer/cache/WAL implications
+→ cost model
+```
+
+A weak answer says "V8 stores small integers as tagged values." A good answer
+explains what tag bits are, where the tagged value is stored, when it stays a
+small integer, when it becomes a heap object, what compiled code assumes, what
+happens if the type changes, and which memory/register/heap costs appear in each
+case.
+
+A weak answer says "Large documents may use overflow pages." A good answer
+explains why a normal page cannot hold the document, what remains in the
+original page, how overflow/chunk pages are linked or addressed, which pages
+must be read for a tiny field access, what gets rewritten on update, and why
+locality helps seeks but not bytes read, copied, parsed, or rewritten.
