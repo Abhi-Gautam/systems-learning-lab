@@ -4,11 +4,12 @@
 Data hand-curated from each book's printed Contents page (extracted via tools/book.py).
 Page numbers below are PRINTED book pages; the per-book offset converts to PDF page.
 """
+
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "Glossaries"
+OUT = ROOT / "glossaries"
 
 # (level, title, printed_page)
 N2T = [
@@ -50,59 +51,59 @@ REF = [
 
 TPP = [
     (1, "Part 1. A Pragmatic Philosophy", 1),
-    (2,   "1. The Cat Ate My Source Code", 2),
-    (2,   "2. Software Entropy", 4),
-    (2,   "3. Stone Soup and Boiled Frogs", 7),
-    (2,   "4. Good-Enough Software", 9),
-    (2,   "5. Your Knowledge Portfolio", 12),
-    (2,   "6. Communicate!", 18),
+    (2, "1. The Cat Ate My Source Code", 2),
+    (2, "2. Software Entropy", 4),
+    (2, "3. Stone Soup and Boiled Frogs", 7),
+    (2, "4. Good-Enough Software", 9),
+    (2, "5. Your Knowledge Portfolio", 12),
+    (2, "6. Communicate!", 18),
     (1, "Part 2. A Pragmatic Approach", 25),
-    (2,   "7. The Evils of Duplication", 26),
-    (2,   "8. Orthogonality", 34),
-    (2,   "9. Reversibility", 44),
-    (2,   "10. Tracer Bullets", 48),
-    (2,   "11. Prototypes and Post-it Notes", 53),
-    (2,   "12. Domain Languages", 57),
-    (2,   "13. Estimating", 64),
+    (2, "7. The Evils of Duplication", 26),
+    (2, "8. Orthogonality", 34),
+    (2, "9. Reversibility", 44),
+    (2, "10. Tracer Bullets", 48),
+    (2, "11. Prototypes and Post-it Notes", 53),
+    (2, "12. Domain Languages", 57),
+    (2, "13. Estimating", 64),
     (1, "Part 3. The Basic Tools", 71),
-    (2,   "14. The Power of Plain Text", 73),
-    (2,   "15. Shell Games", 77),
-    (2,   "16. Power Editing", 82),
-    (2,   "17. Source Code Control", 86),
-    (2,   "18. Debugging", 90),
-    (2,   "19. Text Manipulation", 99),
-    (2,   "20. Code Generators", 102),
+    (2, "14. The Power of Plain Text", 73),
+    (2, "15. Shell Games", 77),
+    (2, "16. Power Editing", 82),
+    (2, "17. Source Code Control", 86),
+    (2, "18. Debugging", 90),
+    (2, "19. Text Manipulation", 99),
+    (2, "20. Code Generators", 102),
     (1, "Part 4. Pragmatic Paranoia", 107),
-    (2,   "21. Design by Contract", 109),
-    (2,   "22. Dead Programs Tell No Lies", 120),
-    (2,   "23. Assertive Programming", 122),
-    (2,   "24. When to Use Exceptions", 125),
-    (2,   "25. How to Balance Resources", 129),
+    (2, "21. Design by Contract", 109),
+    (2, "22. Dead Programs Tell No Lies", 120),
+    (2, "23. Assertive Programming", 122),
+    (2, "24. When to Use Exceptions", 125),
+    (2, "25. How to Balance Resources", 129),
     (1, "Part 5. Bend, or Break", 137),
-    (2,   "26. Decoupling and the Law of Demeter", 138),
-    (2,   "27. Metaprogramming", 144),
-    (2,   "28. Temporal Coupling", 150),
-    (2,   "29. It's Just a View", 157),
-    (2,   "30. Blackboards", 165),
+    (2, "26. Decoupling and the Law of Demeter", 138),
+    (2, "27. Metaprogramming", 144),
+    (2, "28. Temporal Coupling", 150),
+    (2, "29. It's Just a View", 157),
+    (2, "30. Blackboards", 165),
     (1, "Part 6. While You Are Coding", 171),
-    (2,   "31. Programming by Coincidence", 172),
-    (2,   "32. Algorithm Speed", 177),
-    (2,   "33. Refactoring", 184),
-    (2,   "34. Code That's Easy to Test", 189),
-    (2,   "35. Evil Wizards", 198),
+    (2, "31. Programming by Coincidence", 172),
+    (2, "32. Algorithm Speed", 177),
+    (2, "33. Refactoring", 184),
+    (2, "34. Code That's Easy to Test", 189),
+    (2, "35. Evil Wizards", 198),
     (1, "Part 7. Before the Project", 201),
-    (2,   "36. The Requirements Pit", 202),
-    (2,   "37. Solving Impossible Puzzles", 212),
-    (2,   "38. Not Until You're Ready", 215),
-    (2,   "39. The Specification Trap", 217),
-    (2,   "40. Circles and Arrows", 220),
+    (2, "36. The Requirements Pit", 202),
+    (2, "37. Solving Impossible Puzzles", 212),
+    (2, "38. Not Until You're Ready", 215),
+    (2, "39. The Specification Trap", 217),
+    (2, "40. Circles and Arrows", 220),
     (1, "Part 8. Pragmatic Projects", 223),
-    (2,   "41. Pragmatic Teams", 224),
-    (2,   "42. Ubiquitous Automation", 230),
-    (2,   "43. Ruthless Testing", 237),
-    (2,   "44. It's All Writing", 248),
-    (2,   "45. Great Expectations", 255),
-    (2,   "46. Pride and Prejudice", 258),
+    (2, "41. Pragmatic Teams", 224),
+    (2, "42. Ubiquitous Automation", 230),
+    (2, "43. Ruthless Testing", 237),
+    (2, "44. It's All Writing", 248),
+    (2, "45. Great Expectations", 255),
+    (2, "46. Pride and Prejudice", 258),
     (1, "Appendix A. Resources", 261),
     (1, "Appendix B. Answers to Exercises", 279),
 ]
@@ -111,68 +112,69 @@ OSTEP = [
     (1, "1. A Dialogue on the Book", 1),
     (1, "2. Introduction to Operating Systems", 3),
     (1, "Part I. Virtualization", 21),
-    (2,   "3. A Dialogue on Virtualization", 23),
-    (2,   "4. The Abstraction: The Process", 25),
-    (2,   "5. Interlude: Process API", 39),
-    (2,   "6. Mechanism: Limited Direct Execution", 55),
-    (2,   "7. Scheduling: Introduction", 73),
-    (2,   "8. Scheduling: The Multi-Level Feedback Queue", 85),
-    (2,   "9. Scheduling: Proportional Share", 97),
-    (2,   "10. Multiprocessor Scheduling (Advanced)", 107),
-    (2,   "11. Summary Dialogue on CPU Virtualization", 121),
-    (2,   "12. A Dialogue on Memory Virtualization", 123),
-    (2,   "13. The Abstraction: Address Spaces", 125),
-    (2,   "14. Interlude: Memory API", 135),
-    (2,   "15. Mechanism: Address Translation", 147),
-    (2,   "16. Segmentation", 161),
-    (2,   "17. Free-Space Management", 173),
-    (2,   "18. Paging: Introduction", 187),
-    (2,   "19. Paging: Faster Translations (TLBs)", 201),
-    (2,   "20. Paging: Smaller Tables", 217),
-    (2,   "21. Beyond Physical Memory: Mechanisms", 229),
-    (2,   "22. Beyond Physical Memory: Policies", 239),
-    (2,   "23. Complete Virtual Memory Systems", 251),
-    (2,   "24. Summary Dialogue on Memory Virtualization", 273),
+    (2, "3. A Dialogue on Virtualization", 23),
+    (2, "4. The Abstraction: The Process", 25),
+    (2, "5. Interlude: Process API", 39),
+    (2, "6. Mechanism: Limited Direct Execution", 55),
+    (2, "7. Scheduling: Introduction", 73),
+    (2, "8. Scheduling: The Multi-Level Feedback Queue", 85),
+    (2, "9. Scheduling: Proportional Share", 97),
+    (2, "10. Multiprocessor Scheduling (Advanced)", 107),
+    (2, "11. Summary Dialogue on CPU Virtualization", 121),
+    (2, "12. A Dialogue on Memory Virtualization", 123),
+    (2, "13. The Abstraction: Address Spaces", 125),
+    (2, "14. Interlude: Memory API", 135),
+    (2, "15. Mechanism: Address Translation", 147),
+    (2, "16. Segmentation", 161),
+    (2, "17. Free-Space Management", 173),
+    (2, "18. Paging: Introduction", 187),
+    (2, "19. Paging: Faster Translations (TLBs)", 201),
+    (2, "20. Paging: Smaller Tables", 217),
+    (2, "21. Beyond Physical Memory: Mechanisms", 229),
+    (2, "22. Beyond Physical Memory: Policies", 239),
+    (2, "23. Complete Virtual Memory Systems", 251),
+    (2, "24. Summary Dialogue on Memory Virtualization", 273),
     (1, "Part II. Concurrency", 275),
-    (2,   "25. A Dialogue on Concurrency", 277),
-    (2,   "26. Concurrency: An Introduction", 279),
-    (2,   "27. Interlude: Thread API", 297),
-    (2,   "28. Locks", 309),
-    (2,   "29. Lock-based Concurrent Data Structures", 329),
-    (2,   "30. Condition Variables", 341),
-    (2,   "31. Semaphores", 357),
-    (2,   "32. Common Concurrency Problems", 377),
-    (2,   "33. Event-based Concurrency (Advanced)", 391),
-    (2,   "34. Summary Dialogue on Concurrency", 401),
+    (2, "25. A Dialogue on Concurrency", 277),
+    (2, "26. Concurrency: An Introduction", 279),
+    (2, "27. Interlude: Thread API", 297),
+    (2, "28. Locks", 309),
+    (2, "29. Lock-based Concurrent Data Structures", 329),
+    (2, "30. Condition Variables", 341),
+    (2, "31. Semaphores", 357),
+    (2, "32. Common Concurrency Problems", 377),
+    (2, "33. Event-based Concurrency (Advanced)", 391),
+    (2, "34. Summary Dialogue on Concurrency", 401),
     (1, "Part III. Persistence", 403),
-    (2,   "35. A Dialogue on Persistence", 405),
-    (2,   "36. I/O Devices", 407),
-    (2,   "37. Hard Disk Drives", 421),
-    (2,   "38. Redundant Arrays of Inexpensive Disks (RAIDs)", 435),
-    (2,   "39. Interlude: File and Directories", 451),
-    (2,   "40. File System Implementation", 467),
-    (2,   "41. Locality and The Fast File System", 481),
-    (2,   "42. Crash Consistency: FSCK and Journaling", 491),
-    (2,   "43. Log-structured File Systems", 511),
-    (2,   "44. Flash-based SSDs", 525),
-    (2,   "45. Data Integrity and Protection", 545),
-    (2,   "46. Summary Dialogue on Persistence", 557),
-    (2,   "47. A Dialogue on Distribution", 559),
-    (2,   "48. Distributed Systems", 561),
-    (2,   "49. Sun's Network File System (NFS)", 579),
-    (2,   "50. The Andrew File System (AFS)", 595),
-    (2,   "51. Summary Dialogue on Distribution", 607),
+    (2, "35. A Dialogue on Persistence", 405),
+    (2, "36. I/O Devices", 407),
+    (2, "37. Hard Disk Drives", 421),
+    (2, "38. Redundant Arrays of Inexpensive Disks (RAIDs)", 435),
+    (2, "39. Interlude: File and Directories", 451),
+    (2, "40. File System Implementation", 467),
+    (2, "41. Locality and The Fast File System", 481),
+    (2, "42. Crash Consistency: FSCK and Journaling", 491),
+    (2, "43. Log-structured File Systems", 511),
+    (2, "44. Flash-based SSDs", 525),
+    (2, "45. Data Integrity and Protection", 545),
+    (2, "46. Summary Dialogue on Persistence", 557),
+    (2, "47. A Dialogue on Distribution", 559),
+    (2, "48. Distributed Systems", 561),
+    (2, "49. Sun's Network File System (NFS)", 579),
+    (2, "50. The Andrew File System (AFS)", 595),
+    (2, "51. Summary Dialogue on Distribution", 607),
 ]
 
 BOOKS = {
-    "n2t":   {"offset": 14, "pdf_pages": 331,  "entries": N2T},
-    "ref":   {"offset": 0,  "pdf_pages": 337,  "entries": REF},
-    "tpp":   {"offset": 25, "pdf_pages": 352,  "entries": TPP},
-    "ostep": {"offset": 25, "pdf_pages": 687,  "entries": OSTEP},
+    "n2t": {"offset": 14, "pdf_pages": 331, "entries": N2T},
+    "ref": {"offset": 0, "pdf_pages": 337, "entries": REF},
+    "tpp": {"offset": 25, "pdf_pages": 352, "entries": TPP},
+    "ostep": {"offset": 25, "pdf_pages": 687, "entries": OSTEP},
 }
 
 
 def write_book(alias_l: str, data: dict):
+    OUT.mkdir(exist_ok=True)
     entries = [
         {"level": lvl, "title": title, "page": bp + data["offset"], "book_page": bp}
         for lvl, title, bp in data["entries"]
@@ -184,18 +186,26 @@ def write_book(alias_l: str, data: dict):
         "source": "hand-curated from printed Contents page",
         "entries": entries,
     }
-    (OUT / f"{alias_l}.json").write_text(json.dumps(glossary, indent=2, ensure_ascii=False))
+    (OUT / f"{alias_l}.json").write_text(
+        json.dumps(glossary, indent=2, ensure_ascii=False)
+    )
 
-    lines = [f"# {glossary['alias']} Glossary",
-             f"_PDF pages: {glossary['pdf_pages']} · TOC entries: {len(entries)} · "
-             f"book→PDF offset: +{data['offset']}_",
-             "_Source: hand-curated from printed Contents page._",
-             ""]
+    lines = [
+        f"# {glossary['alias']} Glossary",
+        f"_PDF pages: {glossary['pdf_pages']} · TOC entries: {len(entries)} · "
+        f"book→PDF offset: +{data['offset']}_",
+        "_Source: hand-curated from printed Contents page._",
+        "",
+    ]
     for e in entries:
         indent = "  " * (e["level"] - 1)
-        lines.append(f"{indent}- p.{e['page']} (book p.{e['book_page']}) — {e['title']}")
+        lines.append(
+            f"{indent}- p.{e['page']} (book p.{e['book_page']}) — {e['title']}"
+        )
     (OUT / f"{alias_l}.md").write_text("\n".join(lines) + "\n")
-    print(f"[{alias_l.upper()}] wrote {len(entries)} entries (offset +{data['offset']})")
+    print(
+        f"[{alias_l.upper()}] wrote {len(entries)} entries (offset +{data['offset']})"
+    )
 
 
 if __name__ == "__main__":

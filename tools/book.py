@@ -3,7 +3,7 @@
 book.py — verbatim PDF extraction + glossary tool for the 2026 Reading List.
 
 Subcommands:
-  glossary <ALIAS> [--all]        Build TOC glossary -> Glossaries/{alias}.json + .md
+  glossary <ALIAS> [--all]        Build TOC glossary -> glossaries/{alias}.json + .md
   read <ALIAS> --pages A-B        Print verbatim text for PDF page range [A, B]
   read <ALIAS> --section "<q>"    Print verbatim text for the section whose title contains <q>
   read <ALIAS> --chapter N        Print verbatim text for top-level entry #N
@@ -11,7 +11,9 @@ Subcommands:
 
 Page numbers are PDF page numbers (1-indexed for the CLI; pymupdf is 0-indexed internally).
 The TOC outline reflects the PDF's embedded bookmarks; some books have richer outlines than others.
+PDFs live in books/{ALIAS}.pdf; the legacy root-level {ALIAS}.pdf path is also checked.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,20 +24,36 @@ from pathlib import Path
 import fitz  # pymupdf
 
 ROOT = Path(__file__).resolve().parent.parent
-GLOSSARY_DIR = ROOT / "Glossaries"
+BOOKS_DIR = ROOT / "books"
+GLOSSARY_DIR = ROOT / "glossaries"
 
 ALIASES = [
-    "DDIA", "OSTEP", "N2T", "COD", "DBI",
-    "CC", "TPP", "REF", "SAHP", "WPF", "WELC",
-    "LDDD", "DSG", "LGO", "CLRS",
+    "DDIA",
+    "OSTEP",
+    "N2T",
+    "COD",
+    "DBI",
+    "CC",
+    "TPP",
+    "REF",
+    "SAHP",
+    "WPF",
+    "WELC",
+    "LDDD",
+    "DSG",
+    "LGO",
+    "CLRS",
 ]
 
 
 def pdf_path(alias: str) -> Path:
-    p = ROOT / f"{alias.upper()}.pdf"
-    if not p.exists():
-        raise FileNotFoundError(f"PDF not found: {p}")
-    return p
+    name = f"{alias.upper()}.pdf"
+    candidates = [BOOKS_DIR / name, ROOT / name]
+    for p in candidates:
+        if p.exists():
+            return p
+    checked = ", ".join(str(p) for p in candidates)
+    raise FileNotFoundError(f"PDF not found. Checked: {checked}")
 
 
 def load_glossary(alias: str) -> dict:
@@ -51,8 +69,7 @@ def build_glossary(alias: str) -> dict:
     doc = fitz.open(pdf_path(alias))
     toc = doc.get_toc(simple=True)  # [[level, title, page1based], ...]
     entries = [
-        {"level": lvl, "title": title.strip(), "page": page}
-        for lvl, title, page in toc
+        {"level": lvl, "title": title.strip(), "page": page} for lvl, title, page in toc
     ]
     glossary = {
         "alias": alias.upper(),
@@ -71,9 +88,11 @@ def write_glossary(alias: str, glossary: dict) -> tuple[Path, Path]:
 
     json_path.write_text(json.dumps(glossary, indent=2, ensure_ascii=False))
 
-    lines = [f"# {glossary['alias']} Glossary",
-             f"_PDF pages: {glossary['pdf_pages']} · TOC entries: {len(glossary['entries'])}_",
-             ""]
+    lines = [
+        f"# {glossary['alias']} Glossary",
+        f"_PDF pages: {glossary['pdf_pages']} · TOC entries: {len(glossary['entries'])}_",
+        "",
+    ]
     if not glossary["entries"]:
         lines.append("_No embedded TOC outline. Use `--pages` directly._")
     for e in glossary["entries"]:
@@ -89,7 +108,9 @@ def cmd_glossary(args) -> int:
         try:
             g = build_glossary(a)
             jp, mp = write_glossary(a, g)
-            print(f"[{a}] {len(g['entries'])} entries · {g['pdf_pages']} pages → {mp.name}")
+            print(
+                f"[{a}] {len(g['entries'])} entries · {g['pdf_pages']} pages → {mp.name}"
+            )
         except FileNotFoundError as e:
             print(f"[{a}] SKIP: {e}", file=sys.stderr)
     return 0
@@ -102,7 +123,7 @@ def read_pages(alias: str, start: int, end: int) -> str:
     chunks = []
     for i in range(start - 1, end):
         page = doc[i]
-        chunks.append(f"\n===== {alias.upper()} · PDF p.{i+1} =====\n")
+        chunks.append(f"\n===== {alias.upper()} · PDF p.{i + 1} =====\n")
         chunks.append(page.get_text("text"))
     doc.close()
     return "".join(chunks)
@@ -150,7 +171,9 @@ def cmd_read(args) -> int:
         if len(matches) > 1:
             print(f"ambiguous '{args.section}' — matches:", file=sys.stderr)
             for i in matches:
-                print(f"  p.{entries[i]['page']} — {entries[i]['title']}", file=sys.stderr)
+                print(
+                    f"  p.{entries[i]['page']} — {entries[i]['title']}", file=sys.stderr
+                )
             return 2
         idx = matches[0]
 
@@ -178,10 +201,12 @@ def cmd_locate(args) -> int:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    g = sub.add_parser("glossary", help="extract TOC -> Glossaries/")
+    g = sub.add_parser("glossary", help="extract TOC -> glossaries/")
     g.add_argument("alias", nargs="?")
     g.add_argument("--all", action="store_true")
     g.set_defaults(func=cmd_glossary)
@@ -194,10 +219,10 @@ def main() -> int:
     sel.add_argument("--chapter", type=int, help="1-indexed top-level entry")
     r.set_defaults(func=cmd_read)
 
-    l = sub.add_parser("locate", help="find chapter/section for a page")
-    l.add_argument("alias")
-    l.add_argument("--page", type=int, required=True)
-    l.set_defaults(func=cmd_locate)
+    locate_cmd = sub.add_parser("locate", help="find chapter/section for a page")
+    locate_cmd.add_argument("alias")
+    locate_cmd.add_argument("--page", type=int, required=True)
+    locate_cmd.set_defaults(func=cmd_locate)
 
     args = ap.parse_args()
     if args.cmd == "glossary" and not args.all and not args.alias:

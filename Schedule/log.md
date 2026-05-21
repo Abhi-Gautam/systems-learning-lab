@@ -11,3 +11,8 @@
 - **Day 9 · 2026-05-20** — T1 DDIA pp.49-62 · T2 TPP pp.74-89 · T3 CLRS pp.41-46 · T4 DBI (paused)
 - **Day 10 · 2026-05-21** — T1 DDIA pp.63-87 · T2 TPP pp.90-115 · T3 CLRS pp.47-62 · T4 DBI pp.44-65
 - **Day 11 · 2026-05-22** — T1 N2T pp.71-94 · T2 REF pp.13-42 · T3 SAHP pp.19-40 · T4 DBI pp.66-90
+- **Day 12 · 2026-05-23** — T1 N2T pp.95-106 · T2 REF pp.43-56 · T3 SAHP pp.41-49 · T4 DBI pp.91-95
+- **Day 13 · 2026-05-24** — T1 N2T pp.107-118 · T2 WELC pp.26-39 · T3 LDDD pp.29-37 · T4 DBI pp.96-100
+- **Day 14 · 2026-05-25** — T1 N2T pp.119-130 · T2 WELC pp.40-53 · T3 LDDD pp.38-46 · T4 DBI pp.101-105
+- **Day 15 · 2026-05-26** — T1 N2T pp.131-142 · T2 WELC pp.54-67 · T3 LDDD pp.47-55 · T4 DBI pp.106-110
+- **Day 16 · 2026-05-27** — T1 N2T pp.143-154 · T2 WELC pp.68-81 · T3 LDDD pp.56-64 · T4 DBI pp.111-115

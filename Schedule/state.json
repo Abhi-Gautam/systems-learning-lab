@@ -1,6 +1,6 @@
 {
   "start_date": "2026-05-11",
-  "day": 11,
+  "day": 16,
   "rates": {
     "DDIA": 14,
     "OSTEP": 14,
@@ -8,12 +8,10 @@
     "N2T": 12,
     "CC": 16,
     "TPP": 16,
-    "REF": 14,
     "WELC": 14,
     "WPF": 14,
     "LGO": 10,
     "DSG": 10,
-    "SAHP": 9,
     "LDDD": 9,
     "CLRS": 6,
     "DBI": 5
@@ -21,27 +19,27 @@
   "slots": {
     "T1": {
       "book": "N2T",
-      "page": 95,
-      "days_on_slot": 1,
-      "chapters_done_this_quantum": 1
+      "page": 155,
+      "days_on_slot": 6,
+      "chapters_done_this_quantum": 3
     },
     "T2": {
-      "book": "REF",
-      "page": 43,
-      "days_on_slot": 1,
-      "chapters_done_this_quantum": 0
+      "book": "WELC",
+      "page": 82,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 1
     },
     "T3": {
-      "book": "SAHP",
-      "page": 41,
-      "days_on_slot": 1,
-      "chapters_done_this_quantum": 1
+      "book": "LDDD",
+      "page": 65,
+      "days_on_slot": 4,
+      "chapters_done_this_quantum": 0
     },
     "T4": {
       "book": "DBI",
-      "page": 91,
+      "page": 116,
       "days_on_slot": 1,
-      "chapters_done_this_quantum": 1
+      "chapters_done_this_quantum": 0
     }
   },
   "books": {
@@ -61,8 +59,8 @@
       "completed": false
     },
     "N2T": {
-      "last_active": 11,
-      "page": 95,
+      "last_active": 16,
+      "page": 155,
       "completed": false
     },
     "CC": {
@@ -75,14 +73,9 @@
       "page": 116,
       "completed": false
     },
-    "REF": {
-      "last_active": 11,
-      "page": 43,
-      "completed": false
-    },
     "WELC": {
-      "last_active": -1,
-      "page": 22,
+      "last_active": 16,
+      "page": 82,
       "completed": false
     },
     "WPF": {
@@ -100,14 +93,9 @@
       "page": 63,
       "completed": false
     },
-    "SAHP": {
-      "last_active": 11,
-      "page": 41,
-      "completed": false
-    },
     "LDDD": {
-      "last_active": -1,
-      "page": 29,
+      "last_active": 16,
+      "page": 65,
       "completed": false
     },
     "DSG": {
@@ -116,8 +104,8 @@
       "completed": false
     },
     "DBI": {
-      "last_active": 11,
-      "page": 91,
+      "last_active": 16,
+      "page": 116,
       "completed": false
     }
   }

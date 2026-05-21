@@ -28,3 +28,7 @@ target/
 *.log
 tmp/
 temp/
+.claude/
+.agents/skills/
+AGENTS.md
+CLAUDE.md

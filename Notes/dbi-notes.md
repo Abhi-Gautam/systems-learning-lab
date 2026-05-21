@@ -4,6 +4,834 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-26] Page header & sibling links · pp.111–115 · Ch.4 *Implementing B-Trees* (intro → Page Header → Magic Numbers → Sibling Links)
+
+- What lives in a page header and why each field is there
+- Magic numbers as cheap on-disk sanity checks (the `PAGE` = `50 41 47 45` trick)
+- Sibling links: range-scan win vs split/merge cost
+
+### History — "why does this exist?"
+On-disk page formats are old enough that **the first paged storage manager — IBM IMS (1966)** — already used per-page headers to encode page type and free-space markers. The **B-Tree** specifically arrives with **Bayer & McCreight at Boeing in 1972**; their original paper sketched a per-page record that's recognisable in today's PostgreSQL `PageHeaderData`. **Sibling links** are the B+Tree's defining feature, introduced when Bayer added them in the late 1970s to make range scans O(n/B) instead of O(n log B). **Lehman & Yao's "Blink-tree" (1981)** combined sibling links with a right-link discipline that made concurrent B-Trees lock-friendly — the lineage every modern engine (Postgres, MySQL InnoDB, MongoDB WiredTiger, SQLite) traces back to. Magic numbers as a sanity-check convention are even older — `0xCAFEBABE` at the head of every Java `.class` file (1995) and `0x7F ELF` at the head of every Linux binary (1993) are the most-touched examples.
+
+### Intuition — "this is like…"
+A page header is **the HTTP response header of a B-Tree page**: a small fixed-shape prefix that tells the reader what to expect in the body. Just as an HTTP `Content-Length` tells you where the body ends and `Content-Type` tells you how to parse it, the page header's cell count tells you how many slots to iterate and the flags tell you whether the body holds keys+pointers (internal node) or keys+values (leaf). The magic number is the equivalent of HTTP's status line — if you don't see `HTTP/1.1 200` at byte 0, you know you're reading garbage before you parse a single header field.
+
+### Mechanics
+
+**What a B-Tree page header typically carries:**
+
+```
+ ┌─────────────────────────────────────────────────────────┐
+ │  Page header (fixed-size prefix, e.g. 24 bytes)         │
+ ├─────────────────────────────────────────────────────────┤
+ │  magic number       (4B)  e.g. 0x50414745  ("PAGE")     │
+ │  page kind / flags  (1B)  leaf? internal? overflow?     │
+ │  format version     (1B)  schema-evolution marker       │
+ │  cell count         (2B)  how many slot entries follow  │
+ │  lower offset       (2B)  end of slot array (grows ↓)   │
+ │  upper offset       (2B)  start of cell data (grows ↑)  │
+ │  rightmost pointer  (4B)  child for keys > last slot    │
+ │  prev sibling       (4B)  ← optional (Bayer+) for leaves│
+ │  next sibling       (4B)  ← optional (Bayer+) for leaves│
+ │  ...                                                    │
+ └─────────────────────────────────────────────────────────┘
+```
+
+**Three real-world headers, compared:**
+
+| Engine | Header carries | Page size default |
+|---|---|---|
+| PostgreSQL | `pd_lsn`, `pd_checksum`, `pd_flags`, `pd_lower`, `pd_upper`, `pd_special`, `pd_pagesize_version` | 8 KB |
+| MySQL InnoDB | `FIL_PAGE_OFFSET`, `FIL_PAGE_PREV`, `FIL_PAGE_NEXT`, `FIL_PAGE_LSN`, `FIL_PAGE_TYPE`, plus 38-byte FIL trailer | 16 KB |
+| SQLite | cell count, rightmost pointer, first-freeblock offset, fragmented-free byte count | 4 KB (configurable) |
+
+Note InnoDB's `FIL_PAGE_PREV`/`FIL_PAGE_NEXT` — those are the sibling links the book is about to introduce, sitting at fixed offsets in every page. PostgreSQL stores them not in the header but in `BTPageOpaqueData` (the page's "special" area, accessed via `pd_special`).
+
+**Magic numbers — the cheapest sanity check on disk.** The trick:
+
+```
+On write:   memcpy(page_buffer, "PAGE", 4);   // 0x50 41 47 45
+            ...
+            write(fd, page_buffer, PAGE_SIZE);
+
+On read:    read(fd, page_buffer, PAGE_SIZE);
+            if (memcmp(page_buffer, "PAGE", 4) != 0)
+                panic("page %u corrupt or wrong type", pgno);
+```
+
+```
+Why this works:
+  - Random 4-byte sequence matching "PAGE" exactly:  1 / 2^32 ≈ 1 / 4 billion
+  - If the page is truncated, misaligned, or has been
+    overwritten by a different page type, the first 4
+    bytes almost certainly aren't "PAGE"
+  - Cost: 4 bytes per page + 4-byte compare on read.  Negligible.
+  - Catches: torn writes, mis-paged file extension,
+    confused fd offset, file truncation, partial writes
+```
+
+Real magic numbers in the wild — Giampaolo's *Practical File System Design* (referenced as `[GIAMPAOLO98]` in the source) is the canonical citation:
+
+| Format | Magic | Where |
+|---|---|---|
+| ELF binary | `7F 45 4C 46` | bytes 0–3 of every Linux executable |
+| Java class | `CA FE BA BE` | bytes 0–3 of every `.class` |
+| PNG image | `89 50 4E 47 0D 0A 1A 0A` | bytes 0–7 |
+| PostgreSQL WAL segment | `0xD093` (`XLOG_PAGE_MAGIC`) | bumped per major version! |
+| SQLite db file | `"SQLite format 3\000"` (16 bytes) | bytes 0–15 |
+
+The Postgres trick of *bumping the magic per major version* doubles as a refusal-to-replay check — wrong-version WAL is rejected before any record is parsed.
+
+**Sibling links — the optimisation that defines a B+Tree:**
+
+```
+Without sibling links — range scan from key K₁ to K₂:
+
+       Root
+      /  |  \
+    ...  N  ...           For each leaf in range:
+       /   \                walk up to common ancestor,
+     L₁    L₂               then back down to next leaf.
+                            O(log B) per step → O((K₂−K₁)/B × log B) total.
+
+With sibling links — same range scan:
+
+  ┌─ L₁ ─┐ ←→ ┌─ L₂ ─┐ ←→ ┌─ L₃ ─┐   Find L₁ via root descent,
+  │ ... │     │ ... │     │ ... │   then follow next pointers.
+  └─────┘     └─────┘     └─────┘   O(log B) + O((K₂−K₁)/B) total.
+```
+
+**The cost of sibling links** — the maintenance burden Khononov flags:
+
+```
+Split (non-rightmost leaf L):
+  L: [a, b, c, d, e]   →   L: [a, b, c]  +  L': [d, e]
+
+  Updates required:
+    1. L.next  = L'        (new right sibling)
+    2. L'.prev = L         (back link)
+    3. L'.next = (old L.next) = R
+    4. R.prev  = L'        ← THIS is the extra cost; R is a different page
+    5. parent gets new entry (would happen anyway)
+```
+
+Step 4 dirties an extra page that wasn't even involved in the split. In a concurrent B-Tree this is the moment when **the right-sibling page has to be locked** — and not just any latch, a write latch — purely because we're rebinding its back-pointer. Lehman & Yao's Blink-Tree solution: **use only forward links** + a "high key" per page that doubles as a split detector, so a concurrent reader can notice "this page split under me, follow next-pointer once to recover." The book defers that to a later section.
+
+**Trade-off summary:**
+
+```
+┌──────────────────────────────────────────────────────┐
+│  WITHOUT sibling links                               │
+│    + simpler split/merge (no neighbour to touch)     │
+│    – range scan is O(n × log B)                      │
+│  WITH sibling links (B+Tree)                         │
+│    + range scan is O(n)                              │
+│    – split touches 3 pages; merge touches 3 pages    │
+│    – concurrent maintenance needs extra latches      │
+│      (Blink-Tree solves part of this; see Ch.6)      │
+└──────────────────────────────────────────────────────┘
+```
+
+Every production OLTP B-Tree picks "with sibling links". Range queries are too common to give up the win.
+
+### If you were the storage-engine author…
+
+A user reports a crash with `ERROR: page corrupt at file offset 0x80000`. You have a magic-number-tagged page format. What's the first thing you check?
+
+You **dump the first 16 bytes of that offset** and compare with the expected magic. Three possibilities:
+
+- *Magic matches → page header is intact*; the corruption is later (cell offsets, body). Diff the checksum against recomputed value; check the slot array for overlapping ranges.
+- *Magic is zeros* → the page is **partially extended** but never written (file system gave you sparse zeroes). Probably a `posix_fallocate` followed by a power loss; check WAL replay status.
+- *Magic is a different 4-byte value* → the page was overwritten by a **different page type** (the same file holding heap pages and index pages with type-discriminating magics). Now you know exactly which kind of corruption you have — fd-mixed write, or an off-by-one in your page-table indexing.
+
+The magic number turned a one-bit "page is broken" signal into a three-way diagnostic.
+
+### Cross-language view
+*(n/a — page-header design is a binary-encoding concern, not a language one. The same fixed-prefix-with-magic discipline shows up in any language's serializer for on-disk data — e.g., Rust's `bincode` deliberately has no magic (a known footgun); Cap'n Proto and FlatBuffers prepend identifiers.)*
+
+### Where this shows up in real systems
+
+- **Postgres `pg_filedump` utility** parses on-disk pages purely from headers and slot offsets — the existence of `pg_filedump` is direct testimony that the header carries everything you need to interpret the body without consulting any catalog. That's the *contract* the page header encodes.
+- **InnoDB's `FIL_PAGE_PREV`/`FIL_PAGE_NEXT`** are the *exact* sibling links the book is introducing — and the reason MySQL's `SELECT ... ORDER BY id LIMIT 100, 1000000` does not collapse: it walks leaf pages via `FIL_PAGE_NEXT` rather than re-descending the tree.
+- **WiredTiger** (MongoDB) uses page-type magics (`WT_PAGE_*`) and a per-page checksum, but **does not store sibling links in B+Tree leaves**. Instead, range scans use the in-memory cache's sibling pointers and re-descend on a miss — a different point on the trade-off curve.
+- **ZFS block pointers** carry a per-block `dva` (Data Virtual Address) and a 256-bit checksum in the *parent* block, not in the block itself. The magic-number-in-header pattern is replaced by checksum-in-parent — which catches the same torn-write class of failures but pushes the metadata one level up.
+
+### Diagnostic questions
+
+1. **Q:** What does a magic number protect against that a checksum doesn't?
+   *Wrong-answer trap:* "Nothing — checksums are stronger." The trap is conflating the two. A checksum confirms *integrity within the page*; a magic confirms *that you're reading the right page type at this offset*. If your fd is at the wrong offset, the page may have a *valid* checksum (for the *wrong* page) but a *wrong* magic — magic catches the misaligned read class of bug; checksum doesn't.
+
+2. **Q:** Why does a non-rightmost B+Tree leaf split require touching three pages instead of two?
+   *Wrong-answer trap:* "It only touches two — the splitting page and its new sibling." Wrong: the **right neighbour's back-pointer** must be updated to point to the new sibling. Three pages → three latches in a concurrent implementation.
+
+3. **Q:** If sibling links are so useful, why doesn't every B-Tree implementation use them?
+   *Wrong-answer trap:* "Storage cost." Storage is negligible. The real cost is **concurrent-write complexity** — the right neighbour needs to be latched during a split. Lehman & Yao's Blink-Tree mitigates this with forward-only links + high keys, but the cost shaped MongoDB WiredTiger's "no on-disk sibling links" decision.
+
+4. **Q:** Postgres bumps `XLOG_PAGE_MAGIC` per major version. What problem does this prevent?
+   *Wrong-answer trap:* "Generic corruption detection." More specific: it **refuses to replay WAL records from an older format** during pg_upgrade scenarios, preventing silent format-skew bugs where a v15 server would otherwise apply v14-encoded records and produce subtly wrong state.
+
+5. **Q:** A `FIL_PAGE_TYPE` of `0` (InnoDB-allocated but never written). Why is this distinct from a torn write?
+   *Wrong-answer trap:* "It's just corruption — handle the same way." Wrong: `0` indicates a page that was *extended* (e.g., by `posix_fallocate`) but not initialised; recovery should reinitialise it, not refuse to start. A torn write would have a partial magic and a checksum mismatch — different recovery path.
+
+---
+
+## [2026-05-25] File versioning & checksums · pp.106–110 · Ch.3 *File Formats* — Managing Variable-Size Data (end) → Versioning → Checksumming → Summary
+
+- Binary formats have no schema-text to fall back on — versioning must be **explicit**
+- Three strategies: filename prefix, sidecar file, header field (each with one industry exemplar)
+- Error-detection hierarchy: parity → checksum → CRC → cryptographic hash — each catches more, costs more
+
+### History — "why does this exist?"
+**Hamming codes (Richard Hamming, Bell Labs, 1950)** were the first systematic error-detection-and-correction codes — born from Hamming's frustration that overnight batch jobs would crash on a single bit-flip and lose a weekend's work. **CRC (Cyclic Redundancy Check, W. Wesley Peterson, IBM, 1961)** became the dominant detection code in storage and networks because polynomial division can be implemented with shift-and-XOR — a single hardware loop on cheap silicon. **Ethernet (1980)** mandated CRC-32 on every frame, **TCP (1981)** chose a weaker 16-bit one's-complement checksum for speed, and the choice still defines those protocols' error profiles 45 years later. **The Unix `file(1)` command (1973, McIlroy)** introduced "magic numbers" — the first few bytes of a file identifying its format — which is the ancestor of header-field versioning. **Postgres `PG_VERSION` (since 6.0, ~1997)** picked the sidecar-file approach. **Cassandra (2008)** went the filename-prefix route. **ZFS (Sun, 2003)** was the first mainstream filesystem to make per-block cryptographic-strength checksums the default — "trust nothing the disk says" became a real engineering position.
+
+### Intuition — "this is like…"
+**File versioning is HTTP API versioning, applied to bytes.** The same three strategies appear in both worlds:
+
+| Versioning strategy | Database / file world | HTTP API world |
+|---|---|---|
+| **Filename prefix** | Cassandra: `na-1-big-Data.db` (na = v4.0+) | URL path: `/v2/users` |
+| **Sidecar file** | Postgres: `PG_VERSION` file alongside data | OpenAPI spec file: `openapi-v2.yaml` |
+| **Header field / magic number** | SSTable header byte: `0x5A 0x5A 0x00 0x01` | HTTP header: `Accept: application/vnd.api+v2` |
+
+The trade-offs port across too: filename versioning is **discoverable without opening anything**, sidecar files are **easy to update independently**, header fields are **inseparable from the data they describe**.
+
+**Checksumming is ECC RAM at the file level.** It doesn't *fix* corruption — it *detects* it before bad bytes propagate to layers above. The whole engineering point is "fail loudly, not silently." A disk that returns wrong bits and reports success is **the most dangerous failure mode in storage**, and checksums are how you turn silent corruption into a crash.
+
+### Mechanics
+
+#### Three versioning strategies — one row each, with the byte-level reality
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ Strategy 1: Filename prefix (Cassandra)                          │
+├──────────────────────────────────────────────────────────────────┤
+│  na-1-big-Data.db                                                │
+│  ↑↑                                                              │
+│  └─ "na" prefix = SSTable version 4.0 wire format                │
+│     Previous: "ma" = 3.0, "lb" = 3.x, etc.                       │
+│                                                                  │
+│  Reader's job: parse the filename, dispatch to the right         │
+│  decoder before opening the file at all.                         │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ Strategy 2: Sidecar file (Postgres)                              │
+├──────────────────────────────────────────────────────────────────┤
+│  $PGDATA/                                                        │
+│  ├── PG_VERSION   ← contains "15\n" or similar (ASCII)           │
+│  ├── base/...                                                    │
+│  └── pg_wal/...                                                  │
+│                                                                  │
+│  Reader's job: read PG_VERSION first, then start the rest of     │
+│  the server in version-appropriate mode.                         │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ Strategy 3: Header field with magic number (SQLite, ELF, PNG)    │
+├──────────────────────────────────────────────────────────────────┤
+│  SQLite database header (first 100 bytes of every .db file)      │
+│                                                                  │
+│  Offset  Size  Description                                       │
+│  ──────  ────  ───────────────────────────────────────           │
+│  0       16    "SQLite format 3\0"   ← magic string              │
+│  16      2     Page size in bytes    (big-endian u16)            │
+│  18      1     File format write version                         │
+│  19      1     File format read version                          │
+│  20      1     Reserved bytes per page                            │
+│  ...                                                             │
+│                                                                  │
+│  Reader's job: read first ~100 bytes, validate magic, branch     │
+│  on read/write version. The format is self-describing.           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+The header-with-magic-number approach is dominant for files that travel (download, email, S3) because **the version is inseparable from the bytes**. Filename and sidecar strategies break the moment someone renames the file or strips the directory metadata.
+
+#### The error-detection hierarchy — what catches what
+
+| Code | Bits | Catches | Misses | Cost (cycles/byte, modern x86) | Where used |
+|---|---|---|---|---|---|
+| **Parity (XOR)** | 1 bit | Any odd number of bit-flips | Two-bit flips (2 wrongs cancel) | ~0.1 | RS-232 (1960s), legacy memory |
+| **One's-complement sum** | 16 bit | Single-bit flips | Bit-flips that sum to 0 (rearrangements undetectable) | ~0.3 | TCP, UDP, IP |
+| **CRC-32 (Castagnoli, polynomial 0x1EDC6F41)** | 32 bit | All burst errors ≤ 32 bits, ~99.999999998% of random | Adversarial collisions (trivial to construct) | ~0.5 (hw: 0.1 w/ SSE4.2 `crc32` instr) | Ethernet, ZIP, gzip, ext4 metadata, Postgres |
+| **Fletcher-4** | 64 bit | Most random corruptions | Adversarial | ~0.4 | ZFS default |
+| **xxHash (XXH64)** | 64 bit | Random + most adversarial | Cryptographic attacks | ~0.2 (faster than memcpy!) | RocksDB, LZ4 |
+| **SHA-256** | 256 bit | Everything except 2^128 work | Nothing realistic | ~7 (hw: 1 w/ SHA-NI) | Bitcoin, ZFS opt-in, content-addressing |
+| **BLAKE3** | 256 bit | Same as SHA-256 | Same | ~1.5 (parallelizable) | IPFS, modern content-hashing |
+
+Two non-obvious points the book gestures at:
+
+1. **Checksums (parity, sum) catch *random* corruption; CRCs catch *burst* corruption (consecutive bit-flips)**. Storage failure modes are usually burst errors (a sector goes bad, a whole strip flips), so CRC fits storage better than checksums even though both are "small."
+2. **None of parity/sum/CRC are safe against an adversary**. The book's warning is explicit: do not use CRCs to verify tamper-resistance. CRC + known plaintext = trivial collision. That's why ZFS made cryptographic hashes opt-in for hostile-environment deployments.
+
+#### What XOR-parity actually misses — a worked failure
+
+Page contents (4 bytes, hex): `0xDE 0xAD 0xBE 0xEF`. Parity = `0xDE ⊕ 0xAD ⊕ 0xBE ⊕ 0xEF = 0xCC`.
+
+Single bit-flip in last byte: `0xDE 0xAD 0xBE 0xEE`. New parity: `0xDE ⊕ 0xAD ⊕ 0xBE ⊕ 0xEE = 0xCD`. **Mismatch caught.** ✅
+
+Two bit-flips, one in byte 2, one in byte 4: `0xDE 0xAD 0xBF 0xEE`. New parity: `0xDE ⊕ 0xAD ⊕ 0xBF ⊕ 0xEE = 0xCC`. **Mismatch NOT caught.** ❌
+
+This is why XOR-parity is only useful at the *bit* level (single-bit detection within a byte), never at the *byte* level. Real-world corruption is rarely a single-bit flip — disk sectors fail in bursts of consecutive bits, and adversaries are arbitrary.
+
+#### CRC-32 in three lines of pseudo-code
+
+```python
+def crc32(data, poly=0xEDB88320):
+    crc = 0xFFFFFFFF
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            crc = (crc >> 1) ^ poly if crc & 1 else crc >> 1
+    return crc ^ 0xFFFFFFFF
+```
+
+That's the entire algorithm. The reason it's everywhere is hardware: x86 CPUs since SSE4.2 (Nehalem, 2008) have a `crc32` instruction (~0.1 cycle/byte). Modern CRC-32C (Castagnoli polynomial) at full memory bandwidth costs essentially nothing — which is why Postgres, ext4, and the Linux block layer all run CRC-32 by default on every metadata page.
+
+#### Per-page vs per-file checksums — why the granularity matters
+
+```
+PER-FILE checksum                  PER-PAGE checksum (modern DBs)
+
+  ┌──────────┐                     ┌──────────┐ ← page 1 + checksum
+  │          │                     ├──────────┤
+  │  10 GB   │                     │          │ ← page 2 + checksum
+  │   data   │   one 32-bit        ├──────────┤
+  │          │     CRC at          │          │ ← page 3 + checksum  ← CORRUPTED
+  │          │   the end           ├──────────┤
+  │          │                     │          │ ← page 4 + checksum
+  └──────────┘                     └──────────┘
+
+  If page 3 corrupts:              If page 3 corrupts:
+  - whole file is invalid            - only page 3 is invalid
+  - must re-read 10 GB to check     - O(1) to validate per page
+  - O(N) verification cost          - bad page identifies itself
+```
+
+The database lesson: **checksums must be local to the unit of read**. Postgres pages are 8KB by default with a checksum stored in the page header — a single corruption flags exactly that 8KB block as bad, not the whole 100GB table. This is the same engineering decision as TCP's per-segment checksum vs a per-stream checksum: corruption localization is more valuable than density.
+
+#### What corruption looks like at the byte level
+
+Postgres page header (24 bytes):
+
+```
+Offset  Size  Field           Example value
+──────  ────  ──────────────  ──────────────
+0       8     PageLSN         0x0000000018A4F210
+8       2     Checksum        0x4F8A           ← CRC-32C truncated to 16 bits
+10      2     Flags           0x0000
+12      2     LowerOffset     0x18  (24 = header end)
+14      2     UpperOffset     0xFE0 (free space starts here)
+16      2     SpecialOffset   0x2000
+18      4     PageVersion     0x0004           ← format version
+22      2     PruneXid        0x0000
+```
+
+When Postgres reads this page from disk, it:
+1. Recomputes CRC-32C over the page (excluding the checksum field itself).
+2. Compares to the stored `Checksum` field.
+3. On mismatch, returns `ERROR: invalid page in block N of relation` — and **does not** return the page's data to the SQL layer.
+
+That last step is the entire point. The database has chosen `ERROR + crash` over `silent wrong answer`. ZFS, the strictest, will even refuse to serve a checksum-mismatched block in a mirror configuration unless one of the mirrors has a matching checksum — silent corruption literally cannot leak through.
+
+### If you were the storage engine designer…
+Two coupled choices:
+
+**Versioning:** you'll pick header-field-with-magic-number, almost always. Filename prefix breaks the moment someone uses `mv`; sidecar files break the moment someone uses `cp file.db /backup/` and forgets the sidecar. Magic-number-in-header travels with the bytes. Cassandra got away with filename because SSTable files are *internal* to the data directory — they're never moved as standalone artifacts. Postgres got away with `PG_VERSION` because it controls the whole data directory layout. If your file might leave its directory, the version must be in the file.
+
+**Checksumming:** start with CRC-32C and benchmark. It's free in hardware on modern CPUs, catches 99.99999998% of random/burst corruption, and is the industry default. Only reach for cryptographic hashes (SHA-256, BLAKE3) when you have a real hostile-actor threat model — backup integrity in untrusted cloud storage, content-addressable systems where collisions enable cache poisoning, or systems where corruption could be deliberate (filesystems on shared media). The book's warning is right: **do not use CRC for security**.
+
+### Where this shows up in real systems
+- **Postgres** uses **CRC-32C** for page checksums (introduced in 9.3, on by default since 12), the WAL stream (every record), and `pg_control`. A corrupt page raises `invalid page in block N` and refuses to serve the data — exactly the "crash rather than corrupt" stance.
+- **SQLite** added per-page checksums in 3.7.13 (2012) via a `PRAGMA cell_size_check = ON`. Magic-number versioning is in the first 16 bytes: `"SQLite format 3\0"` — recognizable in any hex dump.
+- **ZFS** uses **Fletcher-4** by default (~0.4 cycle/byte), with SHA-256 opt-in for hostile environments. Per-block, stored in the parent block pointer — so reading any block also tells you the expected checksum without trusting the block itself. This is the basis of ZFS's "self-healing" claim.
+- **Bitcoin** uses **double SHA-256** for block hashes (the second hash neutralizes a theoretical length-extension attack on the first). Every block's content is committed by its 256-bit hash — content-addressable storage at protocol level.
+- **Git** uses **SHA-1** for content-addressing (transitioning to SHA-256 in newer git versions). The hash *is* the identifier — `git show 7276c2b` is content-addressed lookup.
+- **TCP's 16-bit one's-complement checksum** is famously weak — it catches single-bit errors but misses many byte rearrangements. In practice it's "ok" because Ethernet's CRC-32 below it and application-layer checksums above it catch what TCP misses. The stack of weak checks composes to acceptable end-to-end integrity, which is the **end-to-end argument** (Saltzer/Reed/Clark, 1981) in action.
+
+### Diagnostic questions
+1. **A Cassandra SSTable file is renamed by an ops engineer from `na-1-big-Data.db` to `data.db`. What breaks?** *Wrong:* "nothing, file contents unchanged." *Right:* **Cassandra refuses to load it** — the version is *only* in the filename. Versioning strategy that puts metadata outside the bytes fails as soon as the bytes are moved alone. This is the canonical critique of filename-based versioning.
+2. **You see two databases store version metadata in two different ways. Postgres uses `PG_VERSION` sidecar; SQLite uses a 100-byte header. Why the difference?** *Wrong:* "preference." *Right:* **deployment shape**. Postgres owns a multi-file *data directory* that's not portable across systems; the sidecar approach fits. SQLite databases are **single files** that get copied to phones, attached to emails, embedded in apps — the version *must* be in the bytes or the file can't survive movement.
+3. **TCP's checksum is much weaker than Ethernet's. Why isn't the internet drowning in corrupted packets?** *Wrong:* "checksums are mostly cosmetic." *Right:* **end-to-end argument** — TCP's weak check composes with Ethernet's CRC-32 below and TLS/application-layer MACs above. Each layer catches the others' misses; no single layer needs to be strong. (Counterpoint: there *are* documented cases of TCP-checksum-passing corruption causing silent data loss; it's not zero, just rare enough to live with.)
+4. **You're choosing a hash function for an internal-only deduplication system processing 10 GB/s. SHA-256 or xxHash?** *Wrong:* "SHA-256 — security." *Right:* **xxHash**. The threat model is *random* corruption, not *adversarial* — a deduplication key doesn't need cryptographic strength, only collision resistance against natural inputs. xxHash at 35 GB/s (3.5x your throughput) leaves CPU for the actual workload; SHA-256 at 1-2 GB/s would bottleneck. Crypto when you have an adversary, fast hash when you don't.
+5. **A 4KB Postgres page has a single-bit flip in the data area (not the checksum field). What happens on next read?** *Wrong:* "Postgres returns the wrong row." *Right:* **the recomputed CRC-32C mismatches, Postgres raises `ERROR: invalid page in block N`, the query fails, nothing is returned to the application**. The corruption is *contained* — bad bytes never reach the SQL layer. This is the entire engineering point of per-page checksums: turn silent corruption into a loud error.
+
+---
+
+## [2026-05-24] Cell Layout + the Sorted-Pointer Trick + Availability Lists — How Slotted Pages Keep Logical Order Without Moving Bytes · pp.101–105 · Ch.3 *File Formats* — Cell Layout → Combining Cells into Slotted Pages → Managing Variable-Size Data
+
+### TL;DR
+Yesterday's entry covered the *why* and gross anatomy of slotted pages; today's chunk fills in three precise mechanics. **First, cell layout** — every cell groups fixed-size fields (sizes, flags, page-ID) at its front and variable-size bytes (key, value) at its back, so any cell can be sliced with O(1) offset arithmetic. **Second, the sorted-pointer trick** — cells are appended to the cell region in **insertion order** (no relocation, ever), while logical order (lexicographic key order) is maintained by **sorting the offset array**, not the cells themselves. Insert "Tom" then "Leslie" then "Ron" → cells laid out as `[Ron|Leslie|Tom]` in arrival order, but the offset array reads `[→Leslie, →Ron, →Tom]` so binary search returns the right tuple. **Third, the availability list** — deletes don't compact; they push the freed `(offset, size)` onto an in-page free-list (SQLite calls these *freeblocks*), and inserts consult it with either **first-fit** (fast, more fragmentation) or **best-fit** (slower, less fragmentation) before resorting to defragmentation. Together these three rules let a slotted page absorb arbitrary insert/delete/lookup traffic with **zero external pointer invalidation** and **constant-time append in steady state.**
+
+### Intuition — "this is like…"
+The sorted-pointer trick is a **librarian's index card system**. Books arrive at the library in whatever order publishers ship them; the librarian crams each new book onto the next empty shelf without sorting. Meanwhile, the card catalog (offset array) is kept alphabetical — when a patron asks for "Ronson, J.," the librarian binary-searches the cards, reads "shelf 7, slot 12" off the card, and walks there. **Adding a book is O(1) shelf placement + O(log n) card insertion**; sorting the books themselves would be O(n) shelf relocation. The library has decoupled *storage order* from *lookup order* by paying for one level of indirection — the same trade as virtual memory, the same trade as Java object references, the same trade you already saw at the slot-directory level yesterday. Now the trick is applied **inside** the slot array itself.
+
+### Mechanics
+
+#### 1. Cell layout — fixed-prefix, variable-suffix
+
+Every cell type follows the same shape: a fixed-size header containing all the **size descriptors** the cell needs to parse itself, followed by the variable-length payload.
+
+##### Key cell (used in **internal** B-tree nodes — separator key + child pointer)
+
+```
+   byte:     0                4                8           8+key_size
+            ┌────────────────┬────────────────┬──────────────────┐
+            │ int  key_size  │ int  page_id   │   bytes  key     │
+            └────────────────┴────────────────┴──────────────────┘
+            └──── fixed header (8 B) ──────┘ └── variable payload ┘
+```
+
+##### Key-value cell (used in **leaf** nodes — key + data record)
+
+```
+   byte:     0       1                5                9        9+key_size       9+key_size+value_size
+            ┌───────┬────────────────┬────────────────┬──────────────────┬──────────────────┐
+            │ flags │ int  key_size  │ int value_size │  bytes  key      │  bytes  data     │
+            └───────┴────────────────┴────────────────┴──────────────────┴──────────────────┘
+            └─────── fixed header (9 B) ─────────────┘ └─────── variable payload ──────────┘
+```
+
+**The grouping convention — fixed before variable — is not aesthetic; it's algorithmic.** To locate the `value` field, you need `key_size` to know how much to skip. If `key_size` lived after the key bytes, you couldn't *find* `key_size` without first knowing where the key ends — a chicken-and-egg problem. By placing all size descriptors at known fixed offsets (`key_size @ byte 1, value_size @ byte 5`), the parser:
+
+1. Reads `key_size` and `value_size` with two O(1) fixed-offset loads.
+2. Then computes `key_offset = 9` and `value_offset = 9 + key_size` directly.
+
+This is the **same encoding discipline N2T showed for the C-instruction**: type-discriminating bits first (at fixed positions), payload fields second (whose positions depend on prior fields). Universal pattern in binary protocols.
+
+##### Why a `flags` byte exists in the leaf cell only
+Internal-node cells are uniform (always key + page-ID). Leaf cells need flags for things like "is this a tombstoned cell?", "does the value overflow to another page?", "is the value compressed?" Each bit of flags is one binary attribute (yesterday's bit-packed booleans entry from 2026-05-22). For a 9-byte header, one flags byte costs less than 12% — cheap insurance for variant-cell-shape extensibility.
+
+##### Page-ID vs. offset — the chapter's quiet design clarification
+Notice the key cell stores `page_id` (an int referring to a page in the file) but cell pointers (in the slot directory) store **offsets relative to the page start**. Two different addressing modes because they live at different scopes:
+
+| Reference kind | Scope | Stored as | Why |
+|---|---|---|---|
+| Cell → another page | File-wide | `page_id` (int, then × `PAGE_SIZE` via the buffer manager) | Pages have fixed size; ID indexes into the page array. Buffer manager (Ch.4) translates IDs to RAM addresses. |
+| Slot directory → cell | Page-local | byte offset within page (uint16 if PAGE_SIZE ≤ 64K) | Slots are intra-page; smaller integer suffices, denser directory. |
+
+This **scoped addressing** is why a 16-bit offset (2 bytes) is plenty for slot pointers — pages are 4–16 KB, and `log₂(16 KB) = 14 bits`. Using a 32-bit pointer would double the directory tax for no benefit.
+
+#### 2. The sorted-pointer trick — cells in insertion order, pointers in key order
+
+The chapter's worked example, expanded:
+
+```
+   Step 1: insert "Tom"
+   ─────────────────────
+   slots:   [→Tom]
+   cells:   ........................|Tom |
+                                    ↑
+
+   Step 2: insert "Leslie"  (alphabetically Leslie < Tom)
+   ──────────────────────────────────────────────────────
+   slots:   [→Leslie, →Tom]          ← sorted by key
+   cells:   .................|Leslie|Tom |     ← insertion order: Tom first, Leslie appended later
+            
+   Step 3: insert "Ron"  (alphabetically Leslie < Ron < Tom)
+   ────────────────────────────────────────────────────────
+   slots:   [→Leslie, →Ron, →Tom]    ← Ron's pointer inserted between Leslie's and Tom's
+   cells:   .........|Ron|Leslie|Tom |     ← Ron's bytes appended at the front of the free space
+```
+
+The data bytes for Tom, Leslie, and Ron are **never moved**. Only the offset-array entries are reordered. When the slot directory needs to insert `→Ron` between `→Leslie` and `→Tom`, the entries after the insertion point shift right by one slot-pointer width (typically 2 bytes) — an O(n) memmove **on the directory only**, never on the cells.
+
+##### Why this is a critical optimization
+A naïve "keep cells sorted in storage order" page would have to shift all cells past the insertion point on every insert — O(n) **bytes**, often kilobytes. The sorted-pointer trick reduces it to O(n) **slot pointers**, typically 2 bytes each. For a 4 KB page with ~100 records of 40 bytes each, the cost asymmetry is:
+
+| Approach | Bytes moved per insert (worst case, middle insert) |
+|---|---|
+| Sort cells in place | ~2 KB (half the page) |
+| Sort pointers only | ~100 bytes (half the directory) |
+
+A **20× reduction** in copy cost per insert, which translates directly to insert throughput. This is also why **range scans are fast**: walk the sorted slot directory linearly, dereferencing each pointer. Random key-order access to cell payloads, sequential cache-friendly access to the directory.
+
+##### Binary search works on the directory, not the cells
+Because the slot directory is sorted by key, you can binary-search **without dereferencing cells until the final step**:
+1. Probe slot `mid = (lo + hi) / 2`.
+2. Dereference its offset to read the cell's `key` bytes.
+3. Compare; update `lo`/`hi`; repeat until found or window empty.
+
+`O(log n)` cell-dereferences per lookup. Each dereference is one cache-line load (assuming the cell fits in 64 bytes). On a 4 KB page with 100 cells, **~7 probes** to find any key. This is why B-tree leaf scans are so fast: the per-page lookup is essentially-instant compared to the I/O that brought the page into cache.
+
+#### 3. Managing variable-size deletes — the availability list
+
+A delete doesn't shift cells. Instead:
+
+```
+   Before delete of "Ron":
+   ───────────────────────
+   slots:   [→Leslie, →Ron, →Tom]
+   cells:   .........|Ron|Leslie|Tom |
+   header:  free_space_ptr = 9, freeblocks_head = null
+
+   After delete of "Ron":
+   ──────────────────────
+   slots:   [→Leslie, →Tom]                       ← Ron's slot removed (or tombstoned)
+   cells:   .........|XXX|Leslie|Tom |            ← Ron's bytes left in place
+   header:  free_space_ptr = 9, freeblocks_head = (offset=9, size=4)   ← availability list
+```
+
+The freed region `(offset=9, size=4)` is pushed onto the in-page **availability list** (SQLite name: **freeblocks**, stored as a linked list with the head pointer in the page header, plus a `total_free_bytes` counter for fast capacity checks).
+
+##### Fit strategies for the next insert
+
+When a new cell needs space, the engine walks the freeblock list looking for a usable hole. Two classic strategies, both inherited from malloc-style allocators:
+
+| Strategy | Algorithm | Pros | Cons |
+|---|---|---|---|
+| **First fit** | Take the first freeblock ≥ requested size. | O(1)-ish (short list walk); fast | Tends to leave small useless remainders ("sliver fragmentation") |
+| **Best fit** | Walk entire list; take the smallest freeblock ≥ requested. | Tighter packing, less fragmentation | O(n) list walk per insert |
+
+A third option (not in this chunk, alluded to next page in DBI Ch.3): **defragment** — rewrite the cell region contiguously, eliminating all freeblocks at once. Engines trigger this when `total_free_bytes` is large but no single freeblock fits the requested insert. Compaction is O(page_size) but rare in steady state.
+
+##### Why the availability list is a linked list, not an array
+A page can have any number of variable-size holes after a string of inserts and deletes. A fixed-size array would need either (a) a hard cap on hole count or (b) repeated resizing. A **linked list threaded through the freed cells themselves** (each freed block's first 4 bytes = pointer to next freeblock) is the standard trick — it costs zero metadata bytes outside the freed space and grows naturally with the number of holes. This is the same intrusive-free-list trick `dlmalloc` uses, just scoped to a single page.
+
+##### SQLite's actual numbers
+SQLite's freeblock chain is stored with two-byte offsets (since pages are at most 64 KB). Each freeblock begins with `next_freeblock_offset (2B), block_size (2B)` — total 4 bytes of overhead per freeblock. The page header carries `first_freeblock_offset (2B), num_free_bytes (2B)`. This is concrete enough to memorize: **a SQLite page with 100 deleted-then-replaced cells has at most ~400 bytes of free-list overhead** out of 4 KB.
+
+#### The complete picture (yesterday + today)
+
+```
+   ┌──────────────────────────────────────────────────────────────┐
+   │ Page header                                                  │
+   │   - cell_count, free_space_ptr,                              │
+   │     first_freeblock_offset, total_free_bytes, LSN, ...       │
+   ├──────────────────────────────────────────────────────────────┤
+   │ Slot directory (sorted by key):                              │
+   │   [→Leslie] [→Ron] [→Tom]                                    │  ← grows down
+   │                                                              │
+   │              ↓ free space ↓                                  │
+   │                                                              │
+   │   ┌──────── freeblock chain (XXX = freed) ─────────┐         │
+   │   │                                                │         │
+   │   │next→null │  cell: Ron  │ cell: Leslie │ cell: Tom        │  ← grows up
+   │   XXXX                                                       │
+   │   ▲ first_freeblock_offset                                   │
+   └──────────────────────────────────────────────────────────────┘
+```
+
+Three independent data structures, three indirections, one page. Each indirection bought a property: **slot directory** = stable external IDs over compaction; **sorted pointers** = O(log n) lookup without sorted storage; **freeblock chain** = O(1) delete without rewriting.
+
+### If you were the storage engine deciding between first-fit and best-fit…
+You'd ask **how variable are the record sizes in your workload?** If most records are similar-sized (uniform schemas, fixed-length VARCHARs), first-fit's "leaves slivers" weakness rarely bites — the next insert is the same size as the one before. If records vary wildly (mixed BLOBs and tiny rows), best-fit's tight packing pays for its O(n) walk. SQLite ships first-fit. PostgreSQL's `heap` does something closer to best-fit at the page level but combined with `VACUUM`'s background compaction so the cost of imperfect packing is bounded. **The winning strategy is workload-dependent**, which is why production engines often offer it as a knob (or auto-tune based on observed fragmentation).
+
+The deeper lesson: the page is a **micro-allocator**, and every allocator-design trade-off (fit policy, fragmentation tolerance, compaction cadence) reappears at this scope. Database internals are operating-system-internals scaled down to a single 4 KB block.
+
+### Cross-language view
+The sorted-pointer + payload-in-arrival-order pattern shows up beyond databases:
+
+| System | "Cells" | "Sorted pointers" | Why same pattern |
+|---|---|---|---|
+| Java `String.intern()` interning table | Interned string bytes | Hash bucket → string offset | Strings arrive in any order; lookup is by hash |
+| Protobuf `Message::ParseFromArray` with packed fields | Field bytes in wire order | Field-number → offset index built during parse | Wire order may differ from declaration order |
+| Linux `ext4` directory entries | Variable-length `dirent` records in insert order | `htree` index of `(hash → block, slot)` | Same problem: variable-size names, frequent lookups |
+| Lucene's `PostingsFormat` | Term postings in doc-order | Skip lists / FST for sorted access | Same: sequential write, sorted read |
+
+The pattern's name in algorithms vocabulary is **"unsorted log + sorted index"** — the same shape that makes LSM-trees (DDIA Ch.3) outperform B-trees on write-heavy workloads at a higher scale. Slotted pages are the within-page version of that idea.
+
+### Where this shows up in real systems
+- **SQLite B-tree pages** are the closest production realization of this chunk's design: page header at offset 0, cell pointer array (sorted by key), free space, then cells growing up from the page end. SQLite's source file `src/btree.c` is ~10 KLOC of exactly this logic — and that file has barely changed in 15 years because the design is good.
+- **PostgreSQL's heap pages** use the slotted layout *without* the sorted-pointer trick — heap tuples are stored in arrival order and slot pointers track them by `ctid`, with **separate B-tree indexes** providing the sorted access. The chapter's "sort the pointers" move is collapsed into "build a separate index." Both work; Postgres trades a denser heap for slower in-page key lookup. Different point on the same design spectrum.
+- **InnoDB compact rows** use a clever variant — records are linked into a sorted singly-linked list by storing a "next record" offset in each row header, with a sparse slot directory ("page directory") storing every 4th–8th slot for binary-search start points. This compresses the directory ~8× at the cost of a final linear scan. Useful when you have many cells per page (small rows).
+- **WAL replay and recovery** depends on the availability-list discipline: because deletes only update the freelist (not the cell bytes), recovering a partial-write page from the WAL is straightforward — replay the slot/directory updates and the freelist updates, the actual cell payloads were never touched by the failed transaction. If deletes compacted cells in-place, crash recovery would require re-emitting the entire page contents to the WAL.
+
+### Diagnostic questions
+1. **Why are fixed-size fields placed before variable-size fields in a cell, not after?** *Because the parser needs the size descriptors to locate the variable fields — and it can only locate the size descriptors trivially if they're at known fixed offsets. Reversing the order creates a chicken-and-egg parse problem requiring sentinels or trailing length markers.*
+2. **A page has 4 KB free according to `total_free_bytes`, but an insert of a 1 KB cell fails. What's going on?** *Fragmentation: the 4 KB is spread across many small freeblocks, none large enough for the 1 KB cell. The engine must defragment (compact the cell region, merge all freeblocks into one) before the insert can succeed.*
+3. **Why doesn't the slot directory just store keys directly, instead of pointing to cells?** *Because keys are variable-size — a directory of variable-size entries can't be binary-searched in O(log n) since you can't compute "the middle entry" in O(1). Fixed-size pointers preserve random-access into the directory, and the actual variable-size key lives in the (random-access) cell.*
+4. **First-fit can degrade to terrible packing over time. What's the cheap mitigation?** *Periodic compaction (rewrite cells contiguously, rebuild slot directory). Postgres calls it `VACUUM`. SQLite triggers it implicitly when an insert finds no fit. The amortized cost is low because compaction is O(page_size) ≈ a single page write.*
+5. **In the Tom/Leslie/Ron example, the slot directory shifts 2 bytes per insert. Why is that acceptable when "shifting cell bytes" was considered too expensive?** *Asymmetry of magnitudes. Slot pointers are 2 bytes; cell records are 40–400 bytes. Shifting 50 slot pointers = 100 bytes; shifting 50 cells = 2–20 KB. The 20–200× ratio is the entire payoff of the indirection.*
+
+### See also
+- DBI 2026-05-23 entry — the slotted-page *anatomy* (page header, bidirectional growth, slot stability) that today's mechanics live inside.
+- DBI 2026-05-22 entry — *binary encoding primitives* (Pascal strings, bit-packed flags, fixed/variable layout discipline) that every cell uses field-by-field.
+- DDIA Ch.3 *Storage and Retrieval* — the B-tree section uses these exact pages as its leaf format; LSM-tree section shows the larger-scale version of the same "unsorted log + sorted index" pattern.
+- N2T 2026-05-24 entry — the C-instruction's fixed-prefix/variable-tail encoding is the same discipline at the CPU level; understanding one accelerates understanding the other.
+- *Modern B-Tree Techniques* (Goetz Graefe, 2011) — exhaustive treatment of leaf-page layouts, including space-management strategies beyond first/best fit (e.g., bin-packing-style "next-fit").
+- Forward link: DBI Ch.4 *Implementing B-Trees* — splits and merges propagate these cell layouts across pages; the cell-format invariants today let those operations stay simple.
+
+---
+
+## [2026-05-23] Slotted Pages — The Universal Variable-Record Page Layout (Why Every Real DB Has Pointers Growing Down and Records Growing Up) · pp.96–100 · Ch.3 *File Formats* §General Principles → Page Structure → Slotted Pages
+
+### TL;DR
+A database page must store **variable-size records** (rows with VARCHAR/BLOB columns) while letting outside pointers reference them stably, even as records are inserted, deleted, and the page is compacted. The naïve solutions — concatenated records, fixed-size segments — either require relocating bytes on every insert or waste up to 1 segment of space per record. The industry's near-universal answer is the **slotted page**: a fixed header at the top, a **slot directory growing downward** from the header, and **record cells growing upward** from the bottom of the page. The slot at index `i` is an immutable pointer "this record lives at offset X" — so external references use slot IDs, not byte offsets, and the storage engine is free to compact/rewrite the cell region without invalidating any pointer outside the page. PostgreSQL, MySQL/InnoDB, SQLite, and almost every B-tree implementation since System R use this layout.
+
+### Intuition — "this is like…"
+A slotted page is a **filing cabinet drawer with numbered tabs on the inside of the lid**. The tabs (slot directory) grow downward as you add files. The files themselves (cells) get crammed in from the back of the drawer forward. You don't tell your colleague "the contract is at byte 1,247 from the front of the drawer" — that breaks the moment someone defragments. You say "the contract is **tab #3**," and tab #3's internal annotation tells you where in the drawer to actually reach. When the drawer gets messy and you defragment, you slide files around but you **update tab #3's annotation**; the tab itself, and your colleague's reference to "tab #3," stays valid forever.
+
+### Mechanics
+
+#### What the chunk actually covers
+The chunk straddles three sections of Ch.3: the **General Principles** of building structured binary formats (compose fields → cells → pages → sections → regions), then **Page Structure** (DBs partition files into 4–16 KB pages, the unit of I/O), then the **Slotted Pages** layout itself with the diagram on p.99 (Figure 3-5).
+
+#### Why naïve layouts fail
+Two predecessors the chapter dismisses:
+
+| Layout | How it works | Why it fails |
+|---|---|---|
+| **Concatenated triplets** (Bayer's original 1972 B-tree paper) | `k₁ v₁ p₁ k₂ v₂ p₂ ...` packed contiguously | Inserts anywhere except the right edge require **shifting all following bytes**. Only works for fixed-size records (variable-size = no way to know where the next triplet starts). |
+| **Fixed-size segments** | Split the page into N equal-size buckets, store each record in one | Wastes `64 - (n mod 64)` bytes per record at 64-byte segments. A 70-byte record wastes 58 bytes of the next segment. **Internal fragmentation tax** on every insert. |
+
+The slotted page's job is to support three properties simultaneously:
+1. **Variable-size records with minimal per-record overhead**
+2. **Reclaim space from removed records** (so deletes aren't permanent leaks)
+3. **External pointers to records survive page reorganization**
+
+The third is the subtle one — and the reason for the directory's existence.
+
+#### The slotted-page anatomy
+
+```
+   ┌─────────────────────────────────────────────────────┐  offset 0
+   │  Page header                                        │  (fixed-size: page LSN, slot count,
+   │  - free-space pointer                               │   free-space pointer, checksum,
+   │  - slot count                                       │   page type, ...)
+   │  - other metadata                                   │
+   ├─────────────────────────────────────────────────────┤
+   │  Slot 0 → offset 4080, length 16                    │  ← slot directory grows DOWN
+   │  Slot 1 → offset 4020, length 60                    │
+   │  Slot 2 → (free / tombstone)                        │
+   │  Slot 3 → offset 3900, length 120                   │
+   │  ▼ free-space pointer points here ▼                 │
+   │                                                     │
+   │                  free space                         │  (where new slots + new cells
+   │                                                     │   converge as the page fills)
+   │                                                     │
+   │  ▲ free-space pointer points here ▲                 │
+   │  [ cell #3: 120 bytes ]                             │  ← cells grow UP
+   │  [ cell #1: 60 bytes  ]                             │
+   │  [ cell #0: 16 bytes  ]                             │
+   └─────────────────────────────────────────────────────┘  offset PAGE_SIZE (e.g. 4096)
+```
+
+**Two regions, two growth directions, one shared free-space middle.** The page is full when slot-directory-end meets cell-region-start.
+
+#### Why two growth directions?
+A common student question. The reason is **insertion ergonomics**:
+- New cells are appended to the *bottom* of the cell region (which is the *top* of the cell stack, i.e., they grow upward toward the directory). No existing cells move.
+- New slots are appended to the *bottom* of the directory (which grows downward toward the cells). No existing slots move.
+- Both grow toward each other; the free-space pointer in the header tracks where they meet.
+
+If both grew the same direction, every insertion would require shifting either all slots or all cells. The dual-direction layout makes **O(1) appends from both sides** the steady-state operation.
+
+#### Three operations and what they do
+
+| Operation | Slot directory | Cell region | External pointer impact |
+|---|---|---|---|
+| **Insert** | Append slot at end of directory pointing to new cell | Append cell at bottom of free-space region | None — new slot ID is the reference |
+| **Delete** | Mark slot as free (tombstone) **or** remove + shift | Leave cell data (or zero it); space becomes reclaimable | If slots are renumbered after delete, external pointers break. **Most engines tombstone instead of shifting** to preserve slot stability. |
+| **Compact / defragment** | Update each slot's offset to its cell's new position | Rewrite cells contiguously, eliminating gaps | None — slot IDs are stable; only their internal offsets change |
+
+The genius is in row 3: **defragmentation is invisible to anything outside the page** because the addressing layer (slot ID) is decoupled from the storage layer (cell offset). This is the same indirection trick the OS uses for virtual memory page tables, or that Java uses for object references vs. raw pointers — pay one level of indirection, gain freedom to move the underlying data.
+
+#### The reorganization invariant
+
+```
+Before compaction (page has dead space from deletes):
+   slots:      [s0→4080] [s1→4020] [tombstone] [s3→3900]
+   cells:      ..|cell3 120B|.....gap....|cell1 60B|cell0 16B|
+
+After compaction:
+   slots:      [s0→4080] [s1→4040] [tombstone] [s3→3920]
+   cells:      .............................|cell3 120B|cell1 60B|cell0 16B|
+   ▲ all free space now contiguous in the middle ▲
+```
+
+External references to `s0`, `s1`, `s3` are unchanged. The slot offsets changed — that's the whole point of going through the directory.
+
+#### The page header (preview of next section)
+Vernon will detail the header in the next section, but the chunk introduces the key fields: **free-space pointer** (where insert can append), **slot count** (directory length), and metadata for crash recovery (LSN — Log Sequence Number, covered in Ch.5–6 on WAL). The header is the *fixed-overhead tax* of the slotted layout — typically 24–40 bytes per page, amortized over hundreds of records.
+
+#### Where slot IDs flow into the rest of the system
+A B-tree leaf cell stores `(key, slot_pointer)` where `slot_pointer = (page_id, slot_id)` — a **tuple identifier** (Postgres calls it a `ctid`; InnoDB calls it a "record ID"). The whole B-tree structure rests on the slot ID being **stable under intra-page reorganization** but rewritten on cross-page moves (splits, merges). When InnoDB does a leaf split, the records move between pages and their TIDs change — which is why secondary indexes in InnoDB point at the primary-key value rather than the TID directly (to avoid cascading index updates on every split). That design choice traces back to the slot-ID stability boundary defined right here.
+
+### If you were the storage engine handling a `DELETE` on a slotted page…
+You face the **shift-or-tombstone** decision. Shifting (compact slots, renumber, also compact cells) gives you contiguous free space immediately and a smaller directory — but every external pointer to the deleted-and-later slots is now wrong, which means you'd need to chase them all (B-tree leaves, secondary indexes, in-flight transactions) and fix them up. That's a transitive write storm. Tombstoning (mark the slot free, leave a hole; reclaim the cell space lazily during a later compaction triggered by an insert or vacuum) keeps every external pointer valid for free, at the cost of carrying dead-slot baggage until the next compaction. Real engines (Postgres `VACUUM`, InnoDB purge, SQLite's freelist) all tombstone — the cost of maintaining external pointer validity is paid once at compaction time, not on every delete.
+
+### Cross-language view
+Slotted pages aren't a language feature, but the **slot-table / data-region split** appears all over systems software:
+
+| Domain | Slot equivalent | Data region | Indirection benefit |
+|---|---|---|---|
+| OS virtual memory | Page table entry (VPN → PFN) | Physical frames | Process sees stable virtual addresses while OS moves physical pages |
+| Java HotSpot | Object reference (`oop`) | Heap | GC can relocate objects during compaction |
+| Filesystem | Inode (`(device, inum)`) | Disk blocks | File can be moved/defragmented; path lookup stable |
+| HTTP routing | URL path | Backend instance | Service can scale/move; client URL stable |
+| DNS | Hostname | IP address | Server can move; clients use the name |
+
+The pattern's name in software-architecture vocabulary is **"add a level of indirection"** (Lampson's famous *"all problems in computer science can be solved by another level of indirection"*). The slotted page is the on-disk instance of the pattern.
+
+### Where this shows up in real systems
+- **PostgreSQL's heap pages** are textbook slotted pages: 8 KB by default, page header at top, line-pointer array (ItemIdData) growing down, tuples growing up. The `ctid` you see in `SELECT ctid, * FROM t` is literally `(page_number, slot_number)`. The "HOT update" mechanism (Heap-Only Tuple) is an optimization that lets new tuple versions reuse the same slot's pointer chain to avoid touching every index — the chain *lives in the slot directory*.
+- **InnoDB's compact row format** uses the same layout with a twist: records are linked into a sorted singly-linked list via offsets in the record header, so the slot directory ("page directory") only stores every 4th–8th slot as a sparse index, with binary-search-then-linear-scan for lookup. Saves ~7/8 of the directory cost.
+- **SQLite's B-tree page format** stores cell pointers as 2-byte offsets in a "cell pointer array" right after the page header — same idea, smaller scale. The format is so stable it's been backward-compatible since SQLite 3 launched in 2004.
+
+### Diagnostic questions
+1. **Why can't external references point directly at byte offsets within a page?** *Compaction moves cells. Any direct byte-offset reference would silently rot the moment the page is defragmented. The slot directory is the stable-naming layer that makes compaction safe.*
+2. **What's the worst-case waste of fixed-size segmentation that slotted pages avoid?** *Up to (segment_size − 1) bytes per record. At 64-byte segments, a 65-byte record wastes 63 bytes of the next segment. Slotted pages waste only the per-slot pointer overhead (~4 bytes) regardless of record size variance.*
+3. **A page has 100 slots with 30 tombstones. The free-space pointer says 0 bytes available, but tombstoned cells hold 2 KB. What does the engine do on the next insert?** *Trigger an in-place compaction: rewrite live cells contiguously, update their slot offsets, reset the free-space pointer. Then perform the insert. Tombstoned slots may or may not be reclaimed depending on the engine (Postgres reclaims them; some engines never reuse slot IDs).*
+4. **Why might an engine choose to never reuse a slot ID even after the cell is gone?** *Slot IDs become parts of higher-level identifiers (TIDs, MVCC version chains, undo logs, replication streams). Reuse can confuse anything that's still holding the old ID — e.g., a long-running read transaction. Some engines burn through 32-bit slot space and just rebuild the page when they wrap.*
+5. **Could you use slotted pages for fixed-size records too?** *Yes, but the slot directory becomes wasteful overhead — for fixed-size records, just compute `cell_addr = base + i × cell_size` and skip the indirection. The slotted layout's value is variable-size support; fixed-size workloads (some columnar formats, e.g., Parquet row groups) skip it for that reason.*
+
+### See also
+- DBI 2026-05-22 entry — *Binary Encoding Primitives* — the fixed-width and variable-length encoding primitives that the cells themselves use; the slotted page composes them at the page level.
+- DDIA Ch.3 *Storage and Retrieval* (B-trees section) — page-level structure of B-trees; the slotted page is the page format on which B-trees are built.
+- Forward link: DBI Ch.4 *Implementing B-Trees* — will use the slot directory's stability properties when discussing splits, merges, and right-most insertion optimization.
+- N2T Ch.5 §5.3.2 (Memory) — the same "logical address space hiding multiple regions" trick, but at the hardware level (RAM16K + Screen + Keyboard behind a single Memory chip interface). Indirection scales from gates to gigabytes.
+
+---
+
+## [2026-05-22] Binary Encoding Primitives — Fixed-Width Numbers, Pascal vs. Null-Terminated Strings, and Bit-Packed Flags · pp.91–95 · Ch.3 File Formats § Binary Encoding (Primitive Types → Strings & Variable-Size Data → Bit-Packed Data: Booleans, Enums, Flags → General Principles)
+
+### TL;DR
+On disk and on the wire, everything is a byte sequence; turning a record into that sequence is **serialization**, the reverse is **deserialization**. The chapter walks the three primitive cases every storage engine must answer: (1) **fixed-width numbers** (`byte`/`short`/`int`/`long` = 1/2/4/8 bytes; floats follow IEEE 754 with sign/exponent/fraction layout), (2) **variable-length data** (Pascal-string `[size: u16][bytes]` vs. C-style null-terminated — Pascal wins on O(1) length and zero-copy slicing), and (3) **bit-packed booleans/flags** where each named bit costs **1/8th of a byte** and is manipulated by the classic `|`/`&`/`~`/`<<` quartet. These three primitives compose into every file header, every page format, every wire protocol you'll ever decode in a hex dump.
+
+### Intuition — "this is like…"
+A binary file is a **train of fixed-length and variable-length cars**, and the conductor (the parser) only knows where the next car starts if it's told either (a) the car has a fixed size baked into the schema or (b) the *current* car ends with a length-prefix saying how big the next one is. Null-terminated strings are the train where you find out a car ended by *walking the whole car until you trip on a sentinel sticker*; Pascal strings are the train where the conductor reads a number on the door before stepping in. Bit-packed flags are the train where eight binary stickers (open/closed) are crammed onto a single 1-byte door label — efficient if you can read the label without removing the other stickers.
+
+### Mechanics
+
+#### Fixed-width numeric primitives (the bedrock)
+| Type | Size | Bit count | Range (signed, two's complement) |
+|---|---|---|---|
+| `byte` | 1 B | 8  | −128 … 127 |
+| `short` | 2 B | 16 | −32,768 … 32,767 |
+| `int` | 4 B | 32 | ≈ −2.1B … 2.1B |
+| `long` | 8 B | 64 | ≈ ±9.2 × 10¹⁸ |
+| `float` (IEEE 754 single) | 4 B | 32 | 1 sign · 8 exponent · 23 fraction |
+| `double` (IEEE 754 double) | 8 B | 64 | 1 sign · 11 exponent · 52 fraction |
+
+#### IEEE 754 single-precision layout (`float`)
+```
+ bit 31         bit 30 .... bit 23       bit 22 ........... bit 0
+ +-----+----------------------------+-------------------------+
+ |  S  |          exponent          |        fraction         |
+ |  1b |           8 bits           |         23 bits         |
+ +-----+----------------------------+-------------------------+
+   sign     biased by 127           mantissa, implicit leading 1
+```
+Value = `(-1)^S × 1.fraction × 2^(exponent − 127)`. This is **why floating-point is approximate**: 0.1 has no finite binary fraction, so storing 0.15652 loses precision in the last few bits. The implicit leading `1.` in the mantissa is the encoding's free bit — by *not* storing it, you get 24 bits of precision out of 23 bits of fraction.
+
+**Endianness footnote** (not in chunk but mandatory for visual grammar): the 4 bytes of a `float` can be laid out high-byte-first (**big-endian**, network byte order) or low-byte-first (**little-endian**, x86/ARM default). A file format must pick one; common protocols pick big-endian; common in-memory layouts on consumer CPUs are little-endian.
+
+#### Strings — two schools
+```
+ Pascal string ("UCSD string"):
+ +--------+---------+---------+----- ... -----+
+ | size   |  byte 0 |  byte 1 |    byte size-1|
+ | u16    |                                   |
+ +--------+---------+---------+----- ... -----+
+  ^ length prefix    ^ raw bytes (no terminator)
+
+ C / null-terminated:
+ +---------+---------+----- ... -----+---------+
+ |  byte 0 |  byte 1 |    byte n-1   |   0x00  |
+ +---------+---------+----- ... -----+---------+
+  ^ walk until you hit the sentinel
+```
+
+| Property | Pascal string | Null-terminated |
+|---|---|---|
+| `len()` cost | **O(1)** — read prefix | **O(n)** — `strlen` walks |
+| Max length | 2¹⁶ − 1 with u16 prefix (or 2³² with u32) | Unbounded, but unsafe |
+| Embeds null byte? | **Yes** — bytes are opaque | **No** — `0x00` is the terminator |
+| Slicing into a language string | Zero-copy: bytes are contiguous, length is known | Must scan first, then allocate |
+| Memory-safety failure mode | None if prefix is honored | Buffer overrun, "off-by-one" classic (`strcpy`, `gets`) |
+
+The DBMS-relevant punchline: **Pascal strings dominate file formats** because the parser is decoding many records per page and the O(n) scan to find a length would dominate the read cost. C strings dominate *language runtimes* because they were cheap to interop with the kernel in 1971.
+
+#### Bit-packed booleans, enums, flags
+**Booleans** waste 7 bits if stored as `0x00` / `0x01`. Pack 8 of them into a byte and you've reclaimed those bits — important for node headers where you might have 4-6 flag bits and storing each as a byte would bloat every page in the DB by tens of MB across a large table.
+
+**Enums** are integers with names. Small (low-cardinality) enums fit in a single byte:
+```
+enum NodeType : u8 {
+   ROOT     = 0x00,
+   INTERNAL = 0x01,
+   LEAF     = 0x02,
+};
+```
+
+**Flags** are a *non-mutually-exclusive* combination. The encoding pattern is **one bit per named flag**, with a mask whose value is a power of two so it has exactly one bit set:
+```c
+#define IS_LEAF              0x01   // bit 0  (1 << 0)
+#define VARIABLE_SIZE_VALUES 0x02   // bit 1  (1 << 1)
+#define HAS_OVERFLOW_PAGES   0x04   // bit 2  (1 << 2)
+```
+
+#### The four bit-manipulation idioms (memorize once, reuse forever)
+| Operation | Formula | Mental model |
+|---|---|---|
+| **Set** a bit | `flags |= MASK;` | OR-in the 1 |
+| **Clear** a bit | `flags &= ~MASK;` | AND with the inverse |
+| **Toggle** a bit | `flags ^= MASK;` | XOR flips it |
+| **Test** a bit | `(flags & MASK) != 0` | AND isolates, compare to 0 |
+
+```
+ flags          = 0 0 0 0 0 1 0 1    <-- IS_LEAF + HAS_OVERFLOW already set
+ HAS_OVERFLOW   = 0 0 0 0 0 1 0 0
+ ~HAS_OVERFLOW  = 1 1 1 1 1 0 1 1
+
+ SET:    flags |= HAS_OVERFLOW   -> 0 0 0 0 0 1 0 1   (no change, already set)
+ CLEAR:  flags &= ~HAS_OVERFLOW  -> 0 0 0 0 0 0 0 1   (bit 2 cleared)
+ TEST:   flags & HAS_OVERFLOW    -> 0 0 0 0 0 1 0 0   (nonzero -> true)
+```
+
+#### Worked example — a tiny B-Tree node header
+Suppose you're designing a node header for the B-Tree variant from Ch. 2:
+```
+ offset  size   field
+ ------  ----   -----
+  0      1      node_type  (enum: 0=root, 1=internal, 2=leaf)
+  1      1      flags      (bit 0: is_leaf, bit 1: var_size_vals, bit 2: has_overflow)
+  2      2      key_count  (u16 — Pascal-style prefix for the keys[] array)
+  4      4      next_page  (u32 — page number of right sibling, or 0)
+  8      ...    keys[]
+```
+That's **8 bytes of fixed-size header**, of which 1 byte (`flags`) holds 3 booleans + 5 reserved bits. If your node count is 10 million, packing those 3 flags into a single byte (instead of 3 separate bytes) saves **~20 MB**. At the file-format level, these savings compound — DB engineers fight for every byte because every byte propagates through caches, buffer pools, and replication streams.
+
+### Cross-language view
+| Language | Fixed-width int type | "Pascal string" idiom | Bit-flag idiom |
+|---|---|---|---|
+| **C** | `<stdint.h>`: `int32_t`, `uint64_t` | Manual `[len][bytes]` | `#define` masks + `|`/`&` |
+| **Rust** | `i32`, `u64` (built-in, no `<stdint.h>` needed); `f32`/`f64` are IEEE 754 | `Vec<u8>` carries its own length; `bytes::Bytes` zero-copy | `bitflags!` macro generates strongly-typed flag set |
+| **Go** | `int32`, `uint64`, `float32`, `float64`; `encoding/binary` for explicit endianness | `[]byte` with explicit length; `binary.BigEndian.PutUint16` for prefix | `const ( FLAG_A = 1 << iota; FLAG_B )` |
+| **Python** | `struct.pack("<I", x)` for fixed-width; native `int` is arbitrary-precision | `struct.pack(f"H{len(s)}s", len(s), s.encode())` | `IntFlag` from `enum` module gives flag arithmetic |
+
+**Stdlib-actually-does notes:**
+- **Go's `encoding/binary`** is the canonical reference — its source code is a 200-line tour of every primitive in this section.
+- **Rust's `bytemuck` and `zerocopy`** crates let you `transmute` a `&[u8]` to a `&MyHeader` zero-copy *if* `MyHeader` is `#[repr(C)]` and contains only POD types — exactly the file-format pattern.
+- **Python's `struct` module** is the chapter's API in one module: `struct.pack("<BBHI", node_type, flags, key_count, next_page)` produces the 8-byte header above, byte-for-byte.
+
+### Where this shows up in real systems
+- **TCP/IP header format** — every field is a fixed-width integer in network byte order; flag bits (SYN, ACK, FIN, RST) sit in a single 6-bit subfield; the URG/PSH pattern is exactly `mask | bit`. RFC 793 is the spec; tcpdump's `-X` decodes it live.
+- **Linux page-table entries (PTE)** — a 64-bit word where bits 0–11 are flags (Present, Writable, User, Accessed, Dirty, …) and bits 12–51 are the physical-frame number. `pte & _PAGE_PRESENT` is the same `flags & MASK` idiom you saw above.
+- **Postgres on-disk row format** — each tuple starts with `t_infomask` (16 bits of bit-packed status flags: HAS_NULL, HASVARWIDTH, HASOID, XMIN_COMMITTED, …). When a Postgres bug says "incorrect `t_infomask`," it's this byte being miscomputed.
+- **Protocol Buffers / Thrift / Avro** — all three avoid Pascal strings *for numbers* (they use varints — variable-length integers — to save space on small values) but use Pascal strings for byte sequences. The chapter's framing makes the trade-off legible: fixed-width is fast, variable-width is small, and binary formats let you pick per-field.
+
+### Diagnostic questions
+1. **Why does the chapter prefer Pascal strings to C strings for on-disk records?**
+   *Wrong answer interpretation*: "Because Pascal strings are safer" — true but not the chapter's reason. The chapter's reason is **O(1) length** and **zero-copy slicing**: a record parser doing 1000s of fields per page can't afford a per-string scan.
+2. **You see `flags = 0b00000101`. Which flags are set?**
+   *Wrong answer interpretation*: "Bits 1 and 3" — no, **bits 0 and 2** (LSB = bit 0). The pattern `1 << n` corresponds to bit position n counted from the LSB.
+3. **A 32-bit float stores 0.15652 as an approximation. Why not exactly?**
+   *Wrong answer interpretation*: "Not enough bits in general" — the precise reason is that **0.15652 has no finite binary fraction** (just as 1/3 has no finite decimal representation). More bits would tighten the approximation but never make it exact.
+4. **Why is `MASK = 0x03` *not* a single flag mask?**
+   *Wrong answer interpretation*: "Yes it is" — wrong. `0x03 = 0b11` has *two* bits set. Single-flag masks must be powers of two (`0x01, 0x02, 0x04, 0x08, …`).
+5. **You batch 8 booleans into one byte. What's the cost?**
+   *Wrong answer interpretation*: "Zero cost — pure win" — the cost is **(a)** atomic-update of a single flag now requires a read-modify-write on the whole byte, which matters under concurrency; and **(b)** every flag read needs a mask and compare, adding 2-3 instructions per access.
+
+### See also
+- [[dbi-2026-05-21-btree-mechanics]] — the B-Tree node format we just sketched is built out of these primitives; revisit the header for `IS_LEAF` and you'll recognize the flag-bit pattern.
+- [[cod-notes]] — Computer Organization & Design's coverage of two's-complement and IEEE 754 sits one level below this chapter, explaining *why* the bit layouts are what they are.
+- [[ddia-notes]] — DDIA's "Encoding and Evolution" chapter generalizes these tactics to schema evolution (Protocol Buffers, Avro, Thrift) — same primitives, plus the question of forward/backward compatibility.
+- [[ostep-notes]] — page-table entry bits in OSTEP's VM chapters are *exactly* the bit-packed-flags pattern at the kernel/MMU boundary.
+
+---
+
 ## [2026-05-21] B-Tree Mechanics — Node Format, Separator Keys, Fanout, Lookup/Insert/Delete with Splits and Merges · pp.66–90 · Ch.2 B-Tree Basics (FTL recap → On-Disk Structures → Ubiquitous B-Trees → B-Tree Hierarchy → Separator Keys → B-Tree Lookup → Node Splits → Node Merges)
 
 ### TL;DR

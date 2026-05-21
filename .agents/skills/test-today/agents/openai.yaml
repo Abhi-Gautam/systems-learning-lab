@@ -1,7 +1,0 @@
-interface:
-  display_name: "Test Today"
-  short_description: "Cumulative diagnostic quiz"
-  default_prompt: "Use $test-today to generate and grade a cumulative diagnostic quiz from the reading notes, then teach back the weak spots."
-
-policy:
-  allow_implicit_invocation: true
