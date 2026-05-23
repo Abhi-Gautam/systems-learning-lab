@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "start_date": "2026-05-22",
+  "day": 0,
+  "queues": {
+    "hld": [
+      "H01", "H10", "H02", "H09", "H03",
+      "H14", "H16", "H17", "H20", "H23",
+      "H26", "H27", "H31", "H32", "H39"
+    ],
+    "lld": [
+      "L01", "L14", "L20", "L13", "L04",
+      "L05", "L02", "L18", "L21", "L17",
+      "L26", "L10", "L12", "L28", "L35"
+    ]
+  },
+  "last_seen": {},
+  "confidence": {},
+  "revisit_due": {},
+  "history": [],
+  "completed": {
+    "hld_count": 0,
+    "lld_count": 0,
+    "revisits_count": 0
+  }
+}

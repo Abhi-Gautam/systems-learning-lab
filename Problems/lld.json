@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "kind": "lld",
+  "problems": [
+    {
+      "id": "L01",
+      "title": "Parking lot system",
+      "ask": "Design a parking lot system. Multiple floors, multiple spot types (compact/regular/large/electric-with-charger). Customers enter via a gate (ticket), park, and pay on exit. Make it extensible to add new spot types and pricing strategies.",
+      "difficulty": "easy",
+      "asked_by": ["amazon", "microsoft", "atlassian", "universal-llld-warmup"],
+      "tags": ["strategy-pattern", "factory", "spot-allocation"],
+      "patterns": ["Strategy", "Factory", "Singleton (avoid!)"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — parking-lot", "uses_for": ["UML reference", "Java solution comparison"] },
+        { "type": "book", "ref": "LDDD Ch.2-3 — aggregates and bounded contexts", "uses_for": ["ParkingLot as aggregate root"] }
+      ],
+      "deep_dive_targets": [
+        "Spot allocation strategy (nearest-first vs first-available vs vehicle-type-aware)",
+        "Pricing strategy (flat rate vs tiered vs dynamic)"
+      ],
+      "follow_ups": [
+        "Add electric vehicle charging — how does this land?",
+        "Add monthly subscribers who skip payment — what changes?",
+        "Multi-lot operator: 50 lots across a city. Where's the seam?"
+      ],
+      "trap_for_juniors": "Conflating spot selection with pricing — collapsing them into one class. They change for different reasons (spot choice = layout, pricing = business model). Two separate Strategy interfaces.",
+      "status": "seeded"
+    },
+    {
+      "id": "L02",
+      "title": "Elevator bank scheduler",
+      "ask": "Design the system that controls a bank of 4 elevators in a 20-floor building. Riders press call buttons; elevators pick up and drop off. Write the classes, the scheduling algorithm, and make it thread-safe.",
+      "difficulty": "medium",
+      "asked_by": ["amazon", "microsoft-idc", "atlassian"],
+      "tags": ["state-machine", "strategy-pattern", "concurrency", "scheduling"],
+      "patterns": ["Strategy", "State", "Observer"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — elevator-system", "uses_for": ["UML reference", "Java solution comparison"] },
+        { "type": "book", "ref": "LDDD Ch.4 — aggregates", "uses_for": ["ElevatorBank as aggregate root with Elevators as entities"] }
+      ],
+      "deep_dive_targets": [
+        "Scheduling algorithm (FCFS vs LOOK vs SCAN vs nearest-car)",
+        "Concurrency model (channels per elevator vs central mutex)"
+      ],
+      "follow_ups": [
+        "Add emergency stop — preempts all current motion.",
+        "VIP rider — guarantees under 30s wait time.",
+        "How do you test this deterministically (no real wall-clock)?"
+      ],
+      "trap_for_juniors": "Treating each elevator independently and having the request hit a random one. The win is the *bank* sees the request, scheduler decides which car takes it. Per-elevator scheduling = N elevators × O(N) bad decisions.",
+      "status": "seeded"
+    },
+    {
+      "id": "L04",
+      "title": "Vending machine",
+      "ask": "Design a vending machine. Coins/notes in, item dispensed, change out. Handle out-of-stock, insufficient funds, cancel mid-transaction. Pure state machine.",
+      "difficulty": "easy",
+      "asked_by": ["universal", "amazon", "atlassian"],
+      "tags": ["state-pattern", "inventory", "payment"],
+      "patterns": ["State", "Strategy"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — vending-machine", "uses_for": ["state diagram", "Java implementation"] }
+      ],
+      "deep_dive_targets": [
+        "State machine: idle → coin-accepted → item-selected → dispensing → idle (with cancel paths)",
+        "Change-making algorithm (greedy fails for non-canonical denominations; DP is correct)"
+      ],
+      "follow_ups": [
+        "Add card payments — how does the state machine extend?",
+        "Coin jam mid-dispense — how do you recover?",
+        "Multiple vending machines, central inventory — what changes?"
+      ],
+      "trap_for_juniors": "Using nested if/else for the state machine. As states grow it becomes unreadable. State pattern: each state is a class that handles its own transitions; adding a state doesn't touch existing code.",
+      "status": "seeded"
+    },
+    {
+      "id": "L05",
+      "title": "Tic-Tac-Toe (extensible to N×N)",
+      "ask": "Design Tic-Tac-Toe. Two players, 3×3 grid. Now extend to N×N where you need K-in-a-row to win. Keep the win-check efficient as N grows.",
+      "difficulty": "easy",
+      "asked_by": ["universal", "amazon", "microsoft"],
+      "tags": ["strategy-pattern", "win-check", "open-closed"],
+      "patterns": ["Strategy"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — tic-tac-toe", "uses_for": ["UML", "win-check optimization"] }
+      ],
+      "deep_dive_targets": [
+        "Win-check optimization: O(N²) naive vs O(N) incremental (track row/col/diag counts)",
+        "Open-Closed extension to Connect-4 / Gomoku without rewriting the engine"
+      ],
+      "follow_ups": [
+        "Make it Connect-4 (gravity!) — what changes in the design?",
+        "Add Gomoku (15×15, 5-in-a-row) — where does it land?",
+        "How would you add an AI opponent (minimax) without coupling to the game class?"
+      ],
+      "trap_for_juniors": "Hardcoding win patterns. For 3×3 there are 8; for N×N there are 4N+2. Naive enumeration is O(N²); incremental tracking (counters per row/col/diag updated on each move) is O(1) per move.",
+      "status": "seeded"
+    },
+    {
+      "id": "L10",
+      "title": "Splitwise (expense splitter)",
+      "ask": "Design Splitwise. Users add expenses with arbitrary split (equal, percentage, exact). The system shows simplified balances ('A owes B $X') across many transactions. Support 'settle up' to reset two users' debt.",
+      "difficulty": "medium",
+      "asked_by": ["fintech", "indian-product-cos", "microsoft"],
+      "tags": ["domain-modeling", "graph-algorithm", "simplification"],
+      "patterns": ["Strategy (split logic)", "Visitor (over expense graph)"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — splitwise", "uses_for": ["expense models", "Java implementation"] },
+        { "type": "book", "ref": "LDDD Ch.6 — domain events", "uses_for": ["Expense as event, Balance as projection"] }
+      ],
+      "deep_dive_targets": [
+        "Debt simplification algorithm (transitive closure → minimum cash flow)",
+        "Domain model: Expense vs Balance vs Settlement (which is the source of truth?)"
+      ],
+      "follow_ups": [
+        "Multiple currencies — when do you convert?",
+        "Group expenses with 50 members — simplification gets quadratic; how do you bound it?",
+        "Concurrent expense additions by two users — how do you avoid double-counting on settlement?"
+      ],
+      "trap_for_juniors": "Storing balances directly and mutating them. Expenses are the source of truth — balance is a projection. If you mutate balances, you can never reconstruct, audit, or simplify.",
+      "status": "seeded"
+    },
+    {
+      "id": "L12",
+      "title": "Meeting scheduler / calendar",
+      "ask": "Design a calendar scheduling system. Users propose meetings with N participants; the system finds the next slot where everyone is free. Each user has working hours, time zones, and existing events.",
+      "difficulty": "medium",
+      "asked_by": ["microsoft", "google", "calendly"],
+      "tags": ["interval-tree", "conflict-detection", "time-zones"],
+      "patterns": ["Strategy (slot-finding)", "Visitor"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — calendar", "uses_for": ["data model"] },
+        { "type": "book", "ref": "CLRS — interval trees", "uses_for": ["interval-tree algorithms"] }
+      ],
+      "deep_dive_targets": [
+        "Interval tree for fast 'find next free slot of duration D' query",
+        "Multi-participant scheduling: intersection of N free-busy lists in O(N log M)"
+      ],
+      "follow_ups": [
+        "Add recurring events — how do you store them efficiently?",
+        "Add 'optional attendees' — does the algorithm change?",
+        "How do you handle daylight saving transitions?"
+      ],
+      "trap_for_juniors": "Storing events as a flat list and scanning linearly. At 10k events per user, every scheduling query is O(N²). Interval tree (or red-black-tree with augmented data) brings it to O(log N).",
+      "status": "seeded"
+    },
+    {
+      "id": "L13",
+      "title": "Logging framework",
+      "ask": "Design a logging framework like log4j or zap. Multiple log levels, multiple output destinations (file, network, stdout), structured logging with key-value pairs, and pluggable formatters. Thread-safe.",
+      "difficulty": "medium",
+      "asked_by": ["universal", "uber", "linkedin"],
+      "tags": ["chain-of-responsibility", "builder", "pluggable-appenders"],
+      "patterns": ["Chain of Responsibility", "Builder", "Strategy"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "uber-go/zap source", "uses_for": ["zero-allocation logging", "structured fields"] },
+        { "type": "book", "ref": "Head First Design Patterns — CoR chapter", "uses_for": ["filter chain design"] }
+      ],
+      "deep_dive_targets": [
+        "Appender chain (filter → format → write) and lifecycle",
+        "Zero-allocation structured logging (sync.Pool, encoder reuse)"
+      ],
+      "follow_ups": [
+        "Add async logging — write to a buffer, flush in background. What can break?",
+        "Add log sampling — keep 1% of debug logs but 100% of errors.",
+        "How do you handle a slow downstream (network appender blocks)?"
+      ],
+      "trap_for_juniors": "Synchronous writes inside the application thread. At high log rates, the slow appender (network, file) blocks the hot path. Async logging with a bounded buffer + drop policy is the production answer.",
+      "status": "seeded"
+    },
+    {
+      "id": "L14",
+      "title": "LRU cache (thread-safe)",
+      "ask": "Design an LRU cache with O(1) get and put. Capacity N. Now make it thread-safe — multiple goroutines/threads accessing concurrently. Discuss the lock contention trade-off and how you'd reduce it.",
+      "difficulty": "medium",
+      "asked_by": ["universal", "amazon", "google", "anthropic"],
+      "tags": ["doubly-linked-list", "hashmap", "concurrency", "lock-striping"],
+      "patterns": ["Composition"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "leetcode", "ref": "#146 — LRU Cache", "uses_for": ["the canonical problem statement"] },
+        { "type": "github", "ref": "hashicorp/golang-lru source", "uses_for": ["production thread-safe LRU"] },
+        { "type": "blog", "ref": "Cloudflare — sharded LRU cache for high concurrency", "uses_for": ["lock-striping pattern"] }
+      ],
+      "deep_dive_targets": [
+        "Doubly-linked list + hashmap composition (the O(1) trick)",
+        "Lock striping: from one mutex to N shards, contention reduction analysis"
+      ],
+      "follow_ups": [
+        "Add TTL — what changes?",
+        "Replace LRU with LFU — what stays, what breaks?",
+        "Make it persistent across restarts (with eventual consistency to disk)."
+      ],
+      "trap_for_juniors": "Putting a single mutex around the whole cache. At high concurrency, every reader serializes — defeats the cache. Lock striping (shard the cache, mutex per shard) cuts contention by N. Lock-free designs exist but are interview-tier-only.",
+      "status": "seeded"
+    },
+    {
+      "id": "L17",
+      "title": "Thread pool / executor",
+      "ask": "Design a thread pool. N workers, a queue of submitted tasks, graceful shutdown, and the ability to submit a Future-style result. Show how you'd implement work-stealing for load balancing.",
+      "difficulty": "hard",
+      "asked_by": ["senior+", "uber", "stripe", "google"],
+      "tags": ["producer-consumer", "work-stealing", "futures"],
+      "patterns": ["Producer-Consumer", "Future / Promise"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "Java ForkJoinPool source", "uses_for": ["work-stealing algorithm", "deque per worker"] },
+        { "type": "blog", "ref": "Rob Pike — Go concurrency patterns", "uses_for": ["channel-based worker pool"] }
+      ],
+      "deep_dive_targets": [
+        "Work-stealing: per-worker deque, victim selection, LIFO own / FIFO steal",
+        "Graceful shutdown: drain queue, signal workers, await Done — without losing in-flight tasks"
+      ],
+      "follow_ups": [
+        "Add priority — a high-priority task should jump the queue.",
+        "Add bounded queue — what's the back-pressure strategy?",
+        "Add cancellation — how do tasks observe cancel without polling?"
+      ],
+      "trap_for_juniors": "Single shared task queue with a mutex. Becomes a contention point at high task rates. Work-stealing (per-worker deque) reduces contention dramatically — workers push/pop their own deque LIFO; only steal from others when empty.",
+      "status": "seeded"
+    },
+    {
+      "id": "L18",
+      "title": "In-memory file system",
+      "ask": "Design an in-memory file system. Directories, files, file contents. Support ls, mkdir, addContentToFile, readContentFromFile. Tree structure with arbitrary nesting.",
+      "difficulty": "medium",
+      "asked_by": ["universal", "leetcode-588", "amazon", "google"],
+      "tags": ["composite-pattern", "tree-traversal"],
+      "patterns": ["Composite"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "leetcode", "ref": "#588 Design In-Memory File System", "uses_for": ["canonical problem", "API surface"] },
+        { "type": "book", "ref": "Head First Design Patterns — Composite chapter", "uses_for": ["pattern reference"] }
+      ],
+      "deep_dive_targets": [
+        "Composite pattern: File and Directory share a common interface; tree operations are recursive",
+        "Path resolution algorithm and edge cases (`/`, `.`, `..`, trailing slashes)"
+      ],
+      "follow_ups": [
+        "Add symbolic links — how do you avoid cycles?",
+        "Add permissions (read/write/execute) — where do they live?",
+        "Make it persistent (snapshot to disk) — what serialization shape?"
+      ],
+      "trap_for_juniors": "Using two separate hierarchies for files and directories. Composite pattern unifies them under one Node interface — `ls` doesn't care whether a child is a file or a sub-directory; it just calls `name()`.",
+      "status": "seeded"
+    },
+    {
+      "id": "L20",
+      "title": "In-memory pub-sub",
+      "ask": "Design an in-memory publish-subscribe system. Publishers send messages to a topic; subscribers receive messages for topics they've subscribed to. Support wildcard subscriptions (`logs.*` matches `logs.error` and `logs.info`). Thread-safe.",
+      "difficulty": "medium",
+      "asked_by": ["universal", "redis-labs", "uber"],
+      "tags": ["observer-pattern", "topic-registry", "wildcards"],
+      "patterns": ["Observer", "Mediator"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — pubsub", "uses_for": ["topic tree", "subscription registry"] },
+        { "type": "blog", "ref": "Redis pub-sub internals", "uses_for": ["dispatch loop", "pattern matching"] }
+      ],
+      "deep_dive_targets": [
+        "Topic tree for wildcard matching (trie of topic segments)",
+        "Slow subscriber problem: per-subscriber bounded channel + drop policy"
+      ],
+      "follow_ups": [
+        "Add durability — survive a process restart.",
+        "Add ordered delivery per topic — what synchronization is needed?",
+        "Scale to 10k subscribers per topic — what changes?"
+      ],
+      "trap_for_juniors": "Letting a slow subscriber block the publisher. One subscriber that doesn't drain its queue halts message delivery to everyone. Bounded per-subscriber channels with drop-or-disconnect policy is the answer.",
+      "status": "seeded"
+    },
+    {
+      "id": "L21",
+      "title": "Undo/Redo (text editor)",
+      "ask": "Design the undo/redo system for a text editor. Operations include insert, delete, format. Memory-bounded history (last N operations). Now extend to collaborative editing where one user's undo doesn't undo another user's work.",
+      "difficulty": "medium",
+      "asked_by": ["microsoft", "google-docs", "notion"],
+      "tags": ["command-pattern", "memento", "operational-transform"],
+      "patterns": ["Command", "Memento"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "ashishps1/awesome-low-level-design — undo-redo", "uses_for": ["Command pattern impl"] },
+        { "type": "blog", "ref": "Notion — how we implement undo", "uses_for": ["collaborative undo design"] }
+      ],
+      "deep_dive_targets": [
+        "Command pattern: each operation knows how to apply + reverse itself",
+        "Selective undo in collaborative editing (the OT/CRDT problem)"
+      ],
+      "follow_ups": [
+        "How do you handle 'undo' after the document was edited remotely?",
+        "Memory: insert of a 1MB image — do you store it in history?",
+        "What about non-undoable side effects (send email, file upload)?"
+      ],
+      "trap_for_juniors": "Storing whole-document snapshots for each undo step. At 1KB doc × 10k operations, that's 10MB. Command pattern stores only the *delta* + reverse-delta — O(operation-size) per step.",
+      "status": "seeded"
+    },
+    {
+      "id": "L26",
+      "title": "Thread-safe blocking queue",
+      "ask": "Implement a thread-safe blocking queue with bounded capacity. `put` blocks when full; `take` blocks when empty. Multiple producers and consumers. Now make it fair (FIFO across threads, not just elements).",
+      "difficulty": "hard",
+      "asked_by": ["senior+", "google", "amazon", "stripe"],
+      "tags": ["condition-variables", "fairness", "concurrency-primitive"],
+      "patterns": ["Producer-Consumer"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "Java ArrayBlockingQueue source", "uses_for": ["condition variable design", "fairness lock"] },
+        { "type": "book", "ref": "OSTEP Ch.30 — condition variables", "uses_for": ["theory of wait/signal"] }
+      ],
+      "deep_dive_targets": [
+        "Two condition variables (notFull, notEmpty) and the wait/signal protocol",
+        "Fairness: ReentrantLock(fair=true) vs unfair — semantic and perf trade-off"
+      ],
+      "follow_ups": [
+        "Implement it in Go using only channels — what changes?",
+        "Add timeout to put/take — what's the API and the cancellation semantics?",
+        "What if `take` is called with a predicate (only take messages matching X)?"
+      ],
+      "trap_for_juniors": "Using `Object.notify()` instead of `notifyAll()` (Java) or signal-one instead of broadcast. Causes deadlock when multiple consumers wait on the same condition. Always use `notifyAll`/`Broadcast` unless you can prove only one waiter needs waking.",
+      "status": "seeded"
+    },
+    {
+      "id": "L28",
+      "title": "Circuit breaker",
+      "ask": "Design a circuit breaker (Netflix Hystrix style). Calls to a downstream service can fail; once failures exceed a threshold, the breaker opens and short-circuits subsequent calls. After a cooldown, it tries again (half-open state).",
+      "difficulty": "medium",
+      "asked_by": ["universal", "netflix", "uber", "stripe"],
+      "tags": ["state-machine", "reliability", "fault-tolerance"],
+      "patterns": ["State"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "Netflix Hystrix source (archived)", "uses_for": ["state machine design", "metric collection"] },
+        { "type": "github", "ref": "sony/gobreaker", "uses_for": ["Go implementation", "ready ramps"] },
+        { "type": "blog", "ref": "Microsoft — circuit breaker pattern", "uses_for": ["design discussion"] }
+      ],
+      "deep_dive_targets": [
+        "Three-state machine: Closed → Open → HalfOpen → Closed (with thresholds)",
+        "Rolling window for failure counting (vs cumulative — accuracy/memory trade-off)"
+      ],
+      "follow_ups": [
+        "What metric drives the transition? (Failure count, failure rate, latency, all of the above?)",
+        "How do you handle the 'thundering herd' when the breaker closes?",
+        "Multiple downstream services — one breaker each or one shared?"
+      ],
+      "trap_for_juniors": "Using a cumulative failure counter. At sustained low failure rate, you eventually trip even though the service is healthy. Sliding window (last N seconds) is the production answer.",
+      "status": "seeded"
+    },
+    {
+      "id": "L35",
+      "title": "Workflow engine (DAG of tasks)",
+      "ask": "Design a workflow engine. Users define a DAG of tasks (Task A → Task B, C; Task D depends on B and C). Workers execute tasks; the engine tracks state, handles retries, and signals completion. Tasks may produce outputs consumed by downstream tasks.",
+      "difficulty": "hard",
+      "asked_by": ["airflow", "temporal", "google", "amazon"],
+      "tags": ["dag", "topological-eval", "retry", "idempotency", "staff-bar"],
+      "patterns": ["Strategy (retry)", "State", "Observer"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "github", "ref": "temporalio/temporal source", "uses_for": ["workflow durability", "deterministic replay"] },
+        { "type": "blog", "ref": "Airbnb — Airflow at scale", "uses_for": ["scheduler bottlenecks", "DAG parsing"] },
+        { "type": "book", "ref": "DDIA Ch.10 — batch processing", "uses_for": ["DAG execution semantics"] }
+      ],
+      "deep_dive_targets": [
+        "Topological execution with concurrent ready-task pool",
+        "Retry semantics: at-least-once vs exactly-once via idempotency keys + deterministic replay"
+      ],
+      "follow_ups": [
+        "A task succeeds but the engine crashes before recording success — what happens?",
+        "How do you handle a task that runs for 7 days (vs 7 ms)?",
+        "Dynamic DAGs (a task discovers new tasks at runtime) — what changes?"
+      ],
+      "trap_for_juniors": "Treating tasks as ad-hoc function calls. Workflow engines must be *deterministic* — given the same inputs, replay produces the same result. This requires capturing all non-determinism (time, random, external calls) in the workflow state, not the task logic.",
+      "status": "seeded"
+    },
+    { "id": "L03", "title": "ATM", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["State"], "status": "queued" },
+    { "id": "L06", "title": "Chess", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Polymorphism (piece moves)", "Memento (undo)"], "status": "queued" },
+    { "id": "L07", "title": "Deck of cards / Poker", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Composition"], "status": "queued" },
+    { "id": "L08", "title": "Library management", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy"], "status": "queued" },
+    { "id": "L09", "title": "Hotel reservation", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["State"], "status": "queued" },
+    { "id": "L11", "title": "Snake & Ladder", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy (dice)"], "status": "queued" },
+    { "id": "L15", "title": "Rate limiter (LLD)", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Strategy (algorithm)"], "status": "queued" },
+    { "id": "L16", "title": "Connection pool", "asked_by": ["senior+"], "difficulty": "medium", "patterns": ["Object Pool"], "status": "queued" },
+    { "id": "L19", "title": "Trello / Kanban", "asked_by": ["atlassian"], "difficulty": "medium", "patterns": ["Aggregate"], "status": "queued" },
+    { "id": "L22", "title": "Stack Overflow / Q&A", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Strategy (voting)"], "status": "queued" },
+    { "id": "L23", "title": "Amazon shopping cart", "asked_by": ["amazon"], "difficulty": "easy", "patterns": ["Strategy (pricing)"], "status": "queued" },
+    { "id": "L24", "title": "Swiggy / food delivery core", "asked_by": ["swiggy", "doordash", "uber-eats"], "difficulty": "medium", "patterns": ["State (order)"], "status": "queued" },
+    { "id": "L25", "title": "Music player", "asked_by": ["spotify", "apple"], "difficulty": "easy", "patterns": ["State", "Strategy"], "status": "queued" },
+    { "id": "L27", "title": "Distributed lock manager interface", "asked_by": ["senior+"], "difficulty": "hard", "patterns": ["Lease"], "status": "queued" },
+    { "id": "L29", "title": "Retry library with backoff/jitter", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy"], "status": "queued" },
+    { "id": "L30", "title": "Feature flag SDK (client)", "asked_by": ["launchdarkly"], "difficulty": "medium", "patterns": ["Strategy (eval)"], "status": "queued" },
+    { "id": "L31", "title": "Typed config loader (YAML/env layered)", "asked_by": ["senior+"], "difficulty": "medium", "patterns": ["Builder", "Visitor"], "status": "queued" },
+    { "id": "L32", "title": "Event-sourced bank account", "asked_by": ["fintech"], "difficulty": "hard", "patterns": ["Event Sourcing"], "status": "queued" },
+    { "id": "L33", "title": "In-memory SQL parser (expression tree)", "asked_by": ["databricks", "snowflake"], "difficulty": "hard", "patterns": ["AST", "Visitor"], "status": "queued" },
+    { "id": "L34", "title": "Regex engine (Thompson NFA)", "asked_by": ["staff+"], "difficulty": "hard", "patterns": ["NFA construction"], "status": "queued" },
+    { "id": "L36", "title": "Idempotency-key middleware", "asked_by": ["stripe", "fintech"], "difficulty": "medium", "patterns": ["Decorator"], "status": "queued" },
+    { "id": "L37", "title": "Bounded actor system", "asked_by": ["senior+"], "difficulty": "hard", "patterns": ["Actor", "Supervisor"], "status": "queued" },
+    { "id": "L38", "title": "Metrics library (counter/gauge/histogram)", "asked_by": ["datadog", "honeycomb"], "difficulty": "medium", "patterns": ["Strategy"], "status": "queued" },
+    { "id": "L39", "title": "Structured logger (zap/zerolog-like)", "asked_by": ["uber"], "difficulty": "medium", "patterns": ["Builder"], "status": "queued" },
+    { "id": "L40", "title": "DI container", "asked_by": ["framework-builder"], "difficulty": "hard", "patterns": ["Reflection", "Lifecycle"], "status": "queued" },
+    { "id": "L41", "title": "Typed message bus (in-process)", "asked_by": ["framework-builder"], "difficulty": "medium", "patterns": ["Generics", "Dispatch"], "status": "queued" },
+    { "id": "L42", "title": "Saga coordinator", "asked_by": ["fintech"], "difficulty": "hard", "patterns": ["Saga"], "status": "queued" },
+    { "id": "L43", "title": "OAuth client library", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Strategy (flow)"], "status": "queued" },
+    { "id": "L44", "title": "Feature-flag-evaluator (server-side)", "asked_by": ["launchdarkly"], "difficulty": "medium", "patterns": ["Rule engine"], "status": "queued" },
+    { "id": "L45", "title": "Graceful shutdown coordinator", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Coordinator"], "status": "queued" }
+  ]
+}

@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "kind": "hld",
+  "problems": [
+    {
+      "id": "H01",
+      "title": "URL shortener",
+      "ask": "Design a URL shortener like bit.ly. Support 100M new URLs/day, 10B redirects/day, with sub-100ms p99 redirect latency. URLs never expire.",
+      "difficulty": "easy",
+      "asked_by": ["universal", "amazon", "google", "stripe"],
+      "tags": ["hashing", "base62", "cache", "write-amplification", "kv-store"],
+      "sources": [
+        { "type": "book", "ref": "DDIA Ch.5 — replication", "uses_for": ["read-replica scaling", "leader-follower"] },
+        { "type": "book", "ref": "Alex Xu Vol.1 Ch.8", "uses_for": ["base62 encoding", "ID generation strategies"] },
+        { "type": "blog", "ref": "bit.ly engineering — original design notes", "uses_for": ["counter-based ID generation", "shard distribution"] }
+      ],
+      "deep_dive_targets": [
+        "ID generation strategy (base62 counter vs hash vs Snowflake)",
+        "cache topology (CDN edge + Redis L2)"
+      ],
+      "follow_ups": [
+        "Custom aliases — how do you prevent collision while keeping the counter approach?",
+        "Analytics on clicks — how do you not block the redirect path?",
+        "Abuse detection — phishing URLs at scale?"
+      ],
+      "trap_for_juniors": "Picking MD5/SHA hash of the URL as the short ID. Hash collisions force you into retry-on-collision logic that breaks idempotency. A monotonic counter encoded base62 is the boring-correct answer.",
+      "status": "seeded"
+    },
+    {
+      "id": "H02",
+      "title": "Twitter home timeline",
+      "ask": "Design Twitter's home timeline. A user logs in and sees a feed of tweets from people they follow, ranked by recency. 500M users, average 200 follows, 1B tweets/day, p99 timeline load under 200ms.",
+      "difficulty": "medium",
+      "asked_by": ["meta", "twitter", "linkedin", "snap"],
+      "tags": ["fan-out", "feed", "celebrity-problem", "ranking", "cache"],
+      "sources": [
+        { "type": "book", "ref": "DDIA Ch.1 (Twitter case study)", "uses_for": ["fan-out write vs read", "celebrity problem framing"] },
+        { "type": "blog", "ref": "Twitter — Manhattan, the real-time storage stack", "uses_for": ["distributed kv design", "denormalization"] },
+        { "type": "blog", "ref": "LinkedIn — feed mixer architecture", "uses_for": ["hybrid fan-out (push for normal, pull for celebrities)"] }
+      ],
+      "deep_dive_targets": [
+        "Fan-out on write vs fan-out on read (and the hybrid)",
+        "Timeline cache structure (per-user materialized list)"
+      ],
+      "follow_ups": [
+        "How do you handle a user with 100M followers (Obama)?",
+        "How do you mix in promoted tweets without blocking the read path?",
+        "How do you backfill timelines when a user follows someone new?"
+      ],
+      "trap_for_juniors": "Picking pure fan-out on write and not addressing the celebrity case. At 100M followers, a single tweet would write 100M timeline entries — fan-out collapses. The answer is hybrid: fan-out for normal users, pull on read for celebrities.",
+      "status": "seeded"
+    },
+    {
+      "id": "H03",
+      "title": "WhatsApp messaging",
+      "ask": "Design WhatsApp. 2B users, 100B messages/day, p99 delivery latency under 1s. Support 1-to-1 and group chats up to 1024 members. Online/offline presence, read receipts, and end-to-end encryption.",
+      "difficulty": "medium",
+      "asked_by": ["meta", "discord", "snap", "telegram"],
+      "tags": ["real-time", "long-lived-connection", "ordering", "presence", "e2e-encryption"],
+      "sources": [
+        { "type": "blog", "ref": "Discord — how we store billions of messages", "uses_for": ["Cassandra/ScyllaDB tradeoffs", "partition key design for messages"] },
+        { "type": "book", "ref": "DDIA Ch.11 — stream processing", "uses_for": ["message ordering guarantees", "stream-table duality"] },
+        { "type": "blog", "ref": "WhatsApp — million connections per server (Erlang)", "uses_for": ["BEAM VM concurrency model", "TCP connection density"] }
+      ],
+      "deep_dive_targets": [
+        "Message ordering across multiple senders to the same recipient",
+        "Connection management at 2B concurrent persistent connections"
+      ],
+      "follow_ups": [
+        "How do you guarantee in-order delivery when client reconnects after going offline?",
+        "How does end-to-end encryption interact with group chat membership changes?",
+        "How do you handle a group chat with 1024 active members typing simultaneously?"
+      ],
+      "trap_for_juniors": "Picking HTTP polling for delivery. At 2B users polling every few seconds, you'd serve 100B+ requests/min for empty replies. WebSocket or XMPP-style persistent connections are mandatory; the architecture must support millions of idle connections per server.",
+      "status": "seeded"
+    },
+    {
+      "id": "H09",
+      "title": "Distributed cache (Redis/Memcached-class)",
+      "ask": "Design a distributed in-memory cache, like Memcached or Redis-cluster. 10TB total working set, 1M ops/sec, p99 under 1ms. Tolerate node failures without losing cache coherence.",
+      "difficulty": "medium",
+      "asked_by": ["universal", "meta", "netflix", "stripe", "anthropic"],
+      "tags": ["consistent-hashing", "eviction", "replication", "ring", "hot-key"],
+      "sources": [
+        { "type": "paper", "ref": "Memcached@FB (Nishtala et al. 2013)", "uses_for": ["regional cache pools", "lease tokens for stampede protection"] },
+        { "type": "paper", "ref": "Dynamo (DeCandia et al. 2007)", "uses_for": ["consistent hashing", "virtual nodes"] },
+        { "type": "book", "ref": "DDIA Ch.6 — partitioning", "uses_for": ["partition assignment", "rebalancing"] },
+        { "type": "blog", "ref": "Netflix EVCache", "uses_for": ["multi-region caching", "warmup strategies"] }
+      ],
+      "deep_dive_targets": [
+        "Consistent hashing with virtual nodes (vnode count, ring rebalance)",
+        "Thundering herd / cache stampede mitigation (lease tokens, request coalescing)"
+      ],
+      "follow_ups": [
+        "What happens when one key gets 100k QPS (hot key)?",
+        "How do you do cross-region replication without doubling write cost?",
+        "What's your eviction policy and why?"
+      ],
+      "trap_for_juniors": "Using modulo-N hashing for shard assignment. When a node is added, ~100% of keys remap — cache cold-start. Consistent hashing with virtual nodes is the answer; expect the interviewer to draw the ring.",
+      "status": "seeded"
+    },
+    {
+      "id": "H10",
+      "title": "Rate limiter",
+      "ask": "Design a distributed rate limiter. 10M users, each with their own quotas (e.g. 100 req/min). Decisions must be made in under 5ms p99. Quotas must hold even under burst traffic across multiple API servers.",
+      "difficulty": "easy",
+      "asked_by": ["universal", "cloudflare", "stripe", "anthropic"],
+      "tags": ["token-bucket", "sliding-window", "redis", "edge-vs-central"],
+      "sources": [
+        { "type": "blog", "ref": "Cloudflare — how we built rate limiting capable of scaling to millions of domains", "uses_for": ["sliding window counters", "approximate counting"] },
+        { "type": "blog", "ref": "Stripe — scaling your API with rate limiters", "uses_for": ["token bucket implementation", "graceful degradation"] },
+        { "type": "book", "ref": "DDIA Ch.7 — transactions", "uses_for": ["atomic check-and-decrement under contention"] }
+      ],
+      "deep_dive_targets": [
+        "Token bucket vs fixed window vs sliding window log vs sliding window counter",
+        "Edge enforcement vs centralized counters (Redis cluster)"
+      ],
+      "follow_ups": [
+        "What if Redis is temporarily unavailable?",
+        "How do you handle a user with 100 requests landing on 50 different API servers simultaneously?",
+        "Can you do it without any centralized state?"
+      ],
+      "trap_for_juniors": "Picking fixed-window counters and missing the burst-at-window-boundary issue. A user can do 2x quota by sending bursts right before and after the window resets. Sliding-window-counter (or token bucket) is the boring-correct default.",
+      "status": "seeded"
+    },
+    {
+      "id": "H14",
+      "title": "Stripe-style payment processing",
+      "ask": "Design Stripe's core payment processing. Process 100M payments/day, each transaction must be exactly-once (no double-charges), reconcile with a downstream double-entry ledger, and survive partial bank failures.",
+      "difficulty": "hard",
+      "asked_by": ["stripe", "square", "plaid", "fintech"],
+      "tags": ["idempotency", "double-entry-ledger", "exactly-once", "webhook", "saga"],
+      "sources": [
+        { "type": "blog", "ref": "Stripe — designing robust and predictable APIs with idempotency", "uses_for": ["idempotency-key middleware", "request fingerprinting"] },
+        { "type": "blog", "ref": "Stripe — online migrations at scale", "uses_for": ["dual-write patterns", "verification framework"] },
+        { "type": "book", "ref": "DDIA Ch.7 — transactions", "uses_for": ["2PC alternatives", "saga pattern"] },
+        { "type": "book", "ref": "LDDD — bounded contexts", "uses_for": ["payment service boundaries", "event integration"] }
+      ],
+      "deep_dive_targets": [
+        "Idempotency key lifecycle and storage",
+        "Double-entry ledger with eventual reconciliation"
+      ],
+      "follow_ups": [
+        "What happens if Stripe's call to the bank times out — is the payment captured or not?",
+        "How do you reconcile a bank's nightly settlement file against your ledger?",
+        "How do webhooks guarantee at-least-once delivery without flooding the merchant?"
+      ],
+      "trap_for_juniors": "Treating it as 'just a transaction.' The hardest part is *unknown* outcomes — the bank API timed out, did the payment go through? Idempotency keys + reconciliation jobs are the answer; 2PC across Stripe and a bank doesn't exist.",
+      "status": "seeded"
+    },
+    {
+      "id": "H16",
+      "title": "Kafka (distributed log)",
+      "ask": "Design Kafka. Append-only partitioned log, 1M writes/sec per topic, durable replication, consumers can replay from any offset. Support exactly-once delivery semantics for downstream stream processors.",
+      "difficulty": "hard",
+      "asked_by": ["confluent", "linkedin", "datadog", "stripe"],
+      "tags": ["log", "partitions", "isr", "consumer-groups", "exactly-once"],
+      "sources": [
+        { "type": "paper", "ref": "Kafka (Kreps et al. 2011)", "uses_for": ["partition + replication design", "consumer-group rebalance"] },
+        { "type": "blog", "ref": "Confluent — exactly-once semantics in Kafka", "uses_for": ["transactional producer", "idempotent send"] },
+        { "type": "book", "ref": "DDIA Ch.11 — stream processing", "uses_for": ["log-as-database", "change-data-capture"] }
+      ],
+      "deep_dive_targets": [
+        "ISR (in-sync replica) protocol and unclean leader election trade-off",
+        "Exactly-once via transactional producer (TID + commit marker)"
+      ],
+      "follow_ups": [
+        "What happens during a leader election — can you lose committed messages?",
+        "How does the consumer group know where to resume after rebalance?",
+        "Why is partition reassignment slow and what would you optimize?"
+      ],
+      "trap_for_juniors": "Conflating 'at-least-once' with 'exactly-once.' Kafka EOS requires the transactional producer + idempotent send + consumer reading committed only. Many candidates wave hands; the depth signal is naming the marker offsets.",
+      "status": "seeded"
+    },
+    {
+      "id": "H17",
+      "title": "DynamoDB-style KV store",
+      "ask": "Design a Dynamo-style distributed key-value store. Always-writable, even during network partition. 100k writes/sec, 1KB values, 99.99% availability single-region.",
+      "difficulty": "hard",
+      "asked_by": ["amazon", "google", "anthropic"],
+      "tags": ["consistent-hashing", "vector-clocks", "sloppy-quorum", "anti-entropy", "merkle"],
+      "sources": [
+        { "type": "paper", "ref": "Dynamo (DeCandia et al. 2007)", "uses_for": ["sloppy quorum §4.5", "vector clocks §4.4", "Merkle anti-entropy §4.7"] },
+        { "type": "book", "ref": "DDIA Ch.5+6", "uses_for": ["leaderless replication", "partitioning strategies"] },
+        { "type": "blog", "ref": "Discord — Cassandra to ScyllaDB migration (2022)", "uses_for": ["real ops numbers", "JVM GC issues with hint queues"] },
+        { "type": "blog", "ref": "Werner Vogels — 10 lessons from DynamoDB", "uses_for": ["adaptive capacity", "hot-key mitigation"] }
+      ],
+      "deep_dive_targets": [
+        "Sloppy quorum + hinted handoff (the AP mechanism)",
+        "Vector clocks + sibling reconciliation"
+      ],
+      "follow_ups": [
+        "What if the hint queue grows unbounded during a long partition?",
+        "How do you handle concurrent writes during partition?",
+        "Why not Paxos here — wouldn't that give linearizability?"
+      ],
+      "trap_for_juniors": "Picking strict quorum and missing that the prompt says 'always-writable.' CAP forces a choice; this prompt mandates AP. Strict quorum is CP. Citing 'eventually consistent' is empty without explaining the *mechanism* — hinted handoff + Merkle anti-entropy.",
+      "status": "seeded"
+    },
+    {
+      "id": "H20",
+      "title": "Ad-click aggregator",
+      "ask": "Design a system that aggregates ad clicks for billing. 10B clicks/day, advertisers see dashboards updated within 1 minute, billing is correct to the cent (no double-counting, no missing clicks).",
+      "difficulty": "hard",
+      "asked_by": ["google", "meta", "amazon-ads", "the-trade-desk"],
+      "tags": ["stream-processing", "watermarks", "exactly-once", "lambda-vs-kappa", "fraud"],
+      "sources": [
+        { "type": "paper", "ref": "MillWheel (Akidau et al. 2013)", "uses_for": ["watermarks", "exactly-once stream processing"] },
+        { "type": "book", "ref": "DDIA Ch.11", "uses_for": ["stream processing patterns", "lambda vs kappa"] },
+        { "type": "blog", "ref": "Stripe — designing event-driven systems", "uses_for": ["idempotency in pipelines", "dedup keys"] }
+      ],
+      "deep_dive_targets": [
+        "Watermarks and late-arriving events",
+        "Exactly-once aggregation across re-processing"
+      ],
+      "follow_ups": [
+        "An ad server fails over and re-emits the last 30s of clicks — how do you avoid double-counting?",
+        "How do you handle 1% of clicks arriving 6 hours late from a flaky region?",
+        "How do you detect fraudulent click farms without slowing the path?"
+      ],
+      "trap_for_juniors": "Treating it as a batch problem ('process every hour'). Advertisers need near-real-time dashboards AND billing accuracy. Lambda architecture (speed + batch) is the historical answer; kappa (stream-only with reprocessing) is the modern answer — name both.",
+      "status": "seeded"
+    },
+    {
+      "id": "H23",
+      "title": "Distributed counter / leaderboard",
+      "ask": "Design a real-time leaderboard for a multiplayer game. 100M players, 1M score updates/sec at peak, leaderboard query returns top-100 globally in under 50ms. Approximate counts are acceptable; exact is preferred.",
+      "difficulty": "medium",
+      "asked_by": ["riot", "epic", "blizzard", "discord"],
+      "tags": ["crdt", "hyperloglog", "sorted-set", "approximate-counting"],
+      "sources": [
+        { "type": "blog", "ref": "Redis — using sorted sets for leaderboards", "uses_for": ["ZRANGE / ZINCRBY", "sharded sorted sets"] },
+        { "type": "paper", "ref": "HyperLogLog (Flajolet et al. 2007)", "uses_for": ["approximate cardinality"] },
+        { "type": "book", "ref": "DDIA Ch.5 — CRDTs", "uses_for": ["counter CRDTs", "G-counter design"] }
+      ],
+      "deep_dive_targets": [
+        "Sharded counter with merge (G-counter CRDT)",
+        "Top-K query under partitioned sorted sets"
+      ],
+      "follow_ups": [
+        "What if a single player's score is updated 10k times per second (hot key)?",
+        "How do you support 'rank around me' (player N's neighbors)?",
+        "How does it work across 5 geo regions?"
+      ],
+      "trap_for_juniors": "Putting all scores in a single Redis sorted set. At 1M updates/sec, single-instance Redis is a bottleneck. Sharded sorted sets + periodic merge is the answer; for true top-K, a tournament tree of shard tops.",
+      "status": "seeded"
+    },
+    {
+      "id": "H26",
+      "title": "LLM inference serving",
+      "ask": "Design a system that serves LLM completions at 10k QPS across a fleet of GPUs, with p95 latency under 2s. Average prompt is 4k tokens; average output is 500 tokens. Support both streaming and unary responses.",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "openai", "google", "cohere"],
+      "tags": ["ml-infra", "kv-cache", "continuous-batching", "speculative-decoding", "tpot"],
+      "sources": [
+        { "type": "paper", "ref": "vLLM / PagedAttention (Kwon et al. 2023)", "uses_for": ["KV cache memory management", "paged attention"] },
+        { "type": "paper", "ref": "Orca (Yu et al. 2022)", "uses_for": ["continuous batching", "iteration-level scheduling"] },
+        { "type": "blog", "ref": "Anthropic — engineering challenges of serving Claude", "uses_for": ["production tradeoffs", "p95 vs throughput"] },
+        { "type": "blog", "ref": "Character.AI — scaling LLM inference", "uses_for": ["cost optimization", "model multiplexing"] }
+      ],
+      "deep_dive_targets": [
+        "KV cache lifecycle on GPU memory (allocation, eviction, sharing across requests)",
+        "Continuous batching loop and scheduler"
+      ],
+      "follow_ups": [
+        "What if a single prompt is 100k tokens (long-context routing)?",
+        "How do you A/B test a new model version live?",
+        "What's the cache key for prompt cache — full prompt? prefix? both?"
+      ],
+      "trap_for_juniors": "Treating it as a stateless web service. KV cache changes everything — each in-flight request holds GPU memory proportional to context length. Continuous batching is the headline optimization; without it, GPU utilization sits at 20-30%.",
+      "status": "seeded"
+    },
+    {
+      "id": "H27",
+      "title": "RAG over 1B documents",
+      "ask": "Design a retrieval-augmented generation system over 1B documents. Queries arrive at 1k QPS, p99 retrieval latency under 200ms. The corpus is updated continuously (~100k new docs/hour). Support hybrid search (vector + keyword).",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "openai", "perplexity", "elastic"],
+      "tags": ["vector-db", "hnsw", "hybrid-search", "freshness", "reranking"],
+      "sources": [
+        { "type": "paper", "ref": "HNSW (Malkov & Yashunin 2018)", "uses_for": ["graph index construction", "search complexity"] },
+        { "type": "blog", "ref": "Pinecone — vector database internals", "uses_for": ["sharding strategies", "incremental indexing"] },
+        { "type": "paper", "ref": "BM25 (Robertson & Walker 1994)", "uses_for": ["keyword scoring", "hybrid weighting"] },
+        { "type": "blog", "ref": "Anthropic — contextual retrieval", "uses_for": ["chunk preprocessing", "prefix augmentation"] }
+      ],
+      "deep_dive_targets": [
+        "HNSW graph + incremental updates (the freshness problem)",
+        "Hybrid search ranking (BM25 + vector score fusion)"
+      ],
+      "follow_ups": [
+        "How do you support a 100k new docs/hour update rate while keeping search latency stable?",
+        "Why not just use Elasticsearch with vector support?",
+        "How do you choose chunk size, and what's the trade-off?"
+      ],
+      "trap_for_juniors": "Picking exact-kNN search and missing that 1B vectors at exact-kNN means a full scan per query. Approximate kNN via HNSW (or IVF, ScaNN) is mandatory. The interview signal is naming the recall/latency trade-off explicitly.",
+      "status": "seeded"
+    },
+    {
+      "id": "H31",
+      "title": "Time-series DB at Datadog scale",
+      "ask": "Design a time-series DB that ingests 10M data points/sec, supports queries like 'avg CPU over last 1h for service=api, region=us-east, percentile=95'. Retention 13 months. Query p99 under 500ms.",
+      "difficulty": "hard",
+      "asked_by": ["datadog", "honeycomb", "influxdata", "grafana-labs"],
+      "tags": ["tsdb", "columnar", "ingestion-pipeline", "downsampling", "cardinality"],
+      "sources": [
+        { "type": "blog", "ref": "Datadog — Husky, a TSDB for event observability", "uses_for": ["columnar storage", "ingestion architecture"] },
+        { "type": "blog", "ref": "Honeycomb — how we use BubbleUp", "uses_for": ["high-cardinality storage", "wide events"] },
+        { "type": "blog", "ref": "InfluxDB — IOx storage engine", "uses_for": ["Parquet-based TSDB", "object storage tier"] },
+        { "type": "paper", "ref": "Gorilla (Pelkonen et al. 2015)", "uses_for": ["delta-delta compression", "in-memory TSDB"] }
+      ],
+      "deep_dive_targets": [
+        "Ingestion pipeline: from agent to durable storage (Kafka → consumer → Parquet)",
+        "Cardinality explosion mitigation (label store, query planning)"
+      ],
+      "follow_ups": [
+        "What happens when one customer suddenly emits 1M unique label combinations?",
+        "How do you support sub-second freshness while writing Parquet to S3?",
+        "How do you downsample without losing percentile accuracy?"
+      ],
+      "trap_for_juniors": "Treating it as 'just a NoSQL DB.' TSDBs are dominated by the *cardinality* problem (number of unique label combinations). Solving 'metric name + labels' as a regular index causes O(cardinality) explosion; the answer is a separate cardinality-bounded label store + per-series chunks.",
+      "status": "seeded"
+    },
+    {
+      "id": "H32",
+      "title": "Distributed tracing",
+      "ask": "Design a distributed tracing system like Datadog APM or Honeycomb. 1M spans/sec ingested, p99 query latency under 1s for 'show me all traces matching service=foo AND error=true in the last 1h'. 7 day retention.",
+      "difficulty": "hard",
+      "asked_by": ["datadog", "honeycomb", "lightstep", "google"],
+      "tags": ["tracing", "sampling", "span-propagation", "head-vs-tail-sampling"],
+      "sources": [
+        { "type": "paper", "ref": "Dapper (Sigelman et al. 2010)", "uses_for": ["trace context propagation", "head sampling"] },
+        { "type": "blog", "ref": "Honeycomb — tail sampling and refinery", "uses_for": ["tail sampling architecture", "trace-aware decisions"] },
+        { "type": "blog", "ref": "Datadog — APM ingestion architecture", "uses_for": ["span aggregation", "service map computation"] }
+      ],
+      "deep_dive_targets": [
+        "Head vs tail sampling (when each is right, where each costs you)",
+        "Trace assembly: stitching spans across services without a central coordinator"
+      ],
+      "follow_ups": [
+        "How do you decide to keep a trace if the decision must be made at the first hop (head sampling)?",
+        "How do you avoid each service phoning home to ask 'should I sample this trace'?",
+        "How does the service map get built — joining millions of spans?"
+      ],
+      "trap_for_juniors": "Confusing trace context propagation (the protocol — W3C trace-context header) with sampling (the policy — what to keep). They're orthogonal; you must address both. Also: tail sampling requires holding ALL spans of a trace in memory before deciding, which is non-trivial at 1M spans/sec.",
+      "status": "seeded"
+    },
+    {
+      "id": "H39",
+      "title": "Spanner-style globally-distributed SQL",
+      "ask": "Design a globally-distributed SQL database with external consistency — reads see a snapshot of the entire database at a globally-consistent point in time. Multi-region writes, p99 commit latency under 100ms intra-region, under 500ms cross-region.",
+      "difficulty": "hard",
+      "asked_by": ["google", "cockroachlabs", "yugabyte"],
+      "tags": ["spanner", "truetime", "paxos", "external-consistency", "multi-region"],
+      "sources": [
+        { "type": "paper", "ref": "Spanner (Corbett et al. 2012)", "uses_for": ["TrueTime", "Paxos groups per shard", "two-phase commit on top"] },
+        { "type": "book", "ref": "DDIA Ch.9 — consistency and consensus", "uses_for": ["linearizability vs serializability", "consensus algorithms"] },
+        { "type": "paper", "ref": "CockroachDB whitepaper", "uses_for": ["HLC (hybrid logical clock) alternative to TrueTime"] }
+      ],
+      "deep_dive_targets": [
+        "TrueTime API and how it bounds clock uncertainty (and what happens without it)",
+        "Two-phase commit on top of Paxos-replicated shards"
+      ],
+      "follow_ups": [
+        "What if you don't have GPS+atomic clocks (i.e., you're not Google)?",
+        "How do read-only transactions get global consistency without locks?",
+        "What's the failure case if TT.now()'s uncertainty bound grows large?"
+      ],
+      "trap_for_juniors": "Treating TrueTime as 'fancy clocks.' The real insight is that TrueTime exposes *uncertainty* — `TT.now()` returns `[earliest, latest]` interval. Commit waits until that interval passes the commit timestamp. Without bounded uncertainty, you can't achieve external consistency without coordination on every read.",
+      "status": "seeded"
+    },
+    { "id": "H04", "title": "Uber match service", "asked_by": ["uber", "lyft", "doordash"], "difficulty": "medium", "tags": ["geohash", "s2", "matching"], "status": "queued" },
+    { "id": "H05", "title": "Netflix video delivery", "asked_by": ["netflix", "youtube", "hulu"], "difficulty": "medium", "tags": ["cdn", "abr", "encoding-ladder"], "status": "queued" },
+    { "id": "H06", "title": "YouTube upload + transcoding", "asked_by": ["google", "meta", "vimeo"], "difficulty": "medium", "tags": ["object-storage", "queue", "gpu-pool"], "status": "queued" },
+    { "id": "H07", "title": "Dropbox sync", "asked_by": ["dropbox", "google", "microsoft"], "difficulty": "medium", "tags": ["chunking", "dedup", "conflict-resolution"], "status": "queued" },
+    { "id": "H08", "title": "Instagram feed", "asked_by": ["meta", "snap", "tiktok"], "difficulty": "medium", "tags": ["fan-out", "ranking", "image-cdn"], "status": "queued" },
+    { "id": "H11", "title": "Web crawler", "asked_by": ["google", "bing", "duckduckgo"], "difficulty": "medium", "tags": ["frontier", "politeness", "dedup", "bloom-filter"], "status": "queued" },
+    { "id": "H12", "title": "Search autocomplete / typeahead", "asked_by": ["google", "meta", "linkedin"], "difficulty": "easy", "tags": ["trie", "prefix-cache", "ranking"], "status": "queued" },
+    { "id": "H13", "title": "Order matching engine", "asked_by": ["jane-street", "two-sigma", "robinhood"], "difficulty": "hard", "tags": ["order-book", "in-memory-state", "durability"], "status": "queued" },
+    { "id": "H15", "title": "Notification system", "asked_by": ["universal"], "difficulty": "easy", "tags": ["fan-out", "dedup", "channel-abstraction"], "status": "queued" },
+    { "id": "H18", "title": "GFS / HDFS", "asked_by": ["google", "amazon", "databricks"], "difficulty": "hard", "tags": ["master-chunkserver", "append-semantics"], "status": "queued" },
+    { "id": "H19", "title": "Google Maps", "asked_by": ["google", "uber", "apple"], "difficulty": "hard", "tags": ["tiling", "routing", "traffic-overlay"], "status": "queued" },
+    { "id": "H21", "title": "BookMyShow / ticket booking", "asked_by": ["bookmyshow", "ticketmaster", "stubhub"], "difficulty": "medium", "tags": ["reservation-locking", "payment-timeout"], "status": "queued" },
+    { "id": "H22", "title": "Slack", "asked_by": ["slack", "discord", "atlassian"], "difficulty": "medium", "tags": ["channels", "threads", "presence", "search"], "status": "queued" },
+    { "id": "H24", "title": "Log analytics system", "asked_by": ["datadog", "splunk", "elastic"], "difficulty": "hard", "tags": ["ingest-pipeline", "columnar-storage", "query"], "status": "queued" },
+    { "id": "H25", "title": "Feature flag service", "asked_by": ["launchdarkly", "split", "stripe"], "difficulty": "medium", "tags": ["targeting-rules", "eval-latency", "audit"], "status": "queued" },
+    { "id": "H28", "title": "Claude prompt cache", "asked_by": ["anthropic"], "difficulty": "hard", "tags": ["content-addressed-cache", "prefix-matching", "eviction"], "status": "queued" },
+    { "id": "H29", "title": "AI agent orchestration", "asked_by": ["anthropic", "openai", "langchain"], "difficulty": "hard", "tags": ["tool-calls", "state", "retries", "sandbox"], "status": "queued" },
+    { "id": "H30", "title": "LLM evals infrastructure", "asked_by": ["anthropic", "openai", "scale"], "difficulty": "medium", "tags": ["dataset-versioning", "run-isolation"], "status": "queued" },
+    { "id": "H33", "title": "Alerting engine", "asked_by": ["datadog", "pagerduty", "grafana-labs"], "difficulty": "medium", "tags": ["rule-evaluation", "dedup", "escalation"], "status": "queued" },
+    { "id": "H34", "title": "APM auto-instrumentation", "asked_by": ["datadog", "honeycomb", "newrelic"], "difficulty": "hard", "tags": ["agent-design", "ebpf", "language-runtime"], "status": "queued" },
+    { "id": "H35", "title": "Query optimizer for Parquet/SQL", "asked_by": ["databricks", "snowflake", "starburst"], "difficulty": "hard", "tags": ["catalyst", "cost-based", "predicate-pushdown"], "status": "queued" },
+    { "id": "H36", "title": "Delta Lake transaction log", "asked_by": ["databricks", "iceberg", "hudi"], "difficulty": "hard", "tags": ["append-only-log", "ACID-on-S3"], "status": "queued" },
+    { "id": "H37", "title": "Unity Catalog (data governance)", "asked_by": ["databricks", "snowflake"], "difficulty": "medium", "tags": ["metadata-api", "acl-eval"], "status": "queued" },
+    { "id": "H38", "title": "Notebook real-time collaboration", "asked_by": ["databricks", "google", "github"], "difficulty": "hard", "tags": ["ot-vs-crdt", "conflict-resolution"], "status": "queued" },
+    { "id": "H40", "title": "YouTube live streaming", "asked_by": ["google", "twitch", "meta"], "difficulty": "hard", "tags": ["low-latency-hls", "edge-ingest"], "status": "queued" },
+    { "id": "H41", "title": "Google ad auction (RTB)", "asked_by": ["google", "meta", "the-trade-desk"], "difficulty": "hard", "tags": ["real-time-bidding", "budget-pacing"], "status": "queued" },
+    { "id": "H42", "title": "Distributed training infrastructure", "asked_by": ["anthropic", "google", "openai"], "difficulty": "hard", "tags": ["collective-comms", "checkpointing"], "status": "queued" },
+    { "id": "H43", "title": "Feature store (offline + online)", "asked_by": ["databricks", "tecton", "uber"], "difficulty": "hard", "tags": ["point-in-time-correctness", "dual-storage"], "status": "queued" },
+    { "id": "H44", "title": "Model serving with A/B routing", "asked_by": ["anthropic", "google", "netflix"], "difficulty": "medium", "tags": ["canary", "shadow", "rollback"], "status": "queued" },
+    { "id": "H45", "title": "Vector database (HNSW + sharding)", "asked_by": ["anthropic", "pinecone", "weaviate"], "difficulty": "hard", "tags": ["index-build", "recall-vs-latency"], "status": "queued" }
+  ]
+}
