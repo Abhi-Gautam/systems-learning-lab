@@ -30,6 +30,7 @@ var (
 	cacheMode   = flag.String("cache", "none", "read cache: none | lru | redis")
 	cacheSize   = flag.Int("cache-size", 10000, "LRU cache size when cache=lru")
 	statsEvery  = flag.Duration("stats-every", 5*time.Second, "print stats every interval (0 = off)")
+	verbose     = flag.Bool("verbose", false, "trace each request step-by-step through counter/store/cache")
 )
 
 type server struct {
@@ -57,6 +58,9 @@ func (s *server) handleShorten(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &req); err != nil || req.URL == "" {
 		http.Error(w, "bad body", http.StatusBadRequest)
 		return
+	}
+	if *verbose {
+		log.Printf("=== POST /shorten received: url=%q (mode=%s) ===", req.URL, *idMode)
 	}
 
 	var id string
@@ -88,9 +92,26 @@ func (s *server) handleShorten(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	} else {
+		if *verbose {
+			log.Printf("STEP 1/4: calling %s counter.Next()...", s.counter.Name())
+		}
 		n := s.counter.Next()
+		if *verbose {
+			log.Printf("STEP 2/4: counter returned uint64=%d. base62-encoding...", n)
+		}
 		id = internal.Base62(n)
+		if *verbose {
+			log.Printf("STEP 2/4 done: id=%q (length %d)", id, len(id))
+			log.Printf("STEP 3/4: store.PutIfAbsent(%q -> %q)...", id, req.URL)
+		}
 		err = s.store.PutIfAbsent(r.Context(), id, req.URL)
+		if *verbose {
+			if err == nil {
+				log.Printf("STEP 3/4 done: stored OK.")
+			} else {
+				log.Printf("STEP 3/4 FAILED: %v", err)
+			}
+		}
 	}
 
 	if err != nil {
@@ -98,7 +119,15 @@ func (s *server) handleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.cache != nil {
+		if *verbose {
+			log.Printf("STEP 4/4: cache.Put(%q -> %q) (warming the LRU)", id, req.URL)
+		}
 		s.cache.Put(id, req.URL)
+	} else if *verbose {
+		log.Printf("STEP 4/4: no cache configured, skipping warm.")
+	}
+	if *verbose {
+		log.Printf("=== POST /shorten done: short_url=http://srt.ly/%s ===", id)
 	}
 	resp := shortenResponse{ID: id, ShortURL: "http://srt.ly/" + id}
 	w.Header().Set("Content-Type", "application/json")
@@ -111,22 +140,47 @@ func (s *server) handleRedirect(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if *verbose {
+		log.Printf("=== GET /%s received ===", id)
+	}
 
 	// L1: in-process LRU
 	if s.cache != nil {
+		if *verbose {
+			log.Printf("STEP 1/2: cache.Get(%q)...", id)
+		}
 		if url, ok := s.cache.Get(id); ok {
+			if *verbose {
+				log.Printf("STEP 1/2: CACHE HIT — skipping store entirely. redirecting to %q.", url)
+				log.Printf("=== GET /%s done (served from cache) ===", id)
+			}
 			redirect(w, url)
 			return
 		}
+		if *verbose {
+			log.Printf("STEP 1/2: cache MISS — falling through to store.")
+		}
 	}
 	// L2: origin store (mem or redis)
+	if *verbose {
+		log.Printf("STEP 2/2: store.Get(%q)...", id)
+	}
 	url, err := s.store.Get(r.Context(), id)
 	if err != nil {
+		if *verbose {
+			log.Printf("STEP 2/2: store miss — 404. err=%v", err)
+		}
 		http.NotFound(w, r)
 		return
 	}
+	if *verbose {
+		log.Printf("STEP 2/2: store HIT — %q. warming cache, then redirecting.", url)
+	}
 	if s.cache != nil {
 		s.cache.Put(id, url)
+	}
+	if *verbose {
+		log.Printf("=== GET /%s done (served from store, cache now warmed) ===", id)
 	}
 	redirect(w, url)
 }
@@ -207,6 +261,7 @@ func build() *server {
 
 func main() {
 	flag.Parse()
+	internal.Verbose = *verbose
 	s := build()
 
 	mux := http.NewServeMux()

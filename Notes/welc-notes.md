@@ -4,6 +4,198 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-27] Sprout & Wrap techniques · pp.82–95 · Ch.6 §Sprout Method → §Sprout Class → §Wrap Method → §Wrap Class
+
+- Sprout Method / Sprout Class — write new behaviour as fresh, tested code; call it from the change point
+- Wrap Method / Wrap Class — sandwich existing behaviour with new code without touching the original
+- When to pick each: Sprout when adding, Wrap when decorating
+
+### History — "why does this exist?"
+
+The four techniques in this chunk — Sprout Method, Sprout Class, Wrap Method, Wrap Class — descend from the **Extract Method** refactoring in Martin Fowler's *Refactoring* (1999), but Feathers inverts the motivation: Fowler extracted methods from *already-tested* code to improve structure; Feathers sprouts and wraps in *untested* code to **create a seam for the new behaviour** without breaking what exists. The Wrap techniques specifically echo the **Decorator pattern** from the Gang of Four (1994): wrap an existing object with a new one that adds behaviour before/after delegation. The difference is that GoF Decorator is a design-time pattern; Feathers' Wrap is a **survival technique** applied when you can't afford to restructure the original class at all.
+
+### Intuition — "this is like…"
+
+Think of legacy code as a **production Postgres database you can't take offline**. Sprout Method is like adding a new **materialized view** — you write fresh, tested SQL that reads from the existing tables but lives in its own object; the original tables are untouched. Wrap Method is like adding a **trigger** — you attach new behaviour (`BEFORE INSERT` / `AFTER INSERT`) around an existing operation without modifying the operation's body. Both strategies avoid the risky move of rewriting the core table/procedure under load.
+
+### Mechanics
+
+#### Sprout Method
+
+**When:** You need to add new behaviour at a specific point in an existing method, but the method is untested and too tangled to test.
+
+**The move:**
+
+```
+BEFORE (untested method):                AFTER (sprouted):
+
+void postEntries(List entries) {         void postEntries(List entries) {
+    for (Entry e : entries) {                for (Entry e : entries) {
+        e.postDate();                            e.postDate();
+        // NEW: need to add                  }
+        // duplicate-checking here           List<Entry> unique =
+    }                                            removeDuplicates(entries);  // ← sprout
+}                                            // ... rest of processing with unique
+                                         }
+
+                                         // NEW — fully tested in isolation:
+                                         List<Entry> removeDuplicates(List<Entry> entries) {
+                                             Set<String> seen = new HashSet<>();
+                                             return entries.stream()
+                                                 .filter(e -> seen.add(e.id()))
+                                                 .collect(toList());
+                                         }
+```
+
+**Steps:**
+1. Identify the change point in the existing method
+2. Write the new code as a **separate method** with clear inputs and outputs
+3. **TDD the new method** — it's brand new, so full test coverage is free
+4. Call the new method from the change point in the original
+
+The new method is tested; the call site in the original is one line of untested glue. You've traded "N lines of untested change inside a tangled method" for "1 untested line + N tested lines in a clean method."
+
+**Trade-off box:**
+
+```
+┌────────────────────────────────────────────────────┐
+│  + New code is fully tested from birth             │
+│  + Original method is not structurally changed     │
+│  + Reversible — delete the call + method to undo   │
+│  – The original method gets slightly longer         │
+│  – The new method may seem oddly placed if the     │
+│    class isn't the right home for it                │
+└────────────────────────────────────────────────────┘
+```
+
+#### Sprout Class
+
+**When:** Sprout Method would work, but (a) you can't instantiate the original class in a test harness at all, or (b) the new behaviour doesn't belong on the original class.
+
+**The move:** extract the new behaviour into a **new class** with its own constructor, test it there, and call it from the original.
+
+```
+// NEW CLASS — fully testable:
+class DuplicateFilter {
+    private final Set<String> seen = new HashSet<>();
+
+    List<Entry> filter(List<Entry> entries) {
+        return entries.stream()
+            .filter(e -> seen.add(e.id()))
+            .collect(toList());
+    }
+}
+
+// ORIGINAL — one new line:
+void postEntries(List entries) {
+    // ...existing code...
+    List<Entry> unique = new DuplicateFilter().filter(entries);
+    // ...
+}
+```
+
+Use Sprout Class over Sprout Method when the original class has **construction dependencies you can't break** (e.g., it requires a database connection, a network socket, or a 200-line `setUp`). The new class has none of those dependencies — it takes plain data in and returns plain data out.
+
+#### Wrap Method
+
+**When:** You need to add behaviour that runs **before or after** an existing method, and you don't want to modify its body at all.
+
+**The move:**
+
+```
+BEFORE:                                  AFTER:
+
+void pay() {                            void pay() {
+    Money amount =                          logPayment();    // ← new (before)
+        calculatePay();                     dispatchPay();   // ← renamed original
+    dispatchPayment(amount);            }
+}
+                                        // ORIGINAL body, renamed:
+                                        private void dispatchPay() {
+                                            Money amount = calculatePay();
+                                            dispatchPayment(amount);
+                                        }
+
+                                        // NEW — tested in isolation:
+                                        void logPayment() {
+                                            // ... audit logging ...
+                                        }
+```
+
+**Steps:**
+1. Rename the existing method (e.g., `pay` → `dispatchPay`)
+2. Create a new method with the **original name** (`pay`)
+3. In the new method, call the renamed original + your new code
+4. TDD the new code independently
+
+Callers see no change — they still call `pay()`. The original body is untouched (just renamed). The new behaviour is independently testable. This is the **method-level Decorator pattern** without an interface.
+
+#### Wrap Class
+
+**When:** Wrap Method doesn't work because you can't (or shouldn't) change the original class. This is the full **Decorator pattern**.
+
+```
+// ORIGINAL (untouched):
+class Employee {
+    void pay() { ... }
+}
+
+// WRAPPER:
+class LoggingEmployee {
+    private final Employee inner;
+
+    LoggingEmployee(Employee e) { this.inner = e; }
+
+    void pay() {
+        inner.pay();
+        logPayment(inner);  // ← new behaviour
+    }
+}
+```
+
+In production, this is exactly how **Go's `http.Handler` middleware** works:
+
+```go
+func withLogging(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        log.Printf("%s %s", r.Method, r.URL.Path)
+        next.ServeHTTP(w, r)  // ← original, untouched
+    })
+}
+```
+
+#### Decision matrix — which technique when?
+
+| Situation | Technique | Why |
+|---|---|---|
+| Adding new logic at a point inside a method | **Sprout Method** | Least invasive; one call-site change |
+| Same, but can't instantiate the class in tests | **Sprout Class** | Isolates from construction dependencies |
+| Adding before/after behaviour to a whole method | **Wrap Method** | Original body untouched (just renamed) |
+| Same, but can't/shouldn't modify the class at all | **Wrap Class** | Full Decorator; class-level isolation |
+| New behaviour is complex + cross-cutting | **Wrap Class** | Keeps the original class focused |
+
+### Where this shows up in real systems
+
+- **Express.js / Koa middleware** is Wrap Method at the framework level: `app.use(cors())` wraps every route handler with CORS headers, without modifying any handler's body. Each middleware calls `next()` — the renamed original.
+- **Python's `@decorator` syntax** is syntactic sugar for Wrap Method: `@login_required` renames the original function and wraps it with auth checking. The original function is untouched; the decorator is independently testable.
+- **Git hooks** (`.git/hooks/pre-commit`) are Wrap at the process level: they run before/after the real `git commit` operation. The commit logic is untouched; the hook is a separate, testable script. Feathers' chapter is teaching the same principle at the method level.
+
+### Diagnostic questions
+
+1. **Q:** Why does Feathers recommend Sprout Method over inline modification even when you *could* modify the original?
+   *Wrong-answer trap:* "Because it's cleaner." The real reason: the original method has no tests. Any inline modification is **untested by definition** until you retrofit tests for the whole method. Sprouting lets you TDD the new code immediately while leaving the untested original untouched.
+
+2. **Q:** What's the risk of Sprout Class that Sprout Method avoids?
+   *Wrong-answer trap:* "More files." The real risk: **conceptual scattering** — behaviour that logically belongs on the original class now lives elsewhere, making the codebase harder to navigate. Use Sprout Class only when you genuinely can't instantiate the original.
+
+3. **Q:** Wrap Method renames the original. What breaks?
+   *Wrong-answer trap:* "All callers." Nothing breaks — the new method takes the original's name, so callers are unaffected. The only change is internal: the original body is now `private` with a new name.
+
+4. **Q:** When would you pick Wrap Class over Wrap Method?
+   *Wrong-answer trap:* "When you want polymorphism." More precise: when you **can't modify the source class** (it's in a library, or it's owned by another team, or the change would require touching too many methods). Wrap Class also wins when the new behaviour is cross-cutting (logging, metrics, auth) and should apply to multiple classes through a shared interface.
+
+---
+
 ## [2026-05-26] Refactoring tools & xUnit isolation · pp.68–81 · Ch.5 *Tools* (Automated Refactoring → Mock Objects → xUnit → FIT/Fitnesse) → Ch.6 *I Don't Have Much Time* (intro)
 
 - Why "behaviour-preserving" refactors aren't always behaviour-preserving

@@ -16,3 +16,6 @@
 - **Day 14 · 2026-05-25** — T1 N2T pp.119-130 · T2 WELC pp.40-53 · T3 LDDD pp.38-46 · T4 DBI pp.101-105
 - **Day 15 · 2026-05-26** — T1 N2T pp.131-142 · T2 WELC pp.54-67 · T3 LDDD pp.47-55 · T4 DBI pp.106-110
 - **Day 16 · 2026-05-27** — T1 N2T pp.143-154 · T2 WELC pp.68-81 · T3 LDDD pp.56-64 · T4 DBI pp.111-115
+- **2026-05-25** — design HLD H01 · fresh · confidence 4 · 370 lines
+- **Day 17 · 2026-05-28** — T1 N2T pp.155-166 · T2 WELC pp.82-95 · T3 LDDD pp.65-73 · T4 DBI pp.116-120
+- **2026-05-25** — design HLD H10 · fresh · confidence 4 · 423 lines

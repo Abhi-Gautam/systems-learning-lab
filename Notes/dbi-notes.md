@@ -4,6 +4,146 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-27] Rightmost pointers & overflow pages · pp.116–120 · Ch.4 §Rightmost Pointers → §Node High Keys → §Overflow Pages
+
+- The N-keys / (N+1)-pointers asymmetry and how SQLite and Postgres handle the extra pointer differently
+- Blink-Tree high keys: upper-bound stored per node, simplifying rightmost-pointer handling
+- Overflow pages: linked-page extensions for variable-size values that exceed `max_payload_size`
+
+### History — "why does this exist?"
+
+The **rightmost pointer problem** is inherent in B-Trees since **Bayer and McCreight's 1972 paper**: with N separator keys, you have N+1 child pointers, and the last one doesn't pair with any key. **SQLite** (D. Richard Hipp, 2000) stores it in the page header as a special field. **Lehman and Yao's Blink-Tree (1981)** solved this differently by adding a **high key** to each node — the maximum possible key in the subtree — which gives each pointer a paired key and simplifies concurrent access. **PostgreSQL's `nbtree`** implementation uses Blink-Trees and stores high keys in every internal node. Overflow pages trace to **IMS and VSAM (IBM, 1960s–70s)**, where variable-length records that didn't fit a fixed block size spilled into extension blocks — the same linked-page technique modern B-Tree engines use.
+
+### Intuition — "this is like…"
+
+The rightmost pointer is the **`default` case in a switch statement**. Separator keys define explicit boundaries (`< 10`, `< 20`, `< 30`), but something has to handle `≥ 30`. In a standard B-Tree, that "default" pointer is stored outside the key-pointer pairs — it's the one pointer without a matching key. Blink-Trees eliminate the special case by adding a sentinel key (the high key) that says "this subtree handles values up to 30" — now every pointer has a label, and there's no `default` branch.
+
+Overflow pages are **Git LFS for B-Trees**: when a blob is too big to store inline, you replace it with a pointer to external storage and link the pages together.
+
+### Mechanics
+
+#### The N+1 pointer problem
+
+A B-Tree node with N keys has N+1 child pointers. The layout:
+
+```
+Standard layout (SQLite style):
+┌──────────────────────────────────────────────────────────────┐
+│ Header: [ ... | rightmost_ptr ]                              │
+├──────────────────────────────────────────────────────────────┤
+│ Cell 0: [ key₀ | ptr₀ ]   ← subtree where all keys < key₀  │
+│ Cell 1: [ key₁ | ptr₁ ]   ← subtree where key₀ ≤ keys < key₁│
+│ Cell 2: [ key₂ | ptr₂ ]                                     │
+│ ...                                                          │
+│ rightmost_ptr              ← subtree where keys ≥ keyₙ₋₁    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+When the rightmost child splits, the parent must:
+1. Append a new cell with the promoted key pointing to the *old* rightmost child (the split node)
+2. Update the header's `rightmost_ptr` to point to the *new* node
+
+```
+Before split:                          After split:
+┌─────────────┐                       ┌──────────────────┐
+│ keys: 10 20 │                       │ keys: 10 20 [30] │ ← promoted
+│ ptrs: A B   │                       │ ptrs: A  B  [C]  │ ← old rightmost
+│ right: C    │                       │ right: D          │ ← new node
+└─────────────┘                       └──────────────────┘
+```
+
+This is a special case that every B-Tree implementation must handle — the rightmost pointer lives in a different location (header) than all other pointers (cells), so split logic needs an `if` branch.
+
+#### Blink-Tree high keys (PostgreSQL's approach)
+
+Blink-Trees eliminate the asymmetry by adding a **high key** — the upper bound of all keys in the subtree:
+
+```
+Blink-Tree layout:
+┌──────────────────────────────────────────────────────────────┐
+│ Cell 0: [ key₀ | ptr₀ ]   ← keys < key₀                    │
+│ Cell 1: [ key₁ | ptr₁ ]   ← key₀ ≤ keys < key₁             │
+│ Cell 2: [ key₂ | ptr₂ ]   ← key₁ ≤ keys < key₂             │
+│ Cell 3: [ HIGH | ptr₃ ]   ← key₂ ≤ keys ≤ HIGH             │
+│                              (HIGH = upper bound of subtree) │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Now **every pointer is paired with a key**. No header field, no special case in split logic. The cost: one extra key per node, reducing effective fanout by 1. For nodes with hundreds of keys, this is negligible.
+
+**Side-by-side comparison:**
+
+| | Standard (SQLite) | Blink-Tree (Postgres) |
+|---|---|---|
+| Keys per node | N | N+1 (includes high key) |
+| Pointers per node | N+1 (last in header) | N+1 (all in cells) |
+| Split edge case | Yes — must update header ptr | No — uniform cell handling |
+| Search bound | Implicit +∞ for rightmost | Explicit high key |
+| Concurrency | Complex (rightmost is shared state) | Simpler (high key aids latch coupling) |
+| Space cost | Slightly less (no high key) | One extra key per node |
+
+The concurrency advantage is the real motivation for Blink-Trees: during a node split, a concurrent reader that arrives at the old node can check the high key and realize the target key has moved to the new sibling — without holding a parent latch. This is why Postgres chose Blink-Trees: `nbtree` must handle concurrent reads and writes without global locks.
+
+#### Overflow pages
+
+When a value is too large to fit in a B-Tree cell (exceeds `max_payload_size = page_size / fanout`), it **spills** to a linked chain of overflow pages:
+
+```
+Primary page:
+┌──────────────────────────────────────────────────┐
+│ Cell: [ key | inline_prefix | overflow_ptr ──────┼──┐
+│       (first max_payload_size bytes)             │  │
+└──────────────────────────────────────────────────┘  │
+                                                      ▼
+                                              ┌───────────────┐
+                                              │ Overflow pg 1 │
+                                              │ (4K of data)  │
+                                              │ next_ptr ─────┼──► ...
+                                              └───────────────┘
+```
+
+**Key invariant:** the primary page always has room for at least `max_payload_size` bytes per cell, so the B-Tree algorithm's "is this node full?" check works purely on cell count, not on actual data size. The overflow mechanism is transparent to the B-Tree split/merge logic.
+
+**How SQLite does it:** cells store the first `min(payload_size, max_payload_size)` bytes inline; the rest goes to overflow pages linked in a chain. `max_payload_size` is approximately `(usable_page_size - 12) × 64 / 255 - 23` for table B-Trees — roughly 25% of the page. This means a 4K page can store ~1K inline before spilling.
+
+**How InnoDB (MySQL) does it:** for `DYNAMIC` row format, only a 20-byte pointer is stored inline for large columns; the entire value lives on overflow pages. For `COMPACT` format, 768 bytes are stored inline. The choice trades read performance (inline = fewer I/Os) against page utilization (inline = fewer cells per page = deeper tree).
+
+**Trade-off:**
+
+```
+┌───────────────────────────────────────────────────────────┐
+│  More inline storage (SQLite, InnoDB COMPACT)              │
+│  + Point reads need fewer I/Os for small-to-medium values  │
+│  – Large values waste primary-page space → lower fanout    │
+│                                                            │
+│  Less inline storage (InnoDB DYNAMIC)                      │
+│  + Higher fanout → shallower tree → faster range scans     │
+│  – Every large-value read needs at least one extra I/O     │
+└───────────────────────────────────────────────────────────┘
+```
+
+### Where this shows up in real systems
+
+- **PostgreSQL's `nbtree`** uses Blink-Tree high keys in every internal page. You can see them with `pageinspect`: `SELECT * FROM bt_page_items('idx_name', 1)` — the last item on each page is the high key, with `itemoffset = 0` in the output. Concurrent readers use the high key to detect in-progress splits without blocking.
+- **SQLite's `btreeInitPage()`** reads the rightmost pointer from bytes 8–11 of every internal page header. The split routine `balance_nonroot()` has explicit logic to handle the rightmost pointer reassignment — the exact edge case the textbook describes.
+- **InnoDB's BLOB storage** uses a 20-byte external pointer (space ID + page number + offset + length) for off-page columns. The `btr_store_big_rec_extern_fields()` function in MySQL source allocates overflow pages and chains them — the linked-list structure from the textbook, at production scale.
+
+### Diagnostic questions
+
+1. **Q:** Why does SQLite store the rightmost pointer in the header instead of as a regular cell?
+   *Wrong-answer trap:* "To save space." It's because a regular cell pairs a key with a pointer, but the rightmost pointer has *no key* — it handles everything above the last separator. There's nothing to store in the key field. SQLite chose the header; Blink-Trees chose to invent a key (the high key) to fill the gap.
+
+2. **Q:** A Blink-Tree node has 100 keys. How many are separator keys vs high keys?
+   *Wrong-answer trap:* "100 separators." 99 are separators; 1 is the high key (the last entry). The high key doesn't separate children — it bounds the subtree.
+
+3. **Q:** A B-Tree on a 4K page stores 2K values. What happens to fanout?
+   *Wrong-answer trap:* "Fanout drops to 2." With overflow pages, fanout stays high — each cell stores only `max_payload_size` bytes inline (maybe ~1K), and the rest spills to overflow. Without overflow, yes — only 2 values per page, making the tree pathologically deep.
+
+4. **Q:** Why do overflow pages form a linked list rather than being indexed?
+   *Wrong-answer trap:* "Simplicity." It's because overflow data is always read sequentially (you need the full value, not a random byte). A linked list minimizes metadata overhead — one pointer per page vs an array of pointers. For random access within a large value, you'd need a different structure (like an extent tree), but B-Tree values are read whole.
+
+---
+
 ## [2026-05-26] Page header & sibling links · pp.111–115 · Ch.4 *Implementing B-Trees* (intro → Page Header → Magic Numbers → Sibling Links)
 
 - What lives in a page header and why each field is there

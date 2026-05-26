@@ -36,8 +36,7 @@ Convert 14_276_804_201 to base62:
 
 Reading remainders bottom-to-top:  "fAc0xV"  → 6 chars for ~14 billion.
 ```
-
-**Why it matters for H01**: 62⁷ = ~3.5 trillion. That's enough unique IDs for 365 billion URLs (10 years × 100M/day) with 10× headroom — at **7 characters**. Base10 of the same integer is 9 digits; hex is 9 digits. Base62 is the densest URL-safe encoding (URL-safe = no `+ / ? #` chars that need escaping).
+> **Why it matters for H01**: 62⁷ = ~3.5 trillion. That's enough unique IDs for 365 billion URLs (10 years × 100M/day) with 10× headroom — at **7 characters**. Base10 of the same integer is 9 digits; hex is 9 digits. Base62 is the densest URL-safe encoding (URL-safe = no `+ / ? #` chars that need escaping).
 
 ```go
 // 10-line base62 encoder

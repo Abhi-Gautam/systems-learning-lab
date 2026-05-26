@@ -4,6 +4,139 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-27] Bounded context boundaries · pp.65–73 · Ch.3 §Interplay Between Subdomains and BCs → §Boundaries → §BCs in Real Life → §Conclusion
+
+- Subdomains are discovered (business strategy); bounded contexts are designed (software decision)
+- Physical boundaries (separate services) vs ownership boundaries (one team per BC)
+- Real-life bounded contexts: semantic domains, science models, the refrigerator cardboard
+
+### History — "why does this exist?"
+
+The term **bounded context** was coined by **Eric Evans in *Domain-Driven Design* (2003)**, but the underlying idea — that a model should have an explicit scope — has older roots. **Fred Brooks's *Mythical Man Month* (1975)** argued that conceptual integrity requires one mind (or a small group) to own each subsystem's design, which is the ownership-boundary idea before it had a name. **Conway's Law (1967)** — "organizations produce designs which are copies of their communication structures" — is the empirical observation that bounded contexts codify into a design principle. The **microservices movement (2011–2014, Fowler & Lewis)** made bounded contexts operational by mapping each BC to a deployable service, but the DDD community insists the *logical* boundary matters more than the *physical* one — you can have bounded contexts inside a monolith.
+
+### Intuition — "this is like…"
+
+A bounded context is a **Git repository boundary**. Inside one repo, everyone shares the same naming conventions, the same CI pipeline, the same `main` branch. Across repos, the same word can mean different things — `User` in the auth repo is a credential holder; `User` in the billing repo is a payment method owner. The repo boundary forces explicit communication (APIs, published events) instead of implicit coupling (shared database tables). Subdomains are like the business units that *need* these repos; bounded contexts are how *you* chose to draw the repo lines.
+
+### Mechanics
+
+#### Subdomains vs bounded contexts — the fundamental asymmetry
+
+| | Subdomains | Bounded contexts |
+|---|---|---|
+| **Origin** | Discovered from business strategy | Designed as software architecture |
+| **Who decides** | The business (domain experts) | The engineering team |
+| **Granularity** | Fixed by the problem domain | Flexible — you choose the scope |
+| **Relationship** | One subdomain can span multiple BCs | One BC can contain multiple subdomains |
+| **Analogy** | The terrain | The map you draw of the terrain |
+
+The textbook's key sentence: *"Subdomains are discovered and bounded contexts are designed."* This is the load-bearing distinction. You don't get to choose whether marketing and sales are separate subdomains — the business decided that. But you *do* get to choose whether they're one bounded context (shared model, one team) or two (separate models, separate teams).
+
+**Why the one-to-one mapping isn't always right:**
+
+```
+┌─────────────────────────────────────────────────┐
+│  One-to-one (BC per subdomain)                   │
+│  + Maximum model isolation                       │
+│  + Each team owns exactly one domain concept     │
+│  – More integration overhead (APIs between BCs)   │
+│  – Overhead may not pay for small subdomains      │
+│                                                   │
+│  Many-to-one (multiple subdomains in one BC)     │
+│  + Less integration code                          │
+│  + Simpler deployment                             │
+│  – Models may conflict as the subdomains grow     │
+│  – One team must understand multiple domains      │
+└─────────────────────────────────────────────────┘
+```
+
+The choice depends on **team size, rate of change, and model complexity**. A startup with 5 engineers and 3 subdomains should probably use 1–2 bounded contexts (monolith with clear modules). A company with 50 engineers and 10 subdomains should lean toward more BCs to reduce cross-team coupling.
+
+#### Physical boundaries
+
+Each bounded context should be **implemented as an independent service/project** — its own repository, its own build pipeline, its own deployment. This is the operational meaning of "bounded."
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Bounded Context A (Marketing)    Bounded Context B (Sales)  │
+│  ┌────────────────────────────┐  ┌────────────────────────┐  │
+│  │ repo: marketing-svc        │  │ repo: sales-svc         │  │
+│  │ lang: Python               │  │ lang: Go                │  │
+│  │ db:   Postgres             │  │ db:   MongoDB           │  │
+│  │ deploy: K8s namespace      │  │ deploy: K8s namespace   │  │
+│  └────────────────────────────┘  └────────────────────────┘  │
+│                                                              │
+│  Communication: API calls or domain events (never shared DB) │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Physical boundaries enable **technology heterogeneity** — each BC picks the stack that fits its problem. Marketing might need Python for ML pipelines; Sales might need Go for high-throughput event processing. This is impossible if they share a codebase.
+
+When a bounded context contains multiple subdomains, the subdomains become **logical boundaries** — namespaces, modules, or packages within the service. The BC is the deployment unit; the subdomains are the organization units within it.
+
+#### Ownership boundaries
+
+**One team per bounded context.** No two teams work on the same BC. This eliminates implicit assumptions: if team A owns the Marketing BC and team B owns Sales, they *must* define explicit contracts (APIs, events, schemas) to integrate.
+
+The reverse is allowed: **one team can own multiple bounded contexts** — but each BC has exactly one owner.
+
+```
+  Team 1 ─── owns ──► Marketing BC
+         └── owns ──► Optimization BC
+
+  Team 2 ─── owns ──► Sales BC
+
+  ✗ INVALID: Team 1 + Team 2 ──► same BC
+```
+
+This is Conway's Law applied deliberately: you're shaping the software boundaries to match the team structure you *want*, not the one you happen to have. The DDD community calls this the **Inverse Conway Manoeuvre** — design the org structure to produce the architecture you need.
+
+#### Real-life bounded contexts (the chapter's examples)
+
+**Semantic domains — the tomato:** In botany (grows from a flower, bears seeds) → fruit. In culinary arts (tough, bland, requires cooking) → vegetable. In US tax law (1893 Supreme Court ruling to close a tariff loophole) → vegetable. In theatrical performance → feedback mechanism. Four bounded contexts, four definitions of the same entity — and each is correct *within its context*.
+
+**Science — Newton vs Einstein:** Newton's gravity model (absolute space and time, force = GMm/r²) and Einstein's (spacetime curvature, E = mc²) are contradictory, but both are useful in their bounded contexts. You use Newton for bridge engineering; Einstein for GPS satellite corrections. Applying the wrong model in the wrong context produces wrong answers.
+
+**The refrigerator cardboard (the chapter's best example):**
+
+```
+Problem: Will this Siemens fridge fit through the kitchen door?
+
+Model 1: Cardboard cutout (width × depth)
+  ✓ Solves: can the base pass through?
+  ✗ Omits: height, colour, features
+
+Model 2: Tape measure (height only)
+  ✓ Solves: is it too tall for the doorway?
+  ✗ Omits: everything else
+
+"Building a 3D model of the fridge would be gross overengineering."
+```
+
+Two models of the same entity, each optimized for a specific problem. This is the DDD principle in physical form: **a model should omit information irrelevant to its task**. A bounded context scopes what's relevant; everything else is noise.
+
+### Where this shows up in real systems
+
+- **Amazon's "two-pizza teams"** are bounded-context ownership made operational. Each team owns a service (BC), communicates with others via APIs, and can deploy independently. The famous 2002 Bezos mandate — "all teams will henceforth expose their data and functionality through service interfaces" — is the physical-boundary rule in corporate memo form.
+- **Stripe's API versioning** is bounded-context evolution: each API version is effectively a snapshot of the model at a point in time. When Stripe introduces a breaking change to `PaymentIntent`, old versions keep working because the bounded context's contract is versioned, not its implementation.
+- **Postgres schemas** are logical boundaries within a physical boundary (one database). A `marketing` schema and a `sales` schema can define their own `users` table with different columns — the schema is the namespace that prevents model collision, exactly like subdomains within a single bounded context.
+
+### Diagnostic questions
+
+1. **Q:** A startup has 3 engineers and 4 subdomains. Should they create 4 bounded contexts?
+   *Wrong-answer trap:* "Yes, one per subdomain." Probably not — 4 BCs means 4 services, 4 deployments, 4 API contracts, for 3 people. The integration overhead would dominate. Better: 1–2 BCs with subdomains as modules, splitting later when team size justifies it.
+
+2. **Q:** Two teams want to work on the same bounded context. What does DDD say?
+   *Wrong-answer trap:* "It's fine if they coordinate." DDD says no — one BC, one team. If two teams need to modify the same model, either split the BC or reorganize the teams. Shared ownership produces implicit assumptions that corrupt the ubiquitous language.
+
+3. **Q:** Is a microservice always a bounded context?
+   *Wrong-answer trap:* "Yes." Not necessarily. A microservice is a deployment unit. A bounded context is a model boundary. You can have a bounded context implemented as a monolith module, or a microservice that's too granular to represent a meaningful BC (anemic microservice). The boundaries should align, but they're conceptually independent.
+
+4. **Q:** The tomato is a fruit in botany and a vegetable in culinary arts. In DDD terms, what went wrong when the US taxed it as a vegetable?
+   *Wrong-answer trap:* "They picked the wrong model." Nothing went wrong — they *chose* a bounded context (taxation) and applied its model consistently. The 1893 Supreme Court ruling is a deliberate design decision, not a mistake. This is the whole point: the same entity has different correct models in different contexts.
+
+---
+
 ## [2026-05-26] Bounded contexts · pp.56–64 · Ch.2 §Challenges (end) → Ch.3 *Managing Domain Complexity* (Inconsistent Models → What Is a Bounded Context → Model Boundaries → Scope → vs Subdomains intro)
 
 - Why a single "ubiquitous language" cannot span an organisation

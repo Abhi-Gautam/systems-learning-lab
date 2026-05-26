@@ -4,6 +4,200 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-05-27] VM program control: flow & calls · pp.155–166 · Ch.7 §7.3.3–§7.5 (Project) → Ch.8 §8.1–§8.1.2
+
+- VM translator architecture: Parser + CodeWriter two-module design
+- `label` / `goto` / `if-goto` — the three opcodes that encode all control flow
+- Subroutine call protocol — how a stack machine saves and restores caller state
+
+### History — "why does this exist?"
+
+Program flow via labels and jumps is as old as computing itself — **Konrad Zuse's Z3 (1941)** had conditional branch, and **EDSAC (1949)** stored programs with jump instructions at fixed addresses. But the idea of encoding *all* high-level control flow (`if`, `while`, `for`, `switch`) into just two primitives — **unconditional goto** and **conditional goto** — was formalized by **Böhm and Jacopini (1966)**, who proved any flowchart can be expressed with sequence, selection, and iteration. The subroutine-call protocol is a separate lineage: **David Wheeler's EDSAC subroutine library (1951)** was the first implementation of "jump to a piece of code and come back," and **McCarthy's LISP (1960)** first demonstrated recursive calls backed by a stack discipline. The stack-based calling convention that N2T implements is essentially the same protocol the **JVM (1995)** and **CLR (2002)** use, minus the type verification.
+
+### Intuition — "this is like…"
+
+Think of the VM translator as a **Kubernetes controller that turns declarative YAML into imperative shell commands**. The `.vm` file says `call Sys.init 0` — a declarative intent ("run this function"). The translator emits 20+ lines of Hack assembly that save registers, repoint the stack, jump, and eventually restore everything. The caller never sees the assembly, just as a pod spec never mentions `cgroup` syscalls. The `label`/`goto`/`if-goto` trio is even simpler: it's the assembly-level `jmp`/`jnz` you already know, but scoped to a function — like Kubernetes labels that are namespace-scoped rather than cluster-global.
+
+### Mechanics
+
+#### The VM translator's two-module architecture (§7.3.3)
+
+```
+   Xxx.vm  ──►  ┌─────────┐    ┌────────────┐  ──►  Xxx.asm
+                 │  Parser  │───►│ CodeWriter  │
+                 └─────────┘    └────────────┘
+
+   Directory mode:
+   *.vm  ──►  N × Parser  ──►  1 × CodeWriter  ──►  Dir.asm
+```
+
+| Module | Responsibilities | Key routines |
+|---|---|---|
+| **Parser** | Tokenize one `.vm` file; classify commands into 9 types; extract `arg1`, `arg2` | `advance()`, `commandType()`, `arg1()`, `arg2()` |
+| **CodeWriter** | Emit Hack assembly for each command; manage label uniqueness across files | `writeArithmetic()`, `writePushPop()`, `setFileName()` |
+| **Main** | Wire Parser → CodeWriter; handle file-vs-directory input | single loop: `while hasMoreCommands: advance → dispatch` |
+
+The design mirrors the **Unix pipe philosophy**: Parser is a lexer with no knowledge of assembly; CodeWriter is an emitter with no knowledge of `.vm` syntax. The Main loop is glue. In directory mode, each `.vm` file gets its own Parser instance but all share one CodeWriter — which is why `setFileName()` exists: the CodeWriter needs the current filename to generate unique `static` labels (`@Foo.3` vs `@Bar.3`).
+
+#### Program flow commands (Ch.8 §8.1.1)
+
+Three commands encode **all** control flow:
+
+```
+label LABEL        ← declare a jump target (emits no code, just an assembly label)
+goto LABEL         ← unconditional jump (PC = address of LABEL)
+if-goto LABEL      ← pop top of stack; if ≠ 0, jump to LABEL; else continue
+```
+
+**How `if` and `while` reduce to these three:**
+
+```
+High-level            VM translation
+
+if (cond)             [compute ~cond, push result]
+  s1                  if-goto L1
+else                  [code for s1]
+  s2                  goto L2
+                      label L1
+                      [code for s2]
+                      label L2
+
+while (cond)          label LOOP
+  body                [compute ~cond, push result]
+                      if-goto END
+                      [code for body]
+                      goto LOOP
+                      label END
+```
+
+The subtle point: `if-goto` tests the **negation** of the condition — when cond is true, fall through to s1; when false, jump to L1 (the else branch). This is the **branch-on-false** convention, the same one GCC and LLVM use in their internal IR. It minimizes jumps on the common (true) path.
+
+**Translation to Hack assembly** is mechanical:
+
+| VM command | Hack assembly |
+|---|---|
+| `label LOOP` | `(functionName$LOOP)` |
+| `goto LOOP` | `@functionName$LOOP` / `0;JMP` |
+| `if-goto LOOP` | `@SP` / `AM=M-1` / `D=M` / `@functionName$LOOP` / `D;JNE` |
+
+Labels are scoped by prepending the current function name — `functionName$LOOP` — so two functions can both use `LOOP` without collision. This is the same namespace-scoping trick C linkers use with static-linkage symbols.
+
+#### Subroutine calling protocol (§8.1.2)
+
+The eight things a stack machine must do per call:
+
+```
+┌─ CALLER side ─────────────────────────────────────────────┐
+│  1. Push arguments onto the stack                         │
+│  2. call functionName nArgs                               │
+│     └─► push return-address                               │
+│         push LCL, ARG, THIS, THAT  (save caller's frame)  │
+│         ARG = SP - nArgs - 5       (reposition ARG)        │
+│         LCL = SP                   (reposition LCL)        │
+│         goto functionName                                  │
+└───────────────────────────────────────────────────────────┘
+
+┌─ CALLEE side ─────────────────────────────────────────────┐
+│  3. function functionName nLocals                         │
+│     └─► push 0 × nLocals  (initialize local segment)      │
+│  4. Execute body                                          │
+│  5. push return value                                     │
+│  6. return                                                │
+│     └─► endFrame = LCL     (save for unwinding)            │
+│         retAddr = *(endFrame - 5)                          │
+│         *ARG = pop()       (put return value for caller)   │
+│         SP = ARG + 1       (discard callee's frame)        │
+│         THAT = *(endFrame-1); THIS = *(endFrame-2)         │
+│         ARG  = *(endFrame-3); LCL  = *(endFrame-4)         │
+│         goto retAddr                                       │
+└───────────────────────────────────────────────────────────┘
+```
+
+**The stack frame layout at the moment the callee starts executing:**
+
+```
+          ┌────────────────────────┐
+   ARG ──►│ argument 0             │
+          │ argument 1             │
+          │ ...                    │
+          │ argument nArgs-1       │
+          ├────────────────────────┤
+          │ return address         │  ← saved by call
+          │ saved LCL             │
+          │ saved ARG             │
+          │ saved THIS            │
+          │ saved THAT            │
+          ├────────────────────────┤
+   LCL ──►│ local 0 (= 0)        │  ← pushed by function
+          │ local 1 (= 0)        │
+          │ ...                    │
+    SP ──►│ (empty — work stack)  │
+          └────────────────────────┘
+```
+
+The five saved values between ARG's last argument and LCL's first local form the **frame record** — the production term is **activation record** or **stack frame**. This is structurally identical to what `gcc -fno-omit-frame-pointer` emits on x86-64, where `rbp` points at the saved frame pointer and return address sits just above it.
+
+**Why the return value goes to `*ARG`:** after `return`, the caller expects the result at the top of *its* stack — which is the slot where `argument 0` used to be. By writing the return value there and then setting `SP = ARG + 1`, the callee's entire frame vanishes and the return value is exactly where the caller would find it after a `push`.
+
+#### The two-tier compilation model (§7.4 Perspective)
+
+```
+                    Frontend tier              Backend tier
+                   (Ch.10–11)                 (Ch.7–8)
+   Jack source ──► Jack Compiler ──► .vm ──► VM Translator ──► .asm ──► Assembler ──► .hack
+                                      │
+                                      └─ portable: runs on any VM backend
+```
+
+The `.vm` file is the **portable artifact** — same role as JVM `.class` files, CLR `.dll` files, or WASM `.wasm` modules. The frontend (compiler) doesn't know about Hack; the backend (VM translator) doesn't know about Jack. The decoupling means you could target the same `.vm` to a different platform by writing a new backend, or compile a different language to `.vm` by writing a new frontend.
+
+Real-world parallels: **JVM** serves Java/Kotlin/Scala/Clojure; **CLR** serves C#/F#/VB; **LLVM IR** serves C/C++/Rust/Swift/Zig. The N+M argument from the previous entry is the economic motivation; this chapter shows the *implementation* — the VM translator *is* the M-side backend.
+
+### If you were the VM translator…
+
+You're implementing `call Sys.init 0`. The tricky part: you need to push a return address, but the return address is the *next instruction after your emitted call sequence*. You don't know that address at emit time because you haven't finished emitting yet. How do you solve it?
+
+You **generate a unique label** — say `Sys.init$ret.0` — and emit `@Sys.init$ret.0` as the return address to push. At the end of the call sequence, you emit `(Sys.init$ret.0)`. The assembler resolves the forward reference in its two-pass algorithm (exactly the pattern from Ch.6). Each `call` gets a unique label by appending an incrementing counter. This is the same technique JIT compilers use: emit a label placeholder, fix up later. The VM translator generates assembly *with unresolved labels* and delegates resolution to the assembler — a clean separation of concerns.
+
+### Cross-language view
+
+Every language runtime implements the same call protocol; only the details differ:
+
+| | Hack VM | JVM | x86-64 (System V ABI) | Go |
+|---|---|---|---|---|
+| Save return addr | push as data word | `jsr` pushes to operand stack | `call` pushes to hardware stack | `BL` stores in `LR`; prologue saves to stack |
+| Save caller state | push LCL/ARG/THIS/THAT | JVM manages internally per frame | `push rbp; mov rbp,rsp` | goroutine stack; `NOSPLIT` for leaf |
+| Allocate locals | `push 0` × nLocals | verifier knows local count from `.class` | `sub rsp, N` | compiler allocates frame at compile time |
+| Return value | write to `*ARG` | push to caller's operand stack | `rax` register | multiple returns via stack slots |
+| Frame cleanup | restore from saved values | JVM pops frame automatically | `leave; ret` | `RET` pops saved `LR` |
+
+The Hack VM makes the protocol *explicit* — every push and restore is a visible VM command. Production runtimes hide it behind a single hardware instruction (`call`/`ret`) plus ABI conventions, but the logical steps are identical.
+
+### Where this shows up in real systems
+
+- **GDB's `backtrace` command** walks the chain of saved frame pointers (the `saved LCL → saved ARG → ...` chain in Hack terms) to reconstruct the call stack. When you see `#0 main() ... #1 libc_start_main()`, GDB is reading exactly the linked list of activation records that Hack's `return` command unwinds.
+- **JavaScript's call stack limit** (`RangeError: Maximum call stack size exceeded`) exists because each `call` allocates a frame. V8's default stack is ~1 MB; each frame is ~100–500 bytes depending on local count. The Hack VM has the same limit — the stack region is RAM 256–2047, giving ~1792 words of frame space, enough for ~50 nested calls with 30 locals each.
+- **Tail call optimization** (TCO) in functional languages (Scheme, Erlang, some Kotlin/Swift) works by *reusing the current frame* instead of pushing a new one. In Hack terms: instead of the full `call` protocol, a tail call would overwrite the current frame's arguments, reset SP, and `goto` — skipping the 5-word frame save entirely. This is why recursive Erlang processes don't blow the stack.
+
+### Diagnostic questions
+
+1. **Q:** Why does `if-goto` test for ≠ 0 rather than = 0?
+   *Wrong-answer trap:* "Convention." The real reason: the VM's boolean `true` is `0xFFFF` (all ones, = −1 in two's complement), which is ≠ 0. Testing ≠ 0 means `if-goto` fires on `true`, which matches the programmer's intent for `if (condition) goto target`. Testing = 0 would invert every conditional.
+
+2. **Q:** What happens if a function `return`s without pushing a return value?
+   *Wrong-answer trap:* "Runtime error." There's no runtime check — `*ARG = pop()` will pop whatever's on top of the stack (possibly a saved register or garbage). The caller will silently use a corrupt value. This is the VM equivalent of undefined behavior.
+
+3. **Q:** Why is the return address saved *before* LCL/ARG/THIS/THAT?
+   *Wrong-answer trap:* "Arbitrary convention." It's positioned so that `*(endFrame - 5)` reaches it after the callee sets `endFrame = LCL`. The five saved values occupy exactly the slots between the last argument and the first local, so the frame record is a contiguous block that `return` can unwind with fixed offsets.
+
+4. **Q:** Two VM functions both use `label LOOP`. Does the translator emit duplicate assembly labels?
+   *Wrong-answer trap:* "Yes, causing an assembler error." No — the translator prepends the function name: `(Foo$LOOP)` vs `(Bar$LOOP)`. Labels are function-scoped by construction.
+
+5. **Q:** The VM translator emits ~20 assembly instructions for a single `call`. Is that expensive?
+   *Wrong-answer trap:* "Yes, calls are slow." In Hack, yes — there's no hardware call instruction. But the same logical work happens in one or two cycles on x86 (`call` + `push rbp`) because the hardware implements the frame save in microcode. The 20-instruction expansion is the cost of building a CPU from NANDs with no call hardware.
+
+---
+
 ## [2026-05-26] VM segments → Hack RAM · pp.143–154 · Ch.7 §7.2.3 (Segments cont'd) → §7.3.1 (Standard Mapping, Part I)
 
 - Eight virtual segments + heap & stack, all backed by Hack's flat 16-bit RAM

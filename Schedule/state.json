@@ -1,6 +1,6 @@
 {
   "start_date": "2026-05-11",
-  "day": 16,
+  "day": 17,
   "rates": {
     "DDIA": 14,
     "OSTEP": 14,
@@ -19,26 +19,26 @@
   "slots": {
     "T1": {
       "book": "N2T",
-      "page": 155,
-      "days_on_slot": 6,
-      "chapters_done_this_quantum": 3
+      "page": 167,
+      "days_on_slot": 7,
+      "chapters_done_this_quantum": 4
     },
     "T2": {
-      "book": "WELC",
-      "page": 82,
-      "days_on_slot": 4,
-      "chapters_done_this_quantum": 1
+      "book": "WPF",
+      "page": 12,
+      "days_on_slot": 0,
+      "chapters_done_this_quantum": 0
     },
     "T3": {
       "book": "LDDD",
-      "page": 65,
-      "days_on_slot": 4,
+      "page": 74,
+      "days_on_slot": 5,
       "chapters_done_this_quantum": 0
     },
     "T4": {
       "book": "DBI",
-      "page": 116,
-      "days_on_slot": 1,
+      "page": 121,
+      "days_on_slot": 2,
       "chapters_done_this_quantum": 0
     }
   },
@@ -59,8 +59,8 @@
       "completed": false
     },
     "N2T": {
-      "last_active": 16,
-      "page": 155,
+      "last_active": 17,
+      "page": 167,
       "completed": false
     },
     "CC": {
@@ -74,12 +74,12 @@
       "completed": false
     },
     "WELC": {
-      "last_active": 16,
-      "page": 82,
+      "last_active": 17,
+      "page": 96,
       "completed": false
     },
     "WPF": {
-      "last_active": -1,
+      "last_active": 17,
       "page": 12,
       "completed": false
     },
@@ -94,8 +94,8 @@
       "completed": false
     },
     "LDDD": {
-      "last_active": 16,
-      "page": 65,
+      "last_active": 17,
+      "page": 74,
       "completed": false
     },
     "DSG": {
@@ -104,8 +104,8 @@
       "completed": false
     },
     "DBI": {
-      "last_active": 16,
-      "page": 116,
+      "last_active": 17,
+      "page": 121,
       "completed": false
     }
   }
