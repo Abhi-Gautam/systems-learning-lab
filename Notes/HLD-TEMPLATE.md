@@ -77,30 +77,43 @@ Secondary index: by_owner_created (owner_id, created_at desc)
 
 Call out the access patterns this schema serves and which it doesn't.
 
+### Request-path layering (where this component lives)
+
+The **first diagram** of every HLD note. Draw the full request path and highlight the component this note is about. Reader must always be able to point at a box and say "this is the layer we're discussing."
+
+```mermaid
+flowchart LR
+    U[User] --> DNS[DNS / GeoDNS]
+    DNS --> AC[Anycast IP / BGP]
+    AC --> CDN[CDN POP edge]
+    CDN --> WAF[WAF / DDoS]
+    WAF --> LB[Regional LB]
+    LB --> GW[API Gateway]
+    GW --> APP[App pod]
+    APP --> CACHE[(Cache: Redis/Memcached)]
+    APP --> DB[(Primary DB)]
+    style APP fill:#ffe680,stroke:#b58900,stroke-width:2px
+```
+
+**Where this concern lives** (the 2–4 viable enforcement points + trade-off):
+
+| Layer | Sees | Latency cost | Blast radius | Best for |
+|---|---|---|---|---|
+| {Edge / CDN} | {IP, SNI, JA3} | {<1ms} | {global} | {coarse abuse} |
+| {API gateway} | {+ user_id, route} | {1-3ms} | {regional} | {cross-cutting tenant limits} |
+| {App middleware} | {+ payload, business ctx} | {2-5ms} | {per-service} | {per-endpoint business rules} |
+| {DB / downstream} | {+ row-level intent} | {5-15ms} | {per-table} | {last-line cost protection} |
+
 ### Architecture
 
-ONE diagram (mermaid or ASCII), ≤8 boxes. Every arrow labeled with what flows on it and at what rate.
+ONE Mermaid diagram, ≤8 boxes, every arrow labeled with what flows and at what rate. **ASCII boxes-and-arrows are banned** — Obsidian renders Mermaid natively.
 
-```
-                ┌──────────┐
-                │  Client  │
-                └─────┬────┘
-                      │ HTTPS (10k QPS)
-                      ▼
-              ┌───────────────┐
-              │  Edge / LB    │
-              └──────┬────────┘
-                     │
-            ┌────────┴────────┐
-            ▼                 ▼
-      ┌──────────┐      ┌──────────┐
-      │ API tier │◄────►│ Cache    │ (~95% hit ratio)
-      └─────┬────┘      └──────────┘
-            │ on miss
-            ▼
-      ┌──────────┐
-      │ Storage  │
-      └──────────┘
+```mermaid
+flowchart TB
+    C[Client] -->|HTTPS 10k QPS| LB[Edge / LB]
+    LB --> API[API tier]
+    API <-->|95% hit| CACHE[(Cache)]
+    API -->|on miss| DB[(Storage)]
 ```
 
 Annotate where each NFR is satisfied (or punted).
@@ -115,10 +128,16 @@ Pick the 2 mechanisms most likely to be drilled. For each, follow the **6-subsec
 Problem before. The alternative that was rejected. The constraint that forced this design.
 
 **2. Walk it concretely.**
-ASCII diagram or numbered steps with a specific scenario (named nodes, values, timestamps). No abstract descriptions.
+A **Mermaid state diagram or sequence diagram** + numbered steps with a specific scenario (named nodes, values, timestamps). No abstract descriptions, no ASCII boxes.
+
+For algorithmic mechanisms, the state diagram MUST show the data structure mutating across at least 3 successive requests (the integers / bytes / pointers visibly changing). Big-O claims must name the data-structure operation: "O(log N) — skip-list insert", not bare "O(log N)".
+
+```mermaid
+{state or sequence diagram showing the mechanism's data evolving}
+```
 
 ```
-{worked scenario with named entities}
+{worked scenario with named entities — integers/bytes changing step by step}
 ```
 
 **3. The cost you're accepting.**
@@ -223,8 +242,23 @@ Why the difference: {one-paragraph synthesis of what depth means here}.
 ## Visual + depth contract (carried forward from /study-today)
 
 - Tables and diagrams over prose wherever a comparison/structure/flow is being explained.
+- **All diagrams are Mermaid blocks**. ASCII boxes/arrows are banned (Obsidian renders Mermaid natively). Reserved exception: byte-layout / Redis key schema / wire-format *data* stays as fenced code.
 - When a low-level concept appears (KV cache memory layout, packet header format, syscall path, bytes-on-wire, lock implementation), **stop and teach it in detail**.
 - Deep-dive Mechanics sections look like: short framing → diagram → short interpretation → table → worked example → short synthesis. Walls of prose in Mechanics are a regression.
+
+## Property-claim contract
+
+Every property assertion ("Redis is single-threaded", "Lua is atomic", "Anycast routes to nearest POP", "TCP is reliable") needs three parts:
+
+1. **Mechanism** — why true at the implementation level (event loop, kernel queue, BGP path selection, sliding window + retransmit).
+2. **Upside** — what this property buys you (atomic ops, no locks, predictable p99).
+3. **Downside** — when this property bites (slow command HoL-blocks, no SMP scaling, hot key saturates one core).
+
+One-sided assertions ("Redis is single-threaded so it's fast") are mid-tier. Both faces is staff-tier.
+
+## Cross-cutting concern framing
+
+For notes covering rate limiting, auth, caching, retries, timeouts, back-pressure: open the deep dive with the cost-of-service / unit-economics framing — these limits encode business cost per call, not arbitrary engineering choices. The variability is economic.
 
 ## Sections removed (do not reintroduce)
 
