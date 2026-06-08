@@ -4,7 +4,127 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
-## [2026-05-27] Rightmost pointers & overflow pages · pp.116–120 · Ch.4 §Rightmost Pointers → §Node High Keys → §Overflow Pages
+## [2026-06-07] In-page search & split backtracking · pp.121–127 · Ch.4 §Overflow Pages (tail) → §Binary Search → §Propagating Splits and Merges
+
+- Overflow-page bookkeeping: chained page IDs in headers, and why a key *prefix* stays in the primary page
+- Binary search with indirection pointers — searching through the cell-offset array, not the cells
+- Two ways back up the tree for split/merge propagation: parent pointers (WiredTiger) vs breadcrumb stacks (Postgres `BTStack`)
+
+### History — "why does this exist?"
+
+Binary search is ancient (first published implementation: **Mauchly, 1946**; first *correct for all array sizes* one took until 1962, and Bentley showed in the 1980s that 90% of professional programmers couldn't write it bug-free — the midpoint overflow bug survived in the JDK until **2006**). The interesting history here is the *propagation* problem: the original **Bayer & McCreight (1972)** B-tree paper assumed you could always walk back to the parent, but said little about how. **Lehman & Yao (1981)** made the question sharp — in a concurrent tree, parent/sibling pointers are how readers deadlock with writers (building on Miller et al., 1978) — and their Blink-tree answered with high keys + rightward-only links. The two backtracking strategies in this chunk — persistent parent pointers vs an ephemeral stack of breadcrumbs — are the two surviving lineages: WiredTiger took pointers, Postgres took the stack.
+
+### Intuition — "this is like…"
+
+Binary search with indirection pointers is **`git log` paging through a packfile index**: the `.idx` file is a small sorted array of offsets (the cell-pointer array) into a big unsorted heap of objects (the cells). You bisect the *index*, and only dereference into the pack when you need to compare actual content. Breadcrumbs are **the directory stack your shell keeps with `pushd`**: on the way down to a deep directory you push each level; if you need to fix something on the way back (`popd`, `popd`…) you retrace exactly the path you took — no directory needs to store a ".." that's guaranteed fresh, because *your traversal itself* is the record. Parent pointers are the opposite bet: store `..` in every node and pay to keep it correct whenever a directory is moved.
+
+### Mechanics
+
+#### Closing out overflow pages: the bookkeeping
+
+| Concern | Mechanism |
+|---|---|
+| Finding the overflow part | first overflow page ID lives in the **primary page header**; chains continue via next-ID in each overflow page's header |
+| Multi-page payloads | linked list of overflow pages — locating a payload tail may traverse several pages |
+| Space reclamation | overflow pages fragment like primary pages; must be reclaimed or discarded when payload shrinks/dies |
+| **Keys vs data records** | asymmetric trick: keys have high cardinality, so keep a **trimmed key prefix in the primary page** — most comparisons resolve on the prefix without I/O; data records only need their overflow fetched on a *match*, which is rare |
+
+That last row is the design insight: place bytes according to *access frequency*, not record identity. Key bytes are read on every traversal through the node; value bytes are read once per successful lookup. (If *all* records are oversized, the book's advice is to stop torturing the B-tree and use dedicated blob storage — the same reasoning behind Postgres TOAST keeping big values out of the main heap page.)
+
+#### Binary search, and what the return value encodes
+
+The in-node search returns one integer carrying **two** facts:
+
+```
+result ≥ 0  →  exact hit: index of the key in the node
+result < 0  →  miss: |result| is the insertion point —
+               index of the first element GREATER than the searched key
+```
+
+The negative encoding (same convention as Java's `Arrays.binarySearch`, returning `-(insertionPoint) - 1`) matters because **most B-tree searches are misses on purpose**: at every internal node you don't expect to find the key — you want the *direction*, i.e., which child link to follow. The insertion point is exactly that separator index. Insert at a leaf = same number again: shift cells right from the insertion point, place the new cell. One algorithm serves lookup, descent, and insert positioning.
+
+#### Indirection: bisecting the pointer array, not the page
+
+Cells sit in the page in **insertion order**; only the cell-offset array is sorted (logically). Binary search therefore runs over the offsets:
+
+```mermaid
+flowchart TD
+    subgraph page ["B-Tree page (4 KB)"]
+        direction TB
+        PTRS["cell pointer array (sorted by key)<br/>[→c₃, →c₁, →c₄, →c₂, →c₅]"]
+        CELLS["cells in insertion order:<br/>c₁ c₂ c₃ c₄ c₅ (unsorted!)"]
+    end
+    PTRS -->|"1. pick middle offset"| M["dereference → cell"]
+    M -->|"2. compare cell key vs target"| D{"<, =, > ?"}
+    D -->|"go left/right in the<br/>POINTER array"| PTRS
+    D -->|"= or array exhausted"| OUT["index or insertion point"]
+```
+
+Worked example — 4 KB page, 100 cells, 8-byte searched key:
+
+| | Sorted cells (no indirection) | Indirection pointers |
+|---|---|---|
+| insert cost | shift up to ~4 KB of cell bytes | append cell anywhere + shift ≤ 200 bytes of 2-byte offsets |
+| search cost | ⌈log₂ 100⌉ = 7 comparisons, sequential-ish reads | 7 comparisons, but each is a **pointer hop** to a random in-page offset |
+| CPU cache behavior | good locality | each hop likely a different cache line — 7 scattered 64-byte line loads |
+
+So indirection trades insert-time byte-shifting for search-time pointer chasing — cheap because all hops stay inside one already-resident page; the disk I/O profile is identical. (This is the payoff of the slotted-page layout from earlier in the chapter: the offsets array is *both* the sort order and the indirection.)
+
+#### Going back up: split/merge propagation needs a path to the root
+
+A leaf split must insert a separator into the parent; if the parent overflows it splits too, recursively to the root. But the descent followed child pointers *downward* — nothing in a vanilla B-tree node names its parent. Two solutions:
+
+| | **Parent pointers** (WiredTiger) | **Breadcrumbs** (Postgres `BTStack`) |
+|---|---|---|
+| What's stored | each node holds a pointer to its parent | per-operation, in-memory stack of (node, cell index) visited root→leaf |
+| Where it lives | in the node — but **not persisted**: lower pages are always paged in via their parent, so the pointer can be set at page-in time | only in the operating thread's memory; vanishes after the operation |
+| Maintenance cost | must update on every separator-key move: parent splits, merges, rebalancing | zero standing cost; rebuilt by each descent |
+| Staleness risk | concurrent split can invalidate a pointer → needs latching discipline | a *concurrent* split can invalidate a breadcrumb's cell index — "assuming the index is still valid" — Postgres re-checks and re-locates when stale |
+| Bonus use | leaf traversal without sibling-pointer deadlocks ([MILLER78], [LEHMAN81]): go up to parent, descend to next child; at parent's end, recurse upward and back down | also yields parent insertion points for free — the breadcrumb *is* the (node, index) where the separator goes |
+
+Propagation with breadcrumbs, concretely: descend root→leaf pushing each (page, followed-index); leaf splits → pop → try to insert separator at the recorded index → parent full → split parent → pop again… until either a parent absorbs the key or you pop the empty stack and **split the root** (the only way a B-tree grows taller).
+
+```mermaid
+sequenceDiagram
+    participant I as insert(k)
+    participant S as BTStack
+    participant R as root
+    participant M as internal
+    participant L as leaf
+    I->>R: descend, choose child idx 2
+    R-->>S: push (root, 2)
+    I->>M: descend, choose child idx 0
+    M-->>S: push (internal, 0)
+    I->>L: leaf full → SPLIT
+    S-->>I: pop (internal, 0)
+    I->>M: insert separator at idx 0 — also full → SPLIT
+    S-->>I: pop (root, 2)
+    I->>R: insert separator at idx 2 — fits ✓ (else: new root)
+```
+
+The deadlock point deserves its derivation: with **bidirectional sibling pointers**, two concurrent operations can grab the same pair of leaves in opposite orders (left→right vs right→left) and wait on each other forever — the classic lock-ordering cycle. Parent-pointer traversal imposes a single global ordering (always via the parent), so the cycle can't form; the Blink-tree alternative keeps siblings but makes them **rightward-only**, which is one lock order by construction.
+
+### If you were the storage engine author…
+
+Your insert just split a leaf, and your breadcrumb says the separator goes into the parent at index 7 — but between your descent and now, another thread split that parent. Index 7 may now be in the *wrong half*. What do you check before trusting a breadcrumb? Postgres's answer: treat breadcrumbs as **hints, not truths** — verify the target page still bounds your key (high-key check, courtesy of the Blink-style high keys from last session), and if not, move right / re-descend from the recorded ancestor. The stack saves you a full root re-descent in the common case while staying correct in the contended one — the same optimistic-validate-retry shape as a CAS loop.
+
+Why does WiredTiger get away with *never persisting* parent pointers? Invariant: a child page can only enter the cache by being referenced from its parent — so at page-in time the parent is, by construction, in memory and known. The pointer is derivable state, so persisting it would only create a second copy that can go stale on disk. General storage-engine rule: **never write to disk what every reader can reconstruct for free on the read path.**
+
+### Where this shows up in real systems
+
+- **Postgres `nbtree`** stores breadcrumbs in a `BTStack` during `_bt_search`; split propagation (`_bt_insert_parent`) walks that stack upward, with high-key checks + move-right to survive concurrent splits — the full optimistic pattern above, in `src/backend/access/nbtree/`.
+- **WiredTiger (MongoDB's engine)** keeps in-memory parent pointers and uses parent-mediated traversal instead of sibling links to dodge the [MILLER78]/[LEHMAN81] deadlock — and its on-disk format stores no parent IDs at all, exactly because they're reconstructible at page-in.
+- **SQLite's `sqlite3BtreeMovetoUnpacked`** runs binary search over the cell-pointer array of each page (the indirection diagram verbatim), and the JDK's 2006 `Arrays.binarySearch` midpoint-overflow fix (`(low+high)>>>1`) is the canonical reminder that even the 7-comparison inner loop here has teeth.
+
+### Diagnostic questions
+
+1. **Why keep a prefix of an overflowing key in the primary page, but not a prefix of an overflowing value?** — "Saves space" is backwards; it saves *I/O on the comparison path*: key bytes are touched by every search through the node, value bytes only on a final match — frequency-of-access decides placement.
+2. **An internal-node binary search "fails" on almost every descent. Why is that the designed-for case?** — If you think a miss is an error path, you've missed that the negative return *is* the child-selection answer: the insertion point names the separator to follow.
+3. **Indirection pointers make in-page search cache-unfriendlier (7 scattered line loads). Why is the trade still right?** — Answering "it isn't, sort the cells" ignores write cost: maintaining physically sorted variable-size cells means shifting kilobytes per insert vs shifting a handful of 2-byte offsets.
+4. **WiredTiger doesn't persist parent pointers. What invariant makes that safe, and what would break it?** — "They rebuild them somehow" misses the mechanism: children are only reachable *through* parents, so the parent is always resident first; direct child access (e.g., a leaf-scan cursor resuming from a bare page ID) would break the invariant.
+5. **Your breadcrumb stack pops empty while propagating a split. What just happened to the tree?** — If you answer "error," wrong: that's a **root split** — the only operation that increases B-tree height, and why height grows logarithmically rarely.
+
+---
 
 - The N-keys / (N+1)-pointers asymmetry and how SQLite and Postgres handle the extra pointer differently
 - Blink-Tree high keys: upper-bound stored per node, simplifying rightmost-pointer handling

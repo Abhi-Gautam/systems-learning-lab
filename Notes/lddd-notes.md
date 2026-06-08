@@ -4,6 +4,103 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-06-07] Bounded context integration patterns · pp.75–81 · Ch.4 §Cooperation → §Customer–Supplier
+
+- Contracts: why independent models still need coordinated touchpoints, and whose language wins
+- Cooperation patterns — partnership (ad hoc, two-way) vs shared kernel (one model, multiple owners)
+- Customer–supplier patterns — conformist, anticorruption layer, open-host service: three answers to power imbalance
+
+### History — "why does this exist?"
+
+**Evans's DDD book (2003)** introduced bounded contexts but spent most of its pages inside one; the integration patterns (context maps, ACL, conformist, shared kernel) were its underdeveloped strategic chapter. The gap became urgent when **microservices (Fowler/Lewis, 2014)** turned every context boundary into a network boundary and an org boundary at once — suddenly "whose model crosses the wire?" was a daily production question, not a modeling nicety. **Conway's law (1968)** is the load-bearing ancestor: communication structure determines system structure, so Vernon (2013) and Khononov reorganized Evans's patterns explicitly around *team relationships* — the pattern you can use is determined by the quality and symmetry of collaboration between the two teams, not by what's architecturally elegant.
+
+### Intuition — "this is like…"
+
+The customer–supplier patterns are the three ways your service can relate to the **Stripe API**. If you embed Stripe's objects (`PaymentIntent`, `Charge`) directly through your codebase, you're a **conformist** — cheap, and fine because Stripe's model is industry-grade. If you wrap Stripe behind your own `PaymentGateway` interface that speaks *your* domain language (`CollectDeposit`, `RefundBooking`), that wrapper is an **anticorruption layer** — you pay a translation tax to keep foreign concepts out of your core. And Stripe's own public API is an **open-host service**: their internal ledger model evolves weekly, but the published API (with `/v1/`, versioned, backwards-compatible) is a deliberately decoupled **published language** — supplier-side translation so thousands of consumers don't need ACLs. Power decides which seat you sit in: with Stripe you have none; with a sister team you might negotiate a partnership instead.
+
+### Mechanics
+
+#### The organizing axis: collaboration type → pattern family
+
+```mermaid
+flowchart TD
+    Q1{"Can the teams<br/>collaborate well?"} -->|"yes — shared goals,<br/>good communication"| COOP["**Cooperation**"]
+    Q1 -->|"yes, but power is<br/>asymmetric (up/downstream)"| CS["**Customer–Supplier**"]
+    Q1 -->|no| SW["**Separate Ways**<br/>(duplicate it — next session)"]
+    COOP --> P["Partnership<br/>ad hoc two-way coordination"]
+    COOP --> SK["Shared Kernel<br/>one model, multiple contexts"]
+    CS -->|"supplier dictates,<br/>their model is fine"| CF["Conformist<br/>adopt upstream model"]
+    CS -->|"supplier dictates,<br/>their model would pollute"| ACL["Anticorruption Layer<br/>consumer translates"]
+    CS -->|"supplier serves<br/>many consumers"| OHS["Open-Host Service<br/>supplier translates"]
+```
+
+**Contracts** exist because two contexts by definition speak different ubiquitous languages — so every touchpoint forces the question *which language crosses the boundary?* Each pattern is a different answer:
+
+| Pattern | Whose model crosses | Who pays translation | Coupling | Precondition |
+|---|---|---|---|---|
+| Partnership | negotiated per change | both, ad hoc | medium | frequent sync, high commitment, co-located-ish |
+| Shared kernel | a jointly-owned overlap | both, continuously | **highest** | shared repo/library + integration tests on every change |
+| Conformist | upstream's, wholesale | nobody (downstream absorbs) | high, one-way | upstream model is good enough / industry standard |
+| Anticorruption layer | upstream's → translated at edge | **downstream** | low (for the core) | translation worth the effort |
+| Open-host service | published language (≠ internal model) | **upstream** | low (for everyone) | supplier motivated to protect consumers |
+
+#### Shared kernel — the deliberate rule-break
+
+The shared kernel violates the previous chapter's core principle (one team owns one bounded context): the overlapping model is owned by *multiple* teams simultaneously. The book justifies it with one inequality:
+
+```
+use shared kernel  ⇔  cost(duplication) > cost(coordination)
+```
+
+- Both costs scale with **model volatility** — the more it changes, the more expensive both duplication-drift and coordination become, but integration cost grows faster. Hence the paradox: the shared kernel fits best for **core subdomains**, the most volatile code you have (e.g., one permissions/authorization model that every context must enforce identically — divergence there is a security bug, not an inconvenience).
+- Containment rules: keep the kernel as thin as possible — ideally just **integration contracts + data structures that cross boundaries**; every kernel change triggers integration tests in *all* participating contexts; mono-repo shared sources or a linked library, but never lagging copies (stale kernels → data corruption).
+- Legitimate uses: (1) substitute for partnership when geography/politics blocks ad hoc coordination, (2) **temporary scaffolding while decomposing a legacy monolith**, (3) same-team contexts, where an explicit kernel stops a partnership from "washing out" the boundary over time.
+
+#### Anticorruption layer vs open-host service — mirror images
+
+The two are the *same translation*, placed on opposite sides of the boundary, paid for by whoever has the motivation:
+
+```mermaid
+flowchart LR
+    subgraph ACL_case ["ACL — consumer protects itself"]
+        U1["Supplier<br/>(model M_s)"] -->|M_s on the wire| T1["ACL<br/>M_s → M_c"] --> C1["Consumer core<br/>(model M_c stays clean)"]
+    end
+    subgraph OHS_case ["OHS — supplier protects everyone"]
+        U2["Supplier internals<br/>(model M_s, evolves freely)"] --> T2["Translation<br/>M_s → PL"] -->|"published language,<br/>versioned v1, v2…"| C2["Many consumers"]
+    end
+```
+
+When to reach for an **ACL** (downstream is weak but unwilling to conform):
+1. Downstream contains a **core subdomain** — conforming to a foreign model would warp the model that *is* your competitive advantage
+2. Upstream model is a mess (typical: legacy integration) — "conform to a mess and you become a mess"
+3. Upstream contract churns — the ACL converts N upstream changes into N translator patches, zero core changes
+
+When **OHS** appears (upstream cares about consumers): the public interface is decoupled from the implementation model *on purpose*, expressed in an integration-oriented **published language**. Decoupling buys two freedoms: internals evolve without breaking anyone (as long as they still translate to the PL), and the supplier can expose **multiple PL versions simultaneously** for gradual consumer migration — exactly the `/v1/`–`/v2/` API versioning discipline, derived from first principles rather than REST folklore.
+
+Conformist is the do-nothing baseline that makes both visible as *choices*: it's correct when the upstream model is an industry standard (you don't ACL-wrap ISO currency codes) or simply good enough — autonomy isn't free, and an ACL guarding a model with no special semantics is pure overhead.
+
+### If you were the downstream architect…
+
+Your booking context consumes a 15-year-old mainframe inventory system, and your team has zero leverage over its COBOL-shaped exports (`ITM-MSTR-REC` with 47 fields, 9 of which matter). Conform, or build an ACL? The mechanical test from the chapter: is your context a **core subdomain** (yes — availability search is the product), is the upstream model inconvenient (extremely), does it change often (rarely, actually). Two of three point to ACL — and the book's sharper point is *where the benefit lands*: the translation isolates your ubiquitous language, so "availability" in your context means what your domain experts mean, not what a 1998 batch job encoded. The ACL is a vocabulary firewall before it's a technical adapter.
+
+Follow-up the chapter forces: who maintains the ACL when the mainframe team ships a field rename? You do — that's the deal. ACL converts "upstream change breaks my core" into "upstream change patches my translator," it never converts it into "not my problem." If that maintenance tax exceeds what boundary purity buys you, you've re-derived the conformist condition.
+
+### Where this shows up in real systems
+
+- **Stripe/Twilio/AWS APIs are open-host services**: versioned published languages (`/v1/`, API date-pinning in Stripe's case) explicitly decoupled from internals, with multiple versions live simultaneously for gradual migration — the chapter's Figure 4-7 is literally Stripe's `Stripe-Version` header mechanism.
+- **Kafka schema registry + canonical event schemas** are a shared kernel in stream form: the event types are jointly-owned data structures that cross context boundaries, every producer/consumer must integrate against the same registry, and a schema change triggers compatibility checks across all of them — the "integration tests on every kernel change" rule, automated.
+- **Strangler-fig migrations** (e.g., wrapping a monolith's order tables behind a façade while extracting services) run the chapter's playbook: an ACL guards each new service from the legacy model, while a *temporary* shared kernel (the still-shared database) holds things together until decomposition completes.
+
+### Diagnostic questions
+
+1. **Your two teams sit in one office, ship together, trust each other. Why might you still formalize a shared kernel instead of relying on partnership?** — "Partnership is enough" misses the long game: ad hoc integration between friendly teams erodes the boundary itself; an explicit kernel pins down *what* is shared so everything else can diverge safely.
+2. **A teammate proposes an ACL in front of the ISO-4217 currency-code feed "for decoupling." What's wrong?** — Reflexive ACL-wrapping ignores the applicability test: the upstream model is an industry standard with no impedance mismatch; the layer adds maintenance cost and translates nothing.
+3. **The shared kernel should be as small as possible — what failure mode grows with its size?** — "More code to maintain" is shallow; the real cost is the **cascading-change blast radius**: every kernel word is coupled to every participating context's release cycle.
+4. **OHS and ACL both translate models. What single question decides which side of the boundary the translator lives on?** — If you answer "architecture," wrong axis: it's *motivation/power* — a supplier with many consumers internalizes the cost once (OHS); an indifferent supplier externalizes it to each consumer (ACL).
+5. **Why does a conformist relationship deserve an entry in your context map even though you built nothing?** — Treating it as "no integration work" hides a strategic fact: your model's evolution is now chained to a foreign team's roadmap — that dependency must be visible when someone asks why the domain model has Salesforce-shaped corners.
+
+---
+
 ## [2026-05-27] Bounded context boundaries · pp.65–73 · Ch.3 §Interplay Between Subdomains and BCs → §Boundaries → §BCs in Real Life → §Conclusion
 
 - Subdomains are discovered (business strategy); bounded contexts are designed (software decision)

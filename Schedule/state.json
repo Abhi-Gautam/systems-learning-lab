@@ -1,6 +1,6 @@
 {
   "start_date": "2026-05-11",
-  "day": 17,
+  "day": 18,
   "rates": {
     "DDIA": 14,
     "OSTEP": 14,
@@ -19,26 +19,26 @@
   "slots": {
     "T1": {
       "book": "N2T",
-      "page": 167,
-      "days_on_slot": 7,
+      "page": 180,
+      "days_on_slot": 8,
       "chapters_done_this_quantum": 4
     },
     "T2": {
       "book": "WPF",
-      "page": 12,
-      "days_on_slot": 0,
+      "page": 29,
+      "days_on_slot": 1,
       "chapters_done_this_quantum": 0
     },
     "T3": {
       "book": "LDDD",
-      "page": 74,
-      "days_on_slot": 5,
+      "page": 82,
+      "days_on_slot": 6,
       "chapters_done_this_quantum": 0
     },
     "T4": {
       "book": "DBI",
-      "page": 121,
-      "days_on_slot": 2,
+      "page": 128,
+      "days_on_slot": 3,
       "chapters_done_this_quantum": 0
     }
   },
@@ -59,8 +59,8 @@
       "completed": false
     },
     "N2T": {
-      "last_active": 17,
-      "page": 167,
+      "last_active": 18,
+      "page": 180,
       "completed": false
     },
     "CC": {
@@ -79,8 +79,8 @@
       "completed": false
     },
     "WPF": {
-      "last_active": 17,
-      "page": 12,
+      "last_active": 18,
+      "page": 29,
       "completed": false
     },
     "LGO": {
@@ -94,8 +94,8 @@
       "completed": false
     },
     "LDDD": {
-      "last_active": 17,
-      "page": 74,
+      "last_active": 18,
+      "page": 82,
       "completed": false
     },
     "DSG": {
@@ -104,8 +104,8 @@
       "completed": false
     },
     "DBI": {
-      "last_active": 17,
-      "page": 121,
+      "last_active": 18,
+      "page": 128,
       "completed": false
     }
   }

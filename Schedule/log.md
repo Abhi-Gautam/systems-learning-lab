@@ -19,3 +19,6 @@
 - **2026-05-25** — design HLD H01 · fresh · confidence 4 · 370 lines
 - **Day 17 · 2026-05-28** — T1 N2T pp.155-166 · T2 WELC pp.82-95 · T3 LDDD pp.65-73 · T4 DBI pp.116-120
 - **2026-05-25** — design HLD H10 · fresh · confidence 4 · 423 lines
+- **2026-05-23** — design LLD L01 · fresh · confidence 4 · 450 lines
+- **2026-05-26** — design HLD H99 · revisit · confidence 4 · 379 lines
+- **Day 18 · 2026-05-29** — T1 N2T pp.167-179 · T2 WPF pp.12-28 · T3 LDDD pp.74-81 · T4 DBI pp.121-127

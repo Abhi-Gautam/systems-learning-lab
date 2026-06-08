@@ -4,7 +4,151 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
-## [2026-05-27] VM program control: flow & calls · pp.155–166 · Ch.7 §7.3.3–§7.5 (Project) → Ch.8 §8.1–§8.1.2
+## [2026-06-07] VM function call protocol · pp.167–179 · Ch.8 §8.1.2 → §8.4
+
+- The global stack: frames, saved-pointer blocks, and why LIFO call chains map onto it
+- `call` / `function` / `return` — the exact assembly each one expands to, with address-level walkthrough
+- Bootstrap code (`SP=256; call Sys.init`) and the symbol-naming contract (`f$label`, `Xxx.j`)
+
+### History — "why does this exist?"
+
+The return-address problem — "a subroutine must serve *any* caller, so the place to come back to cannot live in its code" — was first solved by the **Wheeler jump (EDSAC, 1951)**: the caller deposited its own address into the subroutine's first instruction (self-modifying code!). That broke instantly under **recursion**, which is why early FORTRAN (1957) flatly banned recursive calls — each routine had exactly one static slot for its return address and saved registers. **ALGOL 60** forced the issue: its semantics required recursion, and **Dijkstra's 1960 implementation** introduced the run-time stack of activation records that every mainstream runtime has used since. N2T's global stack is a teaching-sized replica of that exact design — and the pseudo-code in figure 8.5 is, almost line for line, what a JVM interpreter or an x86 `call`/`ret` + frame-pointer prologue does today.
+
+### Intuition — "this is like…"
+
+A `call` is a **context switch performed by the caller on itself**. Think of how the Linux kernel parks a preempted task: it shoves the task's registers onto a stack, repoints a handful of CPU registers at the new task's world, and jumps — and `switch_to` doesn't "remember" the old task in any global place; the old task's entire identity lives *in the stack it left behind*. N2T's `call` does the same with five words: return address, `LCL`, `ARG`, `THIS`, `THAT`. The genius is that **the caller's frozen world and the callee's arguments physically overlap on one contiguous stack**, so `return` can resurrect the caller purely by arithmetic on `LCL` — no allocator, no table of live functions, no GC. The stack *is* the bookkeeping.
+
+### Mechanics
+
+#### The frame: what one `call` leaves on the global stack
+
+```
+RAM grows downward in this table (higher address = lower row)
+```
+
+| Region | Who wrote it | Pointer | Lifetime |
+|---|---|---|---|
+| `argument 0 … n−1` | **caller** (`push` before `call`) | `ARG` → arg 0 | dies at `return` — recycled as the return-value slot |
+| `return address` | `call` codegen | `*(LCL−5)` | consumed by `return` |
+| saved `LCL` | `call` codegen | `*(LCL−4)` | restored by `return` |
+| saved `ARG` | `call` codegen | `*(LCL−3)` | restored by `return` |
+| saved `THIS` | `call` codegen | `*(LCL−2)` | restored by `return` |
+| saved `THAT` | `call` codegen | `*(LCL−1)` | restored by `return` |
+| `local 0 … k−1` | `function f k` codegen (zeros) | `LCL` → local 0 | dies at `return` |
+| working stack | callee's `push`/`pop` | `SP` → next free | tip of the global stack |
+
+Two derived facts the whole protocol hangs on:
+
+- **`ARG = SP − n − 5`** at call time — works because at that instant the stack tip holds exactly `n` args + 5 saved words, nothing else. The constant 5 is not magic; it's the count of saved words. Add a sixth saved pointer and every offset shifts.
+- **`return address = *(FRAME − 5)`** — the same 5, read back from the other side. `return` carries zero operands; *everything* it needs is recoverable from `LCL` alone.
+
+#### The three commands and their expansions (fig. 8.5, annotated)
+
+| VM command | Expansion | Why each line exists |
+|---|---|---|
+| `call f n` | `push return-addr; push LCL; push ARG; push THIS; push THAT` | freeze caller's world (5 words) |
+| | `ARG = SP−n−5` | repoint `ARG` at the args the caller already pushed |
+| | `LCL = SP` | callee's locals will start at the current tip |
+| | `goto f; (return-addr)` | jump; plant a **unique label** right after, so the address exists at assembly time |
+| `function f k` | `(f); repeat k: push 0` | entry label + allocate-and-zero locals. Zeroing is the *initialization guarantee* the spec promises callees |
+| `return` | `FRAME = LCL` | anchor: `LCL` is the only pointer guaranteed valid |
+| | `RET = *(FRAME−5)` | grab return addr **before** the next line clobbers that region |
+| | `*ARG = pop()` | return value lands where arg 0 was — this is how "args vanish, one value appears" |
+| | `SP = ARG+1` | caller's stack tip = just past the return value |
+| | `THAT/THIS/ARG/LCL = *(FRAME−1…−4)` | thaw caller's world |
+| | `goto RET` | resume caller mid-stream |
+
+The `RET = *(FRAME−5)` ordering is load-bearing for one nasty edge case: a function with **zero arguments**. Then `ARG` points *at the return-address slot itself*, so `*ARG = pop()` overwrites the return address. Read it into `R13`/`R14` first or you jump into garbage — the classic Project 8 bug.
+
+#### Worked example — `call mult 2` with real addresses
+
+`fact` is running: `LCL=300`, `ARG=298`, working stack has pushed `local 0`(=2) and `local 1`(=3) into RAM[305..306], `SP=307`.
+
+| Step | RAM effect | SP |
+|---|---|---|
+| `push return-addr` | `RAM[307]=RET₁` | 308 |
+| `push LCL` | `RAM[308]=300` | 309 |
+| `push ARG` | `RAM[309]=298` | 310 |
+| `push THIS` | `RAM[310]=3010` | 311 |
+| `push THAT` | `RAM[311]=4015` | 312 |
+| `ARG = 312−2−5` | `ARG=305` → arg 0 (=2) ✓ | 312 |
+| `LCL = SP` | `LCL=312` | 312 |
+| `function mult 2` | `RAM[312]=0, RAM[313]=0` | 314 |
+
+`mult` computes 6, does `push local 0; return`:
+
+| Step | RAM effect | Result |
+|---|---|---|
+| `FRAME=LCL` | `FRAME=312` | |
+| `RET=*(307)` | `RET=RET₁` | |
+| `*ARG=pop()` | `RAM[305]=6` | args 2,3 → replaced by 6 |
+| `SP=ARG+1` | `SP=306` | tip just past return value |
+| restore ×4 | `THAT=4015, THIS=3010, ARG=298, LCL=300` | fact's world back |
+| `goto RET₁` | resume in fact | |
+
+Net stack delta: **−1 word per completed call** relative to the two pushed args — exactly the "n args in, 1 value out" contract. The 7 words of frame machinery existed only between `call` and `return`.
+
+```mermaid
+sequenceDiagram
+    participant p as p()
+    participant fact as fact(4)
+    participant mult as mult(a,b)
+    p->>fact: call fact 1 — push frame(p)
+    fact->>mult: call mult 2 — push frame(fact)
+    mult-->>fact: return 2 — pop frame(fact)
+    fact->>mult: call mult 2 (j=3)
+    mult-->>fact: return 6
+    fact->>mult: call mult 2 (j=4)
+    mult-->>fact: return 24
+    fact-->>p: return 24 — pop frame(p)
+    Note over p,mult: only the top function runs; every frame below is a frozen caller
+```
+
+#### Bootstrap and the symbol contract
+
+Hack hardware fetches ROM[0] on reset, so the translator plants **bootstrap code** there: `SP=256; call Sys.init`. Note it's a real `call`, not a `goto` — so even `Sys.init` gets a (junk) frame and the stack invariants hold from instruction one. `Sys.init` calls `Main.main` and ends in an infinite loop, because a CPU has no "exit" — same reason a kernel's idle task spins.
+
+| Symbol | Generated for | Scope rule |
+|---|---|---|
+| `(f)` | each `function f` | global — any file may `call f` |
+| `f$b` | each `label b` inside function `f` | function-scoped: two functions can both use `label LOOP` without collision |
+| `Xxx.j` | `static j` in file `Xxx.vm` | file-scoped; the *assembler* allocates the RAM word |
+| `return-addr` labels | each `call` site | must be unique per call — a counter suffix (`RET_7`) is the standard trick |
+| `R13–R15` | translator scratch (e.g., `FRAME`, `RET`) | invisible to VM code |
+
+### If you were the VM translator…
+
+You hit `call Foo.bar 3` in file `Main.vm`. What can you *not* know at this moment? Whether `Foo.bar` even exists — it may live in a `.vm` file you haven't seen yet. The protocol is designed so you don't care: you emit a `goto Foo.bar` against a symbol, and the Hack **assembler's** two-pass symbol resolution (ch. 6) links it up later. The VM translator is doing separate compilation with the assembler as its linker — the same division of labor as `gcc -c` emitting relocatable references that `ld` patches.
+
+Second question: why does `function f k` zero the locals instead of just bumping `SP` by `k` (one instruction instead of `k` pushes)? Because the spec *promises* callees zero-initialized locals — and that promise kills an entire bug class (reading stale stack garbage left by a previous frame at the same addresses). C chose the opposite trade: uninitialized locals are UB, you get the speed and the heisenbugs. Go re-chose N2T's side: zero values everywhere, paying the memset.
+
+### Cross-language view
+
+| | N2T VM | x86-64 (System V) | JVM | Go |
+|---|---|---|---|---|
+| Return addr | pushed by `call` codegen | pushed by hardware `call` | per-frame, in `Frame` struct | pushed by `CALL` insn |
+| Args travel | on the stack, always | first 6 in registers (`rdi…r9`), rest on stack | operand stack → new frame's local slots | registers since Go 1.17 (was all-stack) |
+| Frame anchor | `LCL` | `rbp` (or rbp-less + DWARF unwind info) | frame object | `SP`-relative, fixed-size frames |
+| Locals init | zeroed by spec | garbage (UB to read) | zeroed by spec | zeroed by spec |
+| Stack growth | crash past RAM[2047] | guard page → SIGSEGV | `StackOverflowError` | segmented→copied: runtime grows goroutine stacks |
+
+The N2T column is closest to the **JVM** — unsurprising, since the book says outright that the VM-on-Hack mapping is the JVM/CLR design minus verification. Modern hardware ABIs deviate mainly to keep hot args in registers; the *logical* frame (return addr, saved frame pointer, locals) is unchanged since 1960.
+
+### Where this shows up in real systems
+
+- **Stack traces are this structure read backwards.** When Go's runtime or `gdb` prints a backtrace, it's walking the saved-`LCL` chain: each frame's saved frame pointer links to the previous frame, each `*(FRAME−5)`-equivalent gives the return address to symbolize. `panic`/`recover` and C++ exceptions unwind by executing the `return` half of this protocol repeatedly without the `goto RET`.
+- **Stack-smashing exploits target exactly `*(FRAME−5)`.** A buffer overflow in a local array writes upward into the saved return address; `ret` then jumps to attacker-chosen code. Stack canaries (gcc's `-fstack-protector`) plant a sentinel between locals and the saved block — the hardware analog of N2T's frame layout is what makes the attack *and* the defense possible.
+- **Postgres `max_stack_depth` and Python's `RecursionError`** both exist because every recursive call deposits one of these frames; the recursion limit is just `available_stack / frame_size`. N2T makes the cost concrete: 5 + k + n words per live call, no exceptions.
+
+### Diagnostic questions
+
+1. **Why does `return` read the return address into a temp register *before* `*ARG = pop()`?** — If you answer "just convention," you'll write a translator that passes every test except zero-argument calls, where `ARG` aliases the return-address slot and the pop overwrites it.
+2. **`call f n` computes `ARG = SP−n−5`. Where does 5 come from, and when would it change?** — "It's in the spec" misses that it's the count of saved words; a VM that also saved a `STATIC` pointer would need `n+6`, and *both* `call` and `return` offsets must move in lockstep.
+3. **Why must bootstrap use `call Sys.init` rather than `goto Sys.init`?** — `goto` would leave `LCL`/`ARG` unset; the first real `return` up the chain would read garbage. The junk frame makes the invariant "every running function has a valid frame" true with no base case.
+4. **Two functions in different files both declare `label LOOP`. Why doesn't the assembly collide?** — If you say "the assembler scopes them," wrong layer: the *translator* mangles to `f$LOOP`; the assembler sees globally unique symbols and stays scope-ignorant.
+5. **After `mult` returns, what is at RAM[306..313] — and does it matter?** — The dead frame's bytes are still physically there (stale values), but `SP=306` makes them unreachable; the next `push` overwrites them. Same reason `free()`d heap data is readable until reallocated — deallocation is pointer arithmetic, not erasure.
+
+---
 
 - VM translator architecture: Parser + CodeWriter two-module design
 - `label` / `goto` / `if-goto` — the three opcodes that encode all control flow
