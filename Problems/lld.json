@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
   "kind": "lld",
+  "last_refreshed": "2026-06-18",
+  "refresh_note": "2026-06-18 — Data-platform + observability LLD wave added (L51-L55), placed ahead of the AI-infra wave so they surface next. Based on current Databricks/Datadog SWE loops (web-checked 2026-06-18): these companies skew away from generic OOD toward (a) brutal concurrency rounds and snapshot/MVCC data structures (Databricks 'SnapshotSet', thread-safe KV with TTL, in-memory KV with iterators) and (b) probabilistic streaming + time-series structures from the observability domain (Datadog's own DDSketch quantile sketch, time-windowed log stores, Count-Min top-K, time-based versioned KV). Recurring shape: 'implement this data structure, now make it thread-safe / mergeable / bounded-memory / point-in-time.' 2026-06-17 — AI-infra LLD wave added (L15 promoted from stub; L46-L50 new) based on Anthropic/OpenAI SWE loops: token-aware rate limiting, BPE tokenizer, continuous-batching scheduler, agent orchestration loop, SSE streaming, PagedAttention KV-cache manager. All ordered to surface ahead of classic OOD warm-ups.",
   "problems": [
     {
       "id": "L01",
@@ -131,6 +133,303 @@
       "status": "seeded"
     },
     {
+      "id": "L15",
+      "title": "Token-aware rate limiter for an agent fleet",
+      "ask": "Design a thread-safe rate limiter for an inference API consumed by a tool-calling agent that fans out into thousands of concurrent sub-agents. Limit on BOTH tokens-per-minute (TPM) and requests-per-minute (RPM), keyed by (caller_identity × endpoint × tier). It must be FAIR — one runaway sub-agent cannot starve the rest of the fleet. On reject, return a 429 with a correct Retry-After. Start single-process, then make it distributed.",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "openai", "universal", "stripe", "datadog", "databricks"],
+      "tags": ["token-bucket", "leaky-bucket", "sliding-window", "fairness", "concurrency", "tpm-rpm", "ai-infra"],
+      "patterns": ["Strategy (algorithm)", "Decorator (middleware)"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "blog", "ref": "Cloudflare — How we built rate limiting capable of scaling to millions of domains", "uses_for": ["sliding-window-counter approximation", "memory vs accuracy trade-off"] },
+        { "type": "blog", "ref": "Stripe — Scaling your API with rate limiters", "uses_for": ["tiered limits", "token bucket + Redis", "429/Retry-After contract"] },
+        { "type": "book", "ref": "DDIA Ch.8 — unreliable clocks", "uses_for": ["why wall-clock windows drift across nodes"] }
+      ],
+      "deep_dive_targets": [
+        "Limiting on TOKENS not requests: reserve-then-reconcile (you don't know output token count until generation completes) vs pre-charge worst case",
+        "Fairness across N sub-agents: weighted fair queuing / deficit round robin vs naive shared token bucket (and the global-mutex contention it creates)"
+      ],
+      "follow_ups": [
+        "Cost-of-service framing: this limit is a function of (caller × endpoint × tier × per-token GPU cost) — derive the number before the algorithm.",
+        "Distributed version: Redis token bucket with Lua atomicity — what breaks when Redis is the bottleneck?",
+        "A burst of 5000 sub-agents wakes simultaneously — thundering herd on the shared counter. How do you shard it?"
+      ],
+      "trap_for_juniors": "Counting requests instead of tokens — a single 200k-token prompt costs more than 1000 tiny calls, so RPM limiting alone lets one caller melt the fleet. And: one global mutex around the counter serializes every sub-agent, defeating the concurrency you were hired to protect.",
+      "status": "seeded"
+    },
+    {
+      "id": "L51",
+      "title": "SnapshotSet (versioned set with snapshot iterators)",
+      "ask": "Design a SnapshotSet: a mutable set of unique keys supporting add(k), remove(k), contains(k), and iterator(). iterator() returns a SNAPSHOT — adds/removes performed after the iterator is created must NOT be visible to it, and multiple snapshots taken at different points can be iterated independently and concurrently. Minimize the space overhead of keeping many snapshots alive. Then make the whole thing thread-safe for concurrent readers and writers.",
+      "difficulty": "hard",
+      "asked_by": ["databricks", "rubrik", "staff+"],
+      "tags": ["snapshot-isolation", "copy-on-write", "mvcc", "versioning", "iterator", "concurrency", "data-platform"],
+      "patterns": ["Iterator", "Copy-on-Write", "MVCC"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "book", "ref": "DDIA Ch.7 — snapshot isolation & MVCC", "uses_for": ["each snapshot sees a consistent version", "readers never block writers"] },
+        { "type": "blog", "ref": "Postgres MVCC — xmin/xmax tuple visibility", "uses_for": ["per-element (addedVersion, removedVersion) tagging", "VACUUM-style GC of dead versions"] },
+        { "type": "github", "ref": "immutable-js / persistent HAMT", "uses_for": ["structural sharing as the alternative to per-element version tags"] }
+      ],
+      "deep_dive_targets": [
+        "Versioned visibility: tag each element with (addedVer, removedVer) and represent a snapshot as a single integer version V; the iterator yields k iff addedVer(k) ≤ V < removedVer(k) — derive why this makes iterator() O(1) and gives snapshot isolation with zero copying",
+        "Space reclamation across many live snapshots: track the oldest live snapshot version and GC tombstones no snapshot can still see (the MVCC VACUUM problem), plus the thread-safe read path (RWMutex vs an atomic version-pointer + COW) so readers never block the writer"
+      ],
+      "follow_ups": [
+        "1000 live snapshots each differing by one element — a full copy is O(N) per snapshot. How do version tags or structural sharing bound the cost?",
+        "A snapshot iterator is held open for an hour while writes pour in — what stops the dead-version list from growing without bound? (the long-running-reader / VACUUM-can't-advance bug)",
+        "Make iteration itself lock-free by snapshotting the version and walking an immutable structure — what consistency do you actually guarantee mid-iteration?"
+      ],
+      "trap_for_juniors": "Deep-copying the whole set inside iterator() — O(N) time and memory per snapshot, so 100 snapshots of a 1M-element set materializes 100M elements. Snapshot isolation comes from versioning (an integer + per-element version tags) or structural sharing, never copying. And freeing a tombstoned element while an older snapshot can still see it corrupts that snapshot — exactly the MVCC vacuum-too-early bug.",
+      "status": "seeded"
+    },
+    {
+      "id": "L52",
+      "title": "DDSketch — mergeable streaming quantile sketch",
+      "ask": "Implement a streaming quantile sketch: add(value) and quantile(q) over a stream of millions of latency measurements, in BOUNDED memory, with a configurable RELATIVE error guarantee (the returned p99 is within, say, 1% of the true p99 across a 1ms-to-60s range). It must be MERGEABLE: per-host sketches combine into one sketch answering quantiles over the union, so percentiles are computed in a distributed fashion. Keep memory bounded even on heavy-tailed inputs.",
+      "difficulty": "hard",
+      "asked_by": ["datadog", "observability-cos", "staff+"],
+      "tags": ["quantile-sketch", "ddsketch", "relative-error", "mergeable", "streaming", "log-buckets", "observability"],
+      "patterns": ["Strategy (mapping scheme)", "Mergeable aggregate"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "paper", "ref": "Masson, Rim, Lee 2019 (VLDB) — DDSketch: A Fast and Fully-Mergeable Quantile Sketch with Relative-Error Guarantees", "uses_for": ["§3 logarithmic mapping", "§4 mergeability & bucket collapsing"] },
+        { "type": "blog", "ref": "Datadog — Computing accurate percentiles with DDSketch", "uses_for": ["10M points/sec scale", "10× faster than GK, as fast as HDR"] },
+        { "type": "github", "ref": "DataDog/sketches-go", "uses_for": ["reference encode/merge", "negative-store + zero-count handling"] }
+      ],
+      "deep_dive_targets": [
+        "The logarithmic bucket mapping: index i = ⌈log_γ(x)⌉ with γ = (1+α)/(1−α); bucket i covers [γ^i, γ^{i+1}) so any value in it is within relative error α of its representative — derive why log-spaced buckets give RELATIVE (not absolute) error, and walk inserting 1, 100, 10000 to show the index growing by ~constant steps",
+        "Mergeability + bounded memory: two sketches with the SAME γ have aligned indices, so merge = elementwise sum of bucket counts in O(#buckets); derive why a fixed γ is the precondition for distributed pre-aggregation, and how collapsing the lowest-count buckets caps memory on heavy tails without breaking the tail-quantile guarantee"
+      ],
+      "follow_ups": [
+        "Compare to t-digest and GK (Greenwald-Khanna): why does DDSketch give relative-error guarantees they don't, and where does t-digest still win?",
+        "quantile(0.5) needs the bucket where the cumulative count crosses N/2 — derive the O(#buckets) scan, and why #buckets = O(log(max/min)/log γ), not O(N)",
+        "The log map is undefined at 0 and for x<0 — how do you handle negatives and exact zeros (a mirrored negative store + a dedicated zero counter)?"
+      ],
+      "trap_for_juniors": "Storing every value (or a wide fixed-width linear histogram) to compute percentiles — O(N) memory, and a linear histogram gives ABSOLUTE error, useless across a heavy-tailed 1ms-to-60s range. And merging two sketches built with different γ: the buckets don't align so the merge is silently wrong. Mergeability REQUIRES a shared mapping.",
+      "status": "seeded"
+    },
+    {
+      "id": "L53",
+      "title": "Time-windowed log/event store with range query",
+      "ask": "Design an in-memory store for timestamped log events. ingest(ts, event) appends; query(start, end) returns events in that time range in order; data older than a retention horizon is dropped. Ingest is high-throughput and mostly-but-not-strictly increasing in time (late/out-of-order events happen). Make range queries sub-linear, retention O(1), and the whole thing safe under concurrent ingest + query.",
+      "difficulty": "medium",
+      "asked_by": ["datadog", "observability-cos", "universal"],
+      "tags": ["time-series", "range-query", "time-bucketing", "retention", "lsm", "watermark", "observability", "concurrency"],
+      "patterns": ["Segment/bucket index", "Producer-Consumer"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "book", "ref": "DDIA Ch.3 — SSTables & LSM-trees", "uses_for": ["immutable sorted segments", "retention = drop oldest segment, not delete-from-front"] },
+        { "type": "github", "ref": "Prometheus TSDB — head block + WAL + sealed blocks", "uses_for": ["mutable head vs immutable sealed blocks", "time-window chunks"] },
+        { "type": "blog", "ref": "Datadog — log management & time-indexed storage", "uses_for": ["time-bucketed shards", "hot vs sealed segment lifecycle"] }
+      ],
+      "deep_dive_targets": [
+        "Time-bucketed index: partition the timeline into fixed-duration buckets (e.g. 1-min shards); query(start,end) touches only ⌈(end−start)/bucket⌉ buckets and binary-searches the two edges — derive O(log n + k) vs O(N) flat scan, and why retention becomes an O(1) unlink-oldest-bucket instead of an O(N) delete",
+        "Concurrent ingest + query with out-of-order events: one mutable 'hot' bucket taking appends vs immutable 'sealed' buckets readers scan lock-free, and a watermark deciding when a bucket may seal despite late arrivals — walk an event landing 90s late and where it goes"
+      ],
+      "follow_ups": [
+        "An event arrives 10 minutes late but its bucket was already sealed and evicted — accept into a side-bucket, reject, or reopen? What does the business actually want?",
+        "A 24h query over 1-min buckets touches 1440 buckets — when do you roll up into coarser buckets (downsampling), and what accuracy do you trade?",
+        "Make sealed-segment reads truly lock-free: how does an immutable segment + atomic pointer swap on seal get you there?"
+      ],
+      "trap_for_juniors": "One flat slice sorted by time behind a mutex — every query is O(N) and retention is an O(N) delete-from-front that fights ingest for the lock. Time-bucketing turns range queries into a handful of bucket scans and retention into an O(1) unlink. And assuming timestamps are strictly increasing — late events then break the sort invariant or get silently dropped.",
+      "status": "seeded"
+    },
+    {
+      "id": "L54",
+      "title": "Time-based versioned key-value store (TimeMap)",
+      "ask": "Design a TimeMap: set(key, value, ts) stores a versioned value, and get(key, ts) returns the value with the largest stored timestamp ≤ ts (empty if none). It must answer point-in-time reads efficiently as each key accumulates thousands of versions, support TTL/compaction of old versions, and be thread-safe for concurrent set/get.",
+      "difficulty": "medium",
+      "asked_by": ["datadog", "databricks", "universal"],
+      "tags": ["versioned-kv", "binary-search", "point-in-time", "mvcc-read-path", "ttl", "concurrency"],
+      "patterns": ["Composition", "Binary search"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "leetcode", "ref": "#981 Time Based Key-Value Store", "uses_for": ["canonical problem statement", "API surface"] },
+        { "type": "book", "ref": "DDIA Ch.7 — MVCC", "uses_for": ["reading the version visible at a timestamp", "this is the MVCC read path"] },
+        { "type": "github", "ref": "HBase/Cassandra cell versioning", "uses_for": ["timestamped column versions", "compaction of old versions"] }
+      ],
+      "deep_dive_targets": [
+        "Per-key array sorted by timestamp + binary search for the largest ts ≤ query (upper_bound then step back one) — derive O(log v) get and O(1) amortized append WHEN writes are timestamp-monotonic, vs O(v) insertion when a write arrives out of order; name the adversarial out-of-order write that degrades it",
+        "Thread-safe + bounded memory: append-only per-key slices sharded by key hash under RWMutex (concurrent readers, appending writer), plus TTL/compaction that drops versions past the horizon — and why this IS the MVCC read path (Postgres/HBase store the same timestamp-versioned cells)"
+      ],
+      "follow_ups": [
+        "get is 100× more frequent than set — does a copy-on-write append (immutable per-key snapshot) beat locking? What does it cost the writer?",
+        "A key has 1M versions but reads only ever ask for the last hour — how does tiered storage / compaction keep the hot array small?",
+        "Two sets race with the same (key, ts) — last-writer-wins, reject, or store both? What does the timestamp even mean then?"
+      ],
+      "trap_for_juniors": "Storing map[key][]value and linear-scanning for the right timestamp — O(v) per get, so a hot key with 10k versions makes every read 10k comparisons. Keep versions sorted and binary-search. And assuming set() always arrives in timestamp order — one out-of-order write breaks the sorted invariant the binary search depends on, returning wrong values silently.",
+      "status": "seeded"
+    },
+    {
+      "id": "L55",
+      "title": "Streaming heavy-hitters / top-K (Count-Min Sketch)",
+      "ask": "Design a streaming top-K: over a high-rate stream of keys (request paths, customer IDs) with billions of distinct values, answer 'what are the K most frequent keys right now?' in BOUNDED memory — you cannot keep a counter per distinct key. Tolerate a small over-count error. Then extend to a sliding window (top-K over the last 5 minutes) and make it mergeable across shards.",
+      "difficulty": "hard",
+      "asked_by": ["datadog", "observability-cos", "staff+"],
+      "tags": ["count-min-sketch", "heavy-hitters", "top-k", "streaming", "probabilistic", "min-heap", "sliding-window", "observability"],
+      "patterns": ["Strategy (hashing)", "Mergeable aggregate"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "paper", "ref": "Cormode & Muthukrishnan 2005 — An Improved Data Stream Summary: the Count-Min Sketch", "uses_for": ["§3 the d×w counter matrix", "the (ε, δ) error bound"] },
+        { "type": "github", "ref": "RedisBloom CMS + Misra-Gries/SpaceSaving", "uses_for": ["reference d×w matrix", "deterministic top-K alternative for comparison"] },
+        { "type": "blog", "ref": "Datadog — top-N endpoints by traffic over a window", "uses_for": ["why exact per-key counters don't fit", "sliding-window roll-up"] }
+      ],
+      "deep_dive_targets": [
+        "The d×w counter matrix: d independent hash functions, each key increments one counter per row, estimate = MIN across the d rows — derive why MIN cancels collisions (collisions only ADD, so the min row is least-polluted) and the bound w = ⌈e/ε⌉, d = ⌈ln 1/δ⌉; walk two colliding keys through it",
+        "Top-K on top of CMS: a size-K min-heap of (key, estimate); on each update estimate the key and conditionally sift it in — derive why CMS alone can't enumerate heavy hitters (it stores no key list) so you need the heap beside it, and a ring of per-bucket sketches you sum + expire for the sliding window"
+      ],
+      "follow_ups": [
+        "Compare to SpaceSaving / Misra-Gries (deterministic, bounded counters) — when does the exact-ish counter approach beat CMS + heap?",
+        "Merge across 100 shards: CMS matrices with the same hashes and dimensions sum elementwise — derive why mergeability needs identical hash seeds (mirroring DDSketch's fixed-γ requirement)",
+        "CMS only ever over-counts, never under — what does that mean for a heavy hitter you're about to alert on? Can a cold key ever look hot?"
+      ],
+      "trap_for_juniors": "A hashmap of key→count — exact but O(distinct keys) memory, unbounded when keys are URLs or user IDs. CMS trades a small over-count for fixed memory. And using a single hash row: collisions then inflate estimates with no way to cancel — the d-row MIN is the whole point. Also CMS has no key list, so 'top-K' needs a heap alongside it.",
+      "status": "seeded"
+    },
+    {
+      "id": "L46",
+      "title": "BPE tokenizer (encode/decode with byte fallback)",
+      "ask": "Implement a tokenizer: encode(text) -> []int and decode([]int) -> text, driven by a vocab + ordered merge rules (byte-pair encoding). Critically: characters/bytes NOT covered by the vocab keys (emoji, rare scripts) must still round-trip losslessly via byte fallback, so tokenize ∘ detokenize is the identity. Keep encode efficient as the text grows.",
+      "difficulty": "medium",
+      "asked_by": ["anthropic", "openai"],
+      "tags": ["bpe", "merge-rules", "byte-fallback", "round-trip", "ai-infra", "string-algorithms"],
+      "patterns": ["Strategy (merge ranking)"],
+      "concurrency_required": false,
+      "language": "go",
+      "sources": [
+        { "type": "paper", "ref": "Sennrich et al. 2016 — Neural Machine Translation of Rare Words with Subword Units", "uses_for": ["the BPE merge algorithm §3.2"] },
+        { "type": "github", "ref": "openai/tiktoken", "uses_for": ["byte-level BPE", "regex pre-tokenization split", "special tokens"] },
+        { "type": "github", "ref": "karpathy/minbpe", "uses_for": ["minimal readable BPE train/encode/decode"] }
+      ],
+      "deep_dive_targets": [
+        "The merge loop as a data-structure problem: symbols in a doubly-linked list + a heap of adjacent pairs keyed by merge RANK — derive why it's O(n log n), not greedy longest-match",
+        "Byte fallback: representing the 256 raw bytes as base tokens so any UTF-8 input is always encodable, and why naive char-level vocab crashes on unseen codepoints"
+      ],
+      "follow_ups": [
+        "Streaming decode: a token boundary splits a multi-byte UTF-8 character — how do you emit only complete runes?",
+        "Add special tokens (<|im_start|>) that must never be split by BPE — where do they intercept the pipeline?",
+        "Two different token sequences decode to the same string — is that a bug?"
+      ],
+      "trap_for_juniors": "Greedy longest-match against the vocab instead of replaying merges in rank order — produces a different (wrong) tokenization than the model was trained on. And assuming every input char is in the vocab → KeyError/panic on the first emoji.",
+      "status": "seeded"
+    },
+    {
+      "id": "L47",
+      "title": "Continuous-batching scheduler (LLM inference)",
+      "ask": "Design the scheduler that feeds one GPU model executor. Requests arrive continuously with prompts of varying length. Implement iteration-level (continuous) batching: admit new requests into the running batch and retire finished sequences EVERY decode step — don't wait for a static batch to fill. Respect a fixed KV-cache memory budget. Maximize throughput without starving short requests.",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "openai", "staff+"],
+      "tags": ["continuous-batching", "scheduling", "kv-cache-budget", "admission-control", "prefill-decode", "ai-infra"],
+      "patterns": ["Strategy (admission)", "State (sequence lifecycle)"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "paper", "ref": "Yu et al. 2022 (OSDI) — Orca: A Distributed Serving System for Transformer-Based Generative Models", "uses_for": ["iteration-level scheduling §3", "selective batching"] },
+        { "type": "paper", "ref": "Kwon et al. 2023 (SOSP) — Efficient Memory Management for LLM Serving with PagedAttention (vLLM)", "uses_for": ["KV-budget-driven admission", "throughput numbers"] },
+        { "type": "blog", "ref": "vLLM docs — continuous batching & chunked prefill", "uses_for": ["scheduler config knobs"] }
+      ],
+      "deep_dive_targets": [
+        "The decode loop as a state machine: running set + waiting queue, per-step admit/evict gated on free KV blocks — walk three requests of length 5, 200, 12 through it",
+        "Prefill vs decode cost asymmetry and chunked prefill: derive the max batch size from (KV bytes per token × budget), and why head-of-line blocking appears without iteration-level scheduling"
+      ],
+      "follow_ups": [
+        "Prefix caching: 1000 requests share a 2k-token system prompt — how does the scheduler exploit that?",
+        "SLO classes: an interactive request must not wait behind a 100k-token batch job. Priority + preemption?",
+        "Out of KV mid-decode: preempt-and-recompute vs swap-to-CPU — which, when?"
+      ],
+      "trap_for_juniors": "Static batching — waiting for N requests before launching. A 4k-token straggler then blocks 31 finished slots, and the GPU idles. Iteration-level scheduling admits/retires per step. Also: ignoring the KV budget → OOM mid-generation, the worst possible time to fail.",
+      "status": "seeded"
+    },
+    {
+      "id": "L48",
+      "title": "Agent orchestration loop + tool dispatcher",
+      "ask": "Design the core runtime of an LLM agent. The control loop is observe → think (model call) → act (tool call) → observe, repeating until a termination condition. A tool registry maps tool name → typed schema + handler; dispatch must validate the model's arguments against the schema, execute with a timeout + sandbox, parse the result, and feed structured errors back to the model. Bound the loop (max steps, token/cost budget). Make tools pluggable and some tool calls run in parallel.",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "openai"],
+      "tags": ["orchestrator", "tool-registry", "schema-validation", "timeout", "termination", "retries", "ai-infra"],
+      "patterns": ["Strategy (tool)", "Command", "State (loop)"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "blog", "ref": "Anthropic — Building Effective Agents", "uses_for": ["loop vs workflow distinction", "tool-use error handling"] },
+        { "type": "paper", "ref": "Yao et al. 2023 — ReAct: Synergizing Reasoning and Acting in Language Models", "uses_for": ["interleaved reason/act trace", "termination"] },
+        { "type": "blog", "ref": "Anthropic tool-use / OpenAI function-calling docs", "uses_for": ["JSON-schema tool definitions", "parallel tool calls"] }
+      ],
+      "deep_dive_targets": [
+        "The loop as a state machine with explicit termination set (final answer / max steps / budget exhausted / hard error) — why an unbounded loop is the #1 production incident",
+        "Tool dispatch internals: registry → JSON-schema arg validation → timeout + sandbox → structured error back to the model, plus bounded-concurrency parallel tool calls"
+      ],
+      "follow_ups": [
+        "A tool is non-idempotent (send_email) and the step is retried after a timeout — how do you avoid double-send?",
+        "Stream partial tool output back into the loop before the tool finishes — what changes?",
+        "Human-in-the-loop: pause before a destructive tool, persist state, resume later. Where's the seam?"
+      ],
+      "trap_for_juniors": "No max-steps and no budget ceiling — the agent loops forever or burns thousands of dollars on one request. And executing the model's tool arguments without schema validation — the model hallucinates a field and your handler panics or, worse, does the wrong destructive thing.",
+      "status": "seeded"
+    },
+    {
+      "id": "L49",
+      "title": "SSE token-streaming multiplexer",
+      "ask": "Design the server component that streams generated tokens to clients token-by-token over Server-Sent Events. One generation may fan out to multiple subscribers (tabs, observers). Clients can disconnect or cancel — and if the LAST subscriber leaves, generation should stop (it's burning GPU). A slow client must never block the generator or the other clients. Support resume-from-offset on reconnect.",
+      "difficulty": "medium",
+      "asked_by": ["openai", "anthropic", "universal"],
+      "tags": ["sse", "streaming", "backpressure", "cancellation", "fan-out", "resume", "ai-infra"],
+      "patterns": ["Observer", "Producer-Consumer"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "blog", "ref": "OpenAI API streaming docs — SSE token stream format", "uses_for": ["event/data framing", "[DONE] sentinel"] },
+        { "type": "reference", "ref": "MDN — Server-Sent Events / EventSource", "uses_for": ["Last-Event-ID resume", "reconnect semantics"] },
+        { "type": "book", "ref": "OSTEP Ch.30 — condition variables", "uses_for": ["producer/consumer signalling for the per-subscriber buffer"] }
+      ],
+      "deep_dive_targets": [
+        "Slow-consumer problem: per-subscriber bounded ring buffer + drop-or-disconnect policy, so the generator (single producer) never blocks on the slowest client",
+        "Cancellation propagation: refcount subscribers; last unsubscribe cancels the generation context — walk the bytes/IDs of a resume-from-offset reconnect"
+      ],
+      "follow_ups": [
+        "TTFT vs throughput: do you flush every token or coalesce? What does buffering cost the user?",
+        "SSE vs WebSocket here — what does each buy, and which for one-directional token push?",
+        "Exactly-once token delivery across a reconnect — sequence IDs and dedup. Is exactly-once even achievable?"
+      ],
+      "trap_for_juniors": "A single writer that does a blocking write to each client in turn — one slow client stalls everyone, and TTFT for fast clients collapses. Fan out through bounded per-subscriber channels. And: no cancellation, so the GPU keeps generating after every client has left.",
+      "status": "seeded"
+    },
+    {
+      "id": "L50",
+      "title": "KV-cache block manager (PagedAttention-style)",
+      "ask": "Implement the allocator that manages GPU KV-cache as fixed-size blocks, like OS pages. Each sequence requests blocks as it grows during decoding. Support prefix sharing: many sequences with a common prompt point at the same physical blocks (copy-on-write when they diverge). Support eviction/preemption under memory pressure. alloc and free are O(1).",
+      "difficulty": "hard",
+      "asked_by": ["anthropic", "staff+", "openai"],
+      "tags": ["block-allocator", "paging", "prefix-sharing", "copy-on-write", "eviction", "refcount", "ai-infra"],
+      "patterns": ["Composition", "Flyweight (shared blocks)"],
+      "concurrency_required": true,
+      "language": "go",
+      "sources": [
+        { "type": "paper", "ref": "Kwon et al. 2023 (SOSP) — PagedAttention / vLLM", "uses_for": ["block table, logical→physical mapping §4", "copy-on-write sharing"] },
+        { "type": "book", "ref": "OSTEP Ch.18-19 — paging & TLBs", "uses_for": ["the OS analogy the whole design borrows"] },
+        { "type": "blog", "ref": "vLLM blog — PagedAttention internals", "uses_for": ["fragmentation numbers, near-zero waste"] }
+      ],
+      "deep_dive_targets": [
+        "Free-list block allocator (O(1) alloc/free) + per-sequence block table (logical block → physical block) — walk a sequence growing from 1 to 3 blocks",
+        "Refcounted shared blocks with copy-on-write: two sequences share a prompt prefix, then one writes — derive when you copy vs share, and the bug when you free a still-referenced block"
+      ],
+      "follow_ups": [
+        "Memory pressure: swap blocks to CPU RAM vs drop-and-recompute on resume — cost model for each.",
+        "Beam search forks a sequence into k beams — how does CoW make that cheap?",
+        "Internal fragmentation: last block of every sequence is partially full — how big should a block be?"
+      ],
+      "trap_for_juniors": "Allocating one contiguous KV region per sequence sized to max length — the pre-vLLM mistake. You waste 60-80% to internal fragmentation and OOM far below real capacity. Paging into fixed blocks is the fix. And: freeing a block whose refcount > 1 corrupts another sequence's cache.",
+      "status": "seeded"
+    },
+    {
       "id": "L12",
       "title": "Meeting scheduler / calendar",
       "ask": "Design a calendar scheduling system. Users propose meetings with N participants; the system finds the next slot where everyone is free. Each user has working hours, time zones, and existing events.",
@@ -161,7 +460,7 @@
       "title": "Logging framework",
       "ask": "Design a logging framework like log4j or zap. Multiple log levels, multiple output destinations (file, network, stdout), structured logging with key-value pairs, and pluggable formatters. Thread-safe.",
       "difficulty": "medium",
-      "asked_by": ["universal", "uber", "linkedin"],
+      "asked_by": ["universal", "uber", "linkedin", "databricks"],
       "tags": ["chain-of-responsibility", "builder", "pluggable-appenders"],
       "patterns": ["Chain of Responsibility", "Builder", "Strategy"],
       "concurrency_required": true,
@@ -187,8 +486,8 @@
       "title": "LRU cache (thread-safe)",
       "ask": "Design an LRU cache with O(1) get and put. Capacity N. Now make it thread-safe — multiple goroutines/threads accessing concurrently. Discuss the lock contention trade-off and how you'd reduce it.",
       "difficulty": "medium",
-      "asked_by": ["universal", "amazon", "google", "anthropic"],
-      "tags": ["doubly-linked-list", "hashmap", "concurrency", "lock-striping"],
+      "asked_by": ["universal", "amazon", "google", "anthropic", "databricks"],
+      "tags": ["doubly-linked-list", "hashmap", "concurrency", "lock-striping", "ttl"],
       "patterns": ["Composition"],
       "concurrency_required": true,
       "language": "go",
@@ -214,7 +513,7 @@
       "title": "Thread pool / executor",
       "ask": "Design a thread pool. N workers, a queue of submitted tasks, graceful shutdown, and the ability to submit a Future-style result. Show how you'd implement work-stealing for load balancing.",
       "difficulty": "hard",
-      "asked_by": ["senior+", "uber", "stripe", "google"],
+      "asked_by": ["senior+", "uber", "stripe", "google", "anthropic"],
       "tags": ["producer-consumer", "work-stealing", "futures"],
       "patterns": ["Producer-Consumer", "Future / Promise"],
       "concurrency_required": true,
@@ -371,7 +670,7 @@
       "title": "Workflow engine (DAG of tasks)",
       "ask": "Design a workflow engine. Users define a DAG of tasks (Task A → Task B, C; Task D depends on B and C). Workers execute tasks; the engine tracks state, handles retries, and signals completion. Tasks may produce outputs consumed by downstream tasks.",
       "difficulty": "hard",
-      "asked_by": ["airflow", "temporal", "google", "amazon"],
+      "asked_by": ["airflow", "temporal", "google", "amazon", "openai"],
       "tags": ["dag", "topological-eval", "retry", "idempotency", "staff-bar"],
       "patterns": ["Strategy (retry)", "State", "Observer"],
       "concurrency_required": true,
@@ -399,7 +698,6 @@
     { "id": "L08", "title": "Library management", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy"], "status": "queued" },
     { "id": "L09", "title": "Hotel reservation", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["State"], "status": "queued" },
     { "id": "L11", "title": "Snake & Ladder", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy (dice)"], "status": "queued" },
-    { "id": "L15", "title": "Rate limiter (LLD)", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Strategy (algorithm)"], "status": "queued" },
     { "id": "L16", "title": "Connection pool", "asked_by": ["senior+"], "difficulty": "medium", "patterns": ["Object Pool"], "status": "queued" },
     { "id": "L19", "title": "Trello / Kanban", "asked_by": ["atlassian"], "difficulty": "medium", "patterns": ["Aggregate"], "status": "queued" },
     { "id": "L22", "title": "Stack Overflow / Q&A", "asked_by": ["universal"], "difficulty": "medium", "patterns": ["Strategy (voting)"], "status": "queued" },
@@ -407,7 +705,7 @@
     { "id": "L24", "title": "Swiggy / food delivery core", "asked_by": ["swiggy", "doordash", "uber-eats"], "difficulty": "medium", "patterns": ["State (order)"], "status": "queued" },
     { "id": "L25", "title": "Music player", "asked_by": ["spotify", "apple"], "difficulty": "easy", "patterns": ["State", "Strategy"], "status": "queued" },
     { "id": "L27", "title": "Distributed lock manager interface", "asked_by": ["senior+"], "difficulty": "hard", "patterns": ["Lease"], "status": "queued" },
-    { "id": "L29", "title": "Retry library with backoff/jitter", "asked_by": ["universal"], "difficulty": "easy", "patterns": ["Strategy"], "status": "queued" },
+    { "id": "L29", "title": "Retry library with backoff/jitter", "asked_by": ["universal", "anthropic"], "difficulty": "easy", "patterns": ["Strategy"], "status": "queued" },
     { "id": "L30", "title": "Feature flag SDK (client)", "asked_by": ["launchdarkly"], "difficulty": "medium", "patterns": ["Strategy (eval)"], "status": "queued" },
     { "id": "L31", "title": "Typed config loader (YAML/env layered)", "asked_by": ["senior+"], "difficulty": "medium", "patterns": ["Builder", "Visitor"], "status": "queued" },
     { "id": "L32", "title": "Event-sourced bank account", "asked_by": ["fintech"], "difficulty": "hard", "patterns": ["Event Sourcing"], "status": "queued" },

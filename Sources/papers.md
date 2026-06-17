@@ -121,6 +121,44 @@ These papers are **not duplicated** in the repo. They live wherever the user kee
 
 ---
 
+## LLM serving + inference infra
+
+### Orca (Yu et al. 2022, OSDI)
+**Powers**: L47 continuous-batching scheduler · L50 KV-cache block manager
+**Key sections**: §3 iteration-level scheduling · selective batching
+**One-line**: Introduced continuous (iteration-level) batching — admit/retire requests every decode step instead of per static batch; the foundation of modern LLM serving throughput.
+
+### PagedAttention / vLLM (Kwon et al. 2023, SOSP)
+**Powers**: L50 KV-cache block manager · L47 continuous-batching scheduler
+**Key sections**: §4 block table & logical→physical mapping · copy-on-write sharing
+**One-line**: Treats the KV cache like OS paging — fixed-size blocks, near-zero fragmentation, prefix sharing via refcounted blocks; ~2-4× throughput over contiguous allocation.
+
+### BPE for subwords (Sennrich et al. 2016)
+**Powers**: L46 BPE tokenizer
+**Key sections**: §3.2 the merge algorithm
+**One-line**: Byte-pair encoding for open-vocabulary tokenization; merge most-frequent adjacent pairs in rank order. Byte-level variants add lossless fallback for any input.
+
+### ReAct (Yao et al. 2023)
+**Powers**: L48 agent orchestration loop
+**Key sections**: interleaved reason→act trace · termination
+**One-line**: Interleaves model reasoning with tool actions in a single loop; the conceptual core of the observe→think→act agent runtime.
+
+---
+
+## Probabilistic / streaming structures (observability)
+
+### DDSketch (Masson, Rim, Lee 2019, VLDB)
+**Powers**: L52 mergeable quantile sketch
+**Key sections**: §3 logarithmic mapping (index = ⌈log_γ(x)⌉, γ = (1+α)/(1−α)) · §4 mergeability & bucket collapsing
+**One-line**: Datadog's quantile sketch — log-spaced buckets give a *relative*-error guarantee (not absolute), and a fixed γ makes two sketches mergeable by summing bucket counts, enabling distributed percentile computation.
+
+### Count-Min Sketch (Cormode & Muthukrishnan 2005)
+**Powers**: L55 streaming heavy-hitters / top-K
+**Key sections**: §3 the d×w counter matrix · the (ε, δ) bound (w = ⌈e/ε⌉, d = ⌈ln 1/δ⌉)
+**One-line**: Fixed-memory frequency estimator; d hash rows, estimate = MIN across rows so collisions (which only add) cancel. Pair with a min-heap to enumerate the top-K it can't list on its own.
+
+---
+
 ## Adding a paper
 
 1. Add a section under the appropriate category.

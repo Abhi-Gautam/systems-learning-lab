@@ -4,6 +4,168 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-06-11] Page garbage, fragmentation & vacuum · pp.133–137 · Ch.4 §Compression → §Vacuum and Maintenance
+
+- Compression wrap-up: compress-the-page (padding problem) vs compress-the-data (row/column)
+- Deletes drop cell *offsets*, never cell *bytes* — garbage = unreachable-from-root
+- Leaf updates avoid page rewrites → multiple versions per key; MVCC keeps ghosts alive on purpose
+
+### History — "why does this exist?"
+Slotted pages (System R, 1970s) bought variable-size records with one indirection layer — a sorted pointer array in front of unsorted cells. The bill arrives as fragmentation: every delete and split leaves dead bytes mid-page. The fix that stuck was moving cleanup *off the write path* into background maintenance, so inserts and deletes never pay for compaction inline — Berkeley POSTGRES's no-overwrite storage (1987) turned this into the VACUUM process Postgres still runs today.
+
+### Intuition — "this is like…"
+Deleting a B-Tree cell is deleting a file on a filesystem: the directory entry (the cell offset in the page header) disappears, but the data blocks (the cell bytes) sit on disk untouched until something overwrites them. And a fragmented page is a disk at 40% free that still can't fit one contiguous file: the free bytes are real, they're just scattered between live cells.
+
+### Mechanics
+
+#### 1. Closing out compression: two places to compress
+
+| Design | Mechanism | Problem it buys |
+|---|---|---|
+| Compress the **whole page** | page shrinks below block size | result no longer block-aligned → pad back up (waste) or pack pages (addressing complexity) — fig 4-10 |
+| Compress the **data only** — row-wise or column-wise | records/columns compressed individually | none structural: page management and compression are fully decoupled |
+
+Most open-source engines make compression pluggable (Snappy, zlib, lz4, …) and leave the choice to the operator. Picking one is a four-metric trade: **memory overhead, compression speed, decompression speed, ratio** (the Squash benchmark compares these across block sizes). Read-heavy system → optimize decompression speed; cold archive → optimize ratio.
+
+#### 2. Anatomy of a fragmented page
+
+```mermaid
+flowchart LR
+    subgraph page["slotted page (fig 4-11)"]
+        H["header"] --> P["cell pointers: →c1 ·(c2 removed)· →c3"]
+        P --> F["free space"]
+        F --> C3["cell 3 (live)"]
+        C3 --> G["GARBAGE — deleted cell 2 bytes"]
+        G --> C1["cell 1 (live)"]
+    end
+```
+
+The page has *enough logical space* but no *contiguous* run: free bytes are split between the middle gap and the dead cell. **Liveness = addressability**: a record is live iff you can reach it by following pointers down from the root; an unreferenced cell is garbage — "its contents are as good as nullified." Zero-filling garbage is usually skipped — pure performance call (those bytes get overwritten by future inserts anyway), with a sharp edge: *deleted ≠ erased*. The bytes persist on disk, which is why compliance-grade deletion needs more than a B-Tree delete.
+
+#### 3. How each operation creates (or dodges) garbage
+
+| Operation | What physically happens | Fragmentation effect |
+|---|---|---|
+| **delete** (leaf) | remove offset from header; cell bytes untouched | dead bytes stranded mid-page |
+| **split** | offsets trimmed; cells past the split point unreferenced | dead bytes until overwrite or vacuum |
+| **insert** | cell appended in *arrival* order; pointer array keeps sort order | scattered locality — sequential scans lose cache prefetch vs physically-sorted cells |
+| **update** (leaf) | write new version, repoint offset — page rewrite avoided | multiple versions of the cell on the page, only one addressable |
+
+Internal nodes mostly sit this out: their keys are navigation guides defining subtree boundaries, updated per-key without structural change (overflow pages excepted).
+
+#### 4. MVCC and ghost records — garbage kept on purpose
+
+Some engines *deliberately* leave removed/updated cells in place: a concurrently running transaction that started before the delete may still be entitled to read the old version (multiversion concurrency control). The dead cell becomes collectible only when **no live transaction can see it**; engines track these as *ghost records* and collect them as soon as the last transaction that might see them completes [WEIKUM01]. The tension, derived:
+
+- Reclaim **too early** → a reader's snapshot dereferences a recycled cell — broken isolation.
+- Reclaim **too late** → pages bloat with dead versions; every scan wades through them — this is precisely Postgres "table bloat."
+
+#### 5. Why a rewrite is eventually unavoidable
+
+A write needs **one contiguous run** of free bytes at least as large as the incoming cell. Scattered fragments can sum to plenty yet fit nothing. The only fix is compaction: rewrite the page, packing live cells together (the next section, p.138, picks up the defragmentation machinery).
+
+### If you were the page manager…
+When do you compact — lazily, when an insert fails for space despite sufficient logical free bytes, or eagerly in the background? Lazy makes one unlucky writer pay the full rewrite latency mid-transaction; eager spends background I/O that may be wasted on pages about to change again. It's the same latency-vs-throughput shape as GC pause strategies, and mature engines land in the same place: background maintenance as the norm, inline compaction as the last resort.
+
+### Cross-language view
+*(n/a — storage-engine internals; the per-engine comparison is below.)*
+
+### Where this shows up in real systems
+- **Postgres**: DELETE/UPDATE stamp the tuple's `xmax` and leave the bytes — a *dead tuple*. Autovacuum reclaims it once no snapshot can see it; `VACUUM FULL` is the full page/table rewrite. Bloat dashboards (`pgstattuple`) measure exactly figure 4-11's dead-bytes ratio.
+- **InnoDB**: delete-marked records plus background *purge threads* — the ghost-record design verbatim; purge lag under long-running transactions is the "reclaim too late" failure mode live.
+- **SQLite**: freed pages go to a freelist; `VACUUM` rebuilds the entire database file to compact it, and `PRAGMA auto_vacuum` trades steady-state overhead for avoiding the big rewrite.
+
+### Diagnostic questions
+1. After a leaf delete, where are the record's bytes? *(wrong: "gone" → still on the page, unaddressable, until overwritten or compacted)*
+2. A page reports 200 free bytes but a 150-byte insert triggers a rewrite. Why? *(wrong: "corruption" → free bytes aren't contiguous; writes need one unbroken run)*
+3. Why skip zero-filling deleted cells? *(wrong: "correctness requires keeping them" → pure performance; new data overwrites them anyway — but deleted data lingers on disk)*
+4. Why would an engine deliberately preserve dead cells? *(wrong: "laziness/deferred work" → MVCC: concurrent transactions may still be entitled to the old version)*
+5. Inserts append cells in arrival order, yet range scans return sorted results. How? *(wrong: "cells are kept sorted" → the offset/pointer array is sorted; the cells themselves are not)*
+
+---
+
+## [2026-06-10] B-Tree write optimizations · pp.128–132 · Ch.4 §Rebalancing → §Compression
+
+- **Rebalancing / load-balancing**: postpone splits by shoving elements to a sibling
+- **Right-only appends**: the monotonic-key fastpath (Postgres `fastpath`, SQLite `quickbalance`)
+- **Bulk loading** presorted data bottom-up, and **page-wise compression** trade-offs
+
+### History — "why does this exist?"
+The naive B-Tree from earlier in chapter 4 splits a node the instant it overflows and merges on underflow. Splits are *expensive* (allocate a page, rewrite, propagate a key upward) and they leave nodes ~half full, wasting space and adding tree height. Decades of engineering (Graefe 2011, Knuth's B\*-Trees 1998) went into **deferring** those splits. The payoff is denser nodes → shorter trees → fewer page reads per lookup. SQLite and PostgreSQL each ship a different slice of these tricks.
+
+### Intuition — "this is like…"
+Rebalancing is **load-shedding to a neighbor** the way a busy Kafka partition's producer can spill to a less-loaded sibling instead of forcing a brand-new partition. Right-only append is the **append-only log** insight smuggled into a B-Tree: if keys only ever grow (auto-increment IDs), the action is always at the *right edge*, so you can cache that one leaf and skip the whole root-to-leaf walk — the same reason an LSM memtable loves sequential writes.
+
+### Mechanics
+**1. Rebalancing (deferring the split).** On overflow, instead of splitting, **move some elements to a sibling** that has room. On underflow, instead of merging, **borrow** from a fuller sibling. Both must update the **separator key + pointers in the parent**, because the min/max invariant of the siblings just changed.
+
+```mermaid
+graph TD
+  P["parent: sep key updated ↑"]
+  P --> L["left sibling (over-full)"]
+  P --> R["right sibling (room)"]
+  L -- "move overflow elements →" --> R
+```
+
+**B\*-Trees** push this furthest: keep redistributing between two neighbors until *both* are full, then split **2 nodes → 3 nodes**, each **⅔ full** (vs. the naive 1→2 split giving two ½-full nodes). SQLite uses this `balance-siblings` variant.
+
+| Strategy | Split trigger | Resulting occupancy | Cost |
+|---|---|---|---|
+| Naive split | one node full | ~50% | cheap per-op |
+| Load-balance to sibling | sibling also full | higher | extra tracking |
+| B\* (2→3 split) | both siblings full | ~67% | most balancing logic |
+
+Higher occupancy → smaller height → fewer pages traversed per search. The cost is **more maintenance work and code complexity** — but it's isolated, so Khononov-style advice: add it as a later optimization, not day one.
+
+**2. Right-only appends.** When primary keys are **monotonically increasing** (auto-increment), every insert lands in the **rightmost leaf**, so nearly all splits happen on the right spine. Two production fastpaths:
+
+| DB | Name | Trick |
+|---|---|---|
+| PostgreSQL | **fastpath** | if new key > first key of cached rightmost page *and* it has room → insert directly, **skip the whole read path** (no root-to-leaf descent) |
+| SQLite | **quickbalance** | if inserting at the far right into a *full* node → allocate a fresh rightmost page and just add its pointer to the parent, instead of splitting/rebalancing |
+
+SQLite's quickbalance leaves the new page **nearly empty** (not half-empty like a split) — a deliberate bet that, with monotonic keys, it'll fill up shortly. Bonus: monotonic keys also keep nonleaf pages **less fragmented** than random-key inserts.
+
+**3. Bulk loading.** Presorted data (initial load, or defrag rebuild) takes right-only-append to the extreme — **build the tree bottom-up, no splits/merges at all**:
+
+```mermaid
+graph TD
+  subgraph "write leaves first (sorted, page at a time)"
+    l1["leaf 0"] --- l2["leaf 1"] --- l3["leaf 2"]
+  end
+  l1 -. "propagate first key ↑" .-> p1["parent built after leaves"]
+  l2 -. .-> p1
+  l3 -. .-> p1
+```
+
+Write the full **leaf level** first, propagating each leaf's first key upward; build higher levels once all child pointers exist. Benefits: **zero on-disk splits/merges**, and only the **current chain of parents** needs to live in memory. **Immutable B-Trees** (e.g. in LSM SSTables) go further — pages fill *completely* since nothing is ever modified, maximizing occupancy.
+
+**4. Page-wise compression.** Trade-off: bigger compression ratio = less disk + more data per read, but more RAM/CPU to (de)compress.
+
+| Granularity | Problem |
+|---|---|
+| Whole file | must recompress entire file on any update — impractical for an index |
+| **Per page** | fits fixed-size page model; pages (de)compress independently, coupled to load/flush |
+
+The catch at page granularity: a compressed page may occupy only **part of a disk block**, and since I/O moves in whole blocks, you **page in extra bytes** belonging to neighbors; a page spanning multiple blocks forces an extra block read.
+
+### If you were the storage engine… *(conditional)*
+*Your workload is 99% auto-increment inserts. Do you bother with general load-balancing?* No — you'd implement the right-only fastpath instead. General rebalancing optimizes occupancy for *random* inserts by spreading load to left siblings; but with monotonic keys the left side never sees inserts, so balancing buys nothing. Postgres' fastpath is the correct specialization: detect "insert at right edge," cache that leaf, and skip the descent entirely — turning O(log n) descents into O(1) appends.
+
+### Where this shows up in real systems
+- **PostgreSQL** btree `_bt_insertonpg` implements the **fastpath** (`RelationGetTargetBlock` caches the rightmost leaf) — auto-increment `serial`/`bigserial` PKs hit it constantly.
+- **SQLite** ships both `balance-siblings` (B\*-style) and `quickbalance` for right-edge inserts — visible in `btree.c`.
+- **LSM-tree SSTables** (RocksDB, Cassandra) are **immutable bulk-loaded B-Tree-like** structures: built bottom-up from sorted data, pages fully packed, then block-compressed — the union of the bulk-load + immutable + compression ideas here.
+
+### Diagnostic questions
+1. Why does load-balancing require touching the *parent* node? — "it doesn't" forgets that moving elements between siblings shifts the separator key the parent stores.
+2. B\* splits 2 nodes into 3 — what occupancy does that guarantee vs. a naive split? — "50%" is the naive answer; B\* gives ~67%.
+3. Why can Postgres' fastpath skip the root-to-leaf descent? — "it caches the result" misses the precondition: the key must be > the rightmost page's first key *and* the page must have room.
+4. Why does page-wise (not whole-file) compression suit an index? — "better ratio" is backwards; whole-file compresses better but can't update a single page without rewriting everything.
+5. SQLite's quickbalance leaves a near-empty new page — why is that acceptable? — "it's a bug/waste" ignores that monotonic keys will fill it almost immediately.
+
+---
+
 ## [2026-06-07] In-page search & split backtracking · pp.121–127 · Ch.4 §Overflow Pages (tail) → §Binary Search → §Propagating Splits and Merges
 
 - Overflow-page bookkeeping: chained page IDs in headers, and why a key *prefix* stays in the primary page

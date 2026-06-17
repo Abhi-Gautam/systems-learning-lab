@@ -3,7 +3,7 @@
 Interview problem catalog for `/design-today`. Two files:
 
 - `hld.json` — 45 high-level design problems (15 seeded, 30 queued)
-- `lld.json` — 45 low-level design problems (15 seeded, 30 queued)
+- `lld.json` — 50 low-level design problems (21 seeded, 29 queued); refreshed 2026-06-17 with an AI-infra wave (L15 promoted; L46-L50) — see `last_refreshed`/`refresh_note` in the file
 
 ## Schema (per problem row)
 
@@ -60,6 +60,6 @@ When the active queue drops to ≤3 unsolved seeded problems, the scheduler will
 ## ID assignments
 
 - HLD: H01-H45 (current allocation; H46+ available for new problems)
-- LLD: L01-L45 (current allocation; L46+ available for new problems)
+- LLD: L01-L50 (current allocation; L51+ available for new problems)
 
 Reserved gaps (intentionally skipped during initial design — feel free to use): none currently.

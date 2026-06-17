@@ -4,6 +4,83 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-06-10] Separate Ways & the Context Map · pp.82–90 · Ch.4 §Separate Ways → Ch.5 §Transaction Script
+
+- **Separate Ways**: when *not* integrating is the cheaper option — and the one case it's forbidden
+- The **Context Map**: a visual of bounded contexts + integrations that doubles as an org X-ray
+- A first tactical pattern: **Transaction Script**, and the one thing it's easy to get wrong
+
+### History — "why does this exist?"
+Part I of *Learning DDD* (Khononov, 2021) builds the integration-pattern catalog — partnership, shared kernel, conformist, anticorruption layer (ACL), open-host service (OHS). This chunk closes that catalog with its **null option** and a synthesis tool, then pivots to Part II ("how"). The Context Map idea comes straight from Eric Evans' 2003 *Domain-Driven Design* — it existed because large systems kept failing at the *seams between teams*, not inside any one module.
+
+### Intuition — "this is like…"
+**Separate Ways** is the *"just copy the function"* decision every monorepo team eventually makes: two services each ship their own tiny logging shim rather than stand up a shared logging *service*, because the integration tax exceeds the duplication tax. The **Context Map** is the **AWS architecture diagram** of your domain — but where the arrows encode not just data flow but *team relationships* (who trusts whom, who's defending against whom).
+
+### Mechanics
+**Separate Ways — deliberately not integrating.** Three triggers, all reducing to "collaboration costs more than duplication":
+
+| Trigger | Why duplicate instead | 
+|---|---|
+| **Communication friction** | org size / politics make agreement too costly |
+| **Generic subdomain** | e.g. a logging framework — local integration is trivial, a shared service is overkill |
+| **Model differences** | models so divergent that even an ACL is pricier than duplicating |
+
+> **The hard rule:** *never* use Separate Ways for a **core subdomain**. Duplicating your competitive-advantage logic in two contexts defeats the entire reason you invested in it — you'd fork the thing you most need to keep coherent and optimized.
+
+**The full integration spectrum** (this chunk's recap — ordered loose→tight coupling):
+
+```mermaid
+graph LR
+  SW["Separate Ways<br/>(no integration)"] --- ACL["Anticorruption Layer<br/>(consumer translates)"]
+  ACL --- OHS["Open-Host Service<br/>(provider publishes language)"]
+  OHS --- CF["Conformist<br/>(consumer obeys)"]
+  CF --- SK["Shared Kernel<br/>(shared sub-model)"]
+  SK --- PT["Partnership<br/>(ad-hoc, mutual)"]
+```
+
+| Pattern | Who adapts | Coupling | One-liner |
+|---|---|---|---|
+| Separate Ways | nobody | none | duplicate, don't talk |
+| ACL | consumer | low | consumer translates provider's model into its own |
+| Open-Host Service | provider | low | provider exposes a **published language** for all |
+| Conformist | consumer | high | consumer swallows provider's model as-is |
+| Shared Kernel | both | high | a small overlapping model jointly owned |
+| Partnership | both | high | ad-hoc, two-way coordination |
+
+**The Context Map** plots these onto one diagram, and it reads on three levels:
+- **High-level design** — what components exist and which models they implement.
+- **Communication patterns** — which teams collaborate vs. keep "less intimate" relations (ACL, Separate Ways).
+- **Organizational X-ray** — *patterns of patterns*: if **every** downstream of one team builds an ACL, that team's model is a liability; if all the Separate Ways cluster around one team, that team can't collaborate.
+
+Limits: a single bounded context spanning several subdomains can have *multiple* integration patterns at once (e.g. partnership *and* ACL on the same map). Best maintained **as code** (tool: Context Mapper), with each team owning its own edges.
+
+**Pivot to tactics — Transaction Script** (Ch.5, Fowler's term). Organize business logic as **procedures, one per request** from the presentation layer. The public operations *are* the encapsulation boundary.
+
+```csharp
+DB.StartTransaction();
+var job = DB.LoadNextJob();
+var json = LoadFile(job.Source);
+var xml  = ConvertJsonToXml(json);
+WriteFile(job.Destination, xml.ToString());
+DB.MarkJobAsCompleted(job);
+DB.Commit();
+```
+
+> **The one thing it's easy to get wrong:** the *transactional* guarantee in the name. Every script must wholly succeed or wholly fail — never leave an invalid state. The snippet above has a trap: the file is written *before* `Commit()`, so a crash between `WriteFile` and `MarkJobAsCompleted` leaves a written file with the job un-marked — a partial effect a DB rollback can't undo. Real transaction scripts need **idempotency or compensating actions** for non-transactional resources (files, network). Khononov notes most production bugs he debugged "boiled down to a misimplementation of the transactional behavior."
+
+### Where this shows up in real systems
+- **Stripe / Twilio** are textbook **Open-Host Services**: a versioned public API (the "published language") that thousands of consumers integrate against without the providers ever conforming to *them*.
+- A microservice copying a shared `enum`/validation snippet rather than calling a `common-config` service is **Separate Ways** in the wild — the duplication tax beats the network+ownership tax.
+- **Outbox pattern** is exactly the Transaction Script fix: write the side-effect (a message row) *inside* the DB transaction, then a relay publishes it — turning a non-transactional resource into a transactional one.
+
+### Diagnostic questions
+1. Why is Separate Ways banned for a core subdomain? — "it isn't" misses that forking core logic defeats the whole point of investing in it.
+2. On a context map, every consumer of Team A builds an ACL — what does that signal? — "good isolation" is the rosy read; it actually flags Team A's model as a shared liability.
+3. The JSON→XML script crashes after `WriteFile` but before `Commit` — is state consistent? — "yes, the DB rolls back" forgets the *file* already exists; the rollback can't unwrite it.
+4. ACL vs. Conformist — who absorbs the pain? — swapping them means you've inverted who adapts: ACL = consumer defends; Conformist = consumer surrenders.
+
+---
+
 ## [2026-06-07] Bounded context integration patterns · pp.75–81 · Ch.4 §Cooperation → §Customer–Supplier
 
 - Contracts: why independent models still need coordinated touchpoints, and whose language wins

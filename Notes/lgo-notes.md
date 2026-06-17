@@ -4,6 +4,142 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-06-11] Slices: header, growth, shared storage · pp.61–71 · Ch.3 §Slices
+
+- The slice header `(ptr, len, cap)` — 24 bytes by value, and why `x = append(x, …)` is mandatory
+- Growth rule (Go 1.14): double under 1024 elements, then ≥ +25%; `make` to skip growth entirely
+- Subslices share the backing array; the full slice expression `x[low:high:max]` is the firewall
+
+### History — "why does this exist?"
+C handed sequences around as a bare pointer with the length implied somewhere else — four decades of buffer overflows followed. Go's arrays fix that by baking length into the type (`[3]int` and `[4]int` are different, unconvertible types), which makes them safe and nearly useless: no function can accept "an array of any size." Slices (Go, 2009) are the resolution — arrays demoted to invisible backing store, and a **fat pointer** (pointer + length + capacity) becomes the everyday currency. Length moves out of the type and into the value.
+
+### Intuition — "this is like…"
+A slice is a database view over a table: creating one is O(1), it shares the underlying rows, and a write through any view is visible through every other view of the same rows. The metaphor breaks exactly where Go's surprises live: a view that outgrows its table (`append` past `cap`) silently gets a **private copy of the table**, and from that moment the views diverge without any error telling you so.
+
+### Mechanics
+
+#### 1. The header — 24 bytes, passed by value
+
+```go
+// what the runtime actually passes around (64-bit):
+type sliceHeader struct {
+    ptr *T   // 8 bytes — address of backing array element 0
+    len int  // 8 bytes — elements you may index
+    cap int  // 8 bytes — elements reserved before reallocation
+}
+```
+
+```mermaid
+flowchart LR
+    subgraph headers["two slice headers (24 B each)"]
+        X["x: ptr·len 4·cap 4"]
+        Y["y = x[:2]: ptr·len 2·cap 4"]
+    end
+    subgraph backing["one backing array"]
+        A0["[0]=1"] --- A1["[1]=2"] --- A2["[2]=3"] --- A3["[3]=4"]
+    end
+    X --> A0
+    Y --> A0
+```
+
+Every function call copies the header, never the elements. Two consequences pull in opposite directions, and together they explain the `append` contract:
+
+| Operation in callee | Visible to caller? | Why |
+|---|---|---|
+| `s[0] = 99` | **yes** | both headers hold the same `ptr` |
+| `s = append(s, v)` | **no** | `len` bump (and possibly new `ptr`) lives in the callee's *copy* of the header |
+
+Hence `x = append(x, v)` — the only way the caller learns the new header. Dropping the return value is a compile error because the old header is silently stale.
+
+#### 2. nil slice vs empty slice
+
+`var x []int` → `ptr=nil, len=0, cap=0`. `[]int{}` → non-nil pointer, `len=0`. They behave identically (`len`, `append`, `range` all work on nil) except: `x == nil` differs, and JSON encodes nil as `null` but empty as `[]`. Slices are **not comparable** — `==` is a compile error except against `nil`. The mechanism: Go would have to choose between identity (same ptr/len/cap?) and deep equality (same elements?); either choice surprises half its users, so the language refuses both. `reflect.DeepEqual` exists for tests.
+
+#### 3. append and the growth schedule — worked example
+
+Example 3-1, one append at a time:
+
+| After | len | cap | Reallocated? |
+|---|---|---|---|
+| `var x []int` | 0 | 0 | — |
+| `append(x, 10)` | 1 | 1 | yes |
+| `append(x, 20)` | 2 | 2 | yes |
+| `append(x, 30)` | 3 | **4** | yes — doubled |
+| `append(x, 40)` | 4 | 4 | **no** — room left |
+| `append(x, 50)` | 5 | **8** | yes — doubled |
+
+Rule as of Go 1.14: `cap < 1024` → ×2; afterwards ≥ ×1.25. Doubling makes append amortized O(1) — total copy work for n appends is a geometric series summing to < 2n. The costs are real though: each growth is an allocation + memmove, and the abandoned old array becomes garbage-collector work. That's why pre-sizing matters.
+
+#### 4. make — three strategies, one classic bug
+
+```go
+x := make([]int, 5)      // len 5, cap 5 — five ZEROS, indexable x[0]..x[4]
+x = append(x, 10)        // BUG? x is now [0 0 0 0 0 10] — append extends length
+x := make([]int, 5, 10)  // len 5, cap 10
+x := make([]int, 0, 10)  // len 0, cap 10 — can't index, CAN append
+```
+
+| You know… | Declare with | Failure mode avoided |
+|---|---|---|
+| slice may stay empty | `var data []int` (nil) | zero allocations if nothing comes |
+| the values now | literal `[]int{2, 4, 6, 8}` | — |
+| exact size, will index-assign | `make(len)` | wrong size → trailing zeros or panic |
+| approximate size, will append | `make(0, cap)` | surprise zeros at the *front* (the bug above) |
+
+`cap < len` is a compile error with literals, a runtime panic with variables. The author's vote: `make(0, cap)` + `append` — marginally slower sometimes, structurally harder to get wrong.
+
+#### 5. Shared storage — the aliasing minefield
+
+Slicing never copies. Example 3-5: `x := []int{1,2,3,4}; y := x[:2]; z := x[1:]` — then `x[1]=20`, `y[0]=10`, `z[1]=30` produce `x: [10 20 30 4]`, `y: [10 20]`, `z: [20 30 4]`. Same cells, different windows (`z[0]` *is* `x[1]`).
+
+The subslice inherits spare room: **`cap(sub) = cap(parent) − low`**. That's where append turns dangerous — Example 3-7, full trace of the one shared `[5]int` backing array:
+
+| Step | Backing array | x (len/cap) | y | z |
+|---|---|---|---|---|
+| `x := make([]int,0,5)` + append 1,2,3,4 | `[1 2 3 4 _]` | 4/5 | — | — |
+| `y := x[:2]` · `z := x[2:]` | `[1 2 3 4 _]` | 4/5 | 2/**5** | 2/**3** |
+| `y = append(y, 30,40,50)` → writes idx 2,3,4 | `[1 2 30 40 50]` | 4/5 | 5/5 | 2/3 |
+| `x = append(x, 60)` → x's len is 4 → writes idx 4 | `[1 2 30 40 60]` | 5/5 | 5/5 | 2/3 |
+| `z = append(z, 70)` → z starts at idx 2, len 2 → writes idx 4 | `[1 2 30 40 70]` | 5/5 | 5/5 | 3/3 |
+
+Final print: `x: [1 2 30 40 70]`, `y: [1 2 30 40 70]`, `z: [30 40 70]`. Three appends, zero reallocations, and everyone trampled index 4 in turn. No error, no warning — every operation was "correct."
+
+#### 6. The firewall: full slice expression
+
+```go
+y := x[:2:2]   // low:high:max — cap = max − low = 2
+z := x[2:4:4]  // cap = 2
+```
+
+With `len == cap`, the *next* append must reallocate — the subslice divorces the parent before it can overwrite it. Rule of thumb: a subslice you intend to `append` to gets a three-index slice or an explicit `copy`. Never `append` to a bare subslice.
+
+### If you were the runtime (append's fast path)…
+`if len < cap`: write the element at `ptr[len]`, increment `len` in the returned header, done — no allocation, ~1ns. Else: compute new cap from the growth rule, allocate, memmove the old elements, write, return a header with the **new ptr**. Note what's absent: any locking. Two goroutines appending to the same slice race on `ptr[len]` — slices are values, not concurrent data structures.
+
+### Cross-language view
+
+| | Go slice | Rust `&mut [T]` / `Vec` | Python list | C `T*` + len |
+|---|---|---|---|---|
+| Slicing shares storage? | yes — view | yes — borrow | **no — copies** | yes — raw |
+| Aliasing + grow hazard (§5) | yes, silent | **compile error** — can't hold a borrow across `push` | no (copy semantics) | yes, plus overflow |
+| Length lives | in the header value | in the fat pointer / Vec | in the object | in your head |
+
+Stdlib note: Python's copy-on-slice is why `l[:]` is the shallow-copy idiom — the *opposite* default from Go. Rust's borrow checker makes Example 3-7 unrepresentable: you cannot hold `y` and `z` as mutable views while appending. Go chose sharing + programmer discipline; Rust chose sharing + compiler enforcement; Python chose copying + no discipline needed.
+
+### Where this shows up in real systems
+- **The pinned-array leak:** parse a 64 MB response, keep `header := data[:100]` in a long-lived map — the GC cannot free part of an array, so 100 live bytes pin 64 MB. Classic production OOM in Go services; cure is `bytes.Clone` (or `copy` into a fresh slice) at the boundary.
+- **`io.Reader` contract:** `Read(p []byte)` fills at most `len(p)` bytes — `len` is the write window, and `bufio`'s whole design is reusing one backing array across reads to hit zero allocations on the hot path.
+- **`strings.Builder` / `bytes.Buffer`** grow with the same geometric schedule internally; calling `Grow(n)` up front is exactly §4's "make with capacity" — a one-line fix that routinely deletes 90% of allocations in tight loops (visible in `pprof` alloc profiles).
+
+### Diagnostic questions
+1. Why must `append`'s result be reassigned? *(wrong: "style/convention" → the callee mutates a copied 24-byte header; the caller's `len`/`ptr` are stale without the reassignment)*
+2. `x := []int{1,2,3,4}; y := x[:2]; y = append(y, 99)` — what is `x`? *(wrong: unchanged → `[1 2 99 4]`; `y` inherited cap 4, so the append wrote into x's territory)*
+3. When does nil slice vs `[]int{}` actually matter? *(wrong: "always — nil panics" → behavior is identical; only `== nil` and JSON `null` vs `[]` differ)*
+4. `x := make([]int, 5); x = append(x, 10)` — contents? *(wrong: `[10 0 0 0 0]` → `[0 0 0 0 0 10]`; append always extends past the existing length)*
+5. What does `x[2:4:4]` buy over `x[2:4]`? *(wrong: "bounds checking" → it caps capacity at 2, forcing any future append to reallocate instead of overwriting the parent)*
+
+---
+
 ## [2026-05-15] `const`, Untyped Constants, and Why Go Refuses Runtime Immutability · pp.51–60 · Ch.2 § var vs := → Ch.3 § Arrays
 
 ### TL;DR

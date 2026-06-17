@@ -124,6 +124,56 @@ These blogs are URLs the user opens in a browser if they want the raw post. The 
 
 ---
 
+## AI infra / LLM serving
+
+### Anthropic — Building Effective Agents
+**URL**: https://www.anthropic.com/research/building-effective-agents
+**Powers**: L48 agent orchestration loop + tool dispatcher
+**Key insight**: Distinguishes deterministic *workflows* from open-ended *agents* (model drives the loop); agents need explicit termination, bounded steps, and structured tool-error feedback — keep the loop simple.
+
+### vLLM — PagedAttention internals / continuous batching
+**URL**: https://blog.vllm.ai/2023/06/20/vllm.html
+**Powers**: L47 continuous-batching scheduler · L50 KV-cache block manager
+**Key numbers**: up to ~24× throughput vs naive HF serving; KV waste cut from ~60-80% to <4%.
+**Key insight**: KV-budget-driven admission — the scheduler admits requests only while free KV blocks exist; memory, not compute, is the binding constraint.
+
+### Cloudflare — How we built rate limiting at scale
+**URL**: https://blog.cloudflare.com/counting-things-a-lot-of-different-things/
+**Powers**: L15 token-aware rate limiter
+**Key insight**: Sliding-window-counter approximation (weighted blend of current + previous fixed window) gets near-exact accuracy at a fraction of the memory of a true sliding-window log.
+
+### Stripe — Scaling your API with rate limiters
+**URL**: https://stripe.com/blog/rate-limiters
+**Powers**: L15 token-aware rate limiter
+**Key insight**: Layered limiters (request-rate, concurrency, fleet-usage, per-endpoint cost) — different limiters protect different resources; the 429 + Retry-After contract is part of the design, not an afterthought.
+
+### OpenAI / Anthropic — streaming API (SSE token format)
+**URL**: https://platform.openai.com/docs/api-reference/streaming
+**Powers**: L49 SSE token-streaming multiplexer
+**Key insight**: `text/event-stream` with incremental `data:` deltas and a `[DONE]` sentinel; low TTFT comes from flushing each token, and clients resume via Last-Event-ID.
+
+---
+
+## Data platform + observability
+
+### Datadog — Computing accurate percentiles with DDSketch
+**URL**: https://www.datadoghq.com/blog/engineering/computing-accurate-percentiles-with-ddsketch/
+**Powers**: L52 mergeable quantile sketch
+**Key numbers**: some endpoints generate >10M points/sec; DDSketch ingests ~10× faster than GK and as fast as HDR; 1% relative-accuracy ⇒ a true-100 quantile returns in [99, 101].
+**Key insight**: Don't keep the values — keep just enough (log-bucket counts) to answer percentiles with a *relative* error bound, and merge sketches to aggregate across hosts.
+
+### Postgres — MVCC tuple visibility (xmin/xmax)
+**URL**: https://www.postgresql.org/docs/current/mvcc-intro.html
+**Powers**: L51 SnapshotSet · L54 TimeMap
+**Key insight**: Each row version carries a creating and deleting transaction id; a snapshot sees a row iff xmin is committed-and-visible and xmax is not — snapshot isolation with no copying, at the cost of dead tuples that VACUUM must reclaim (the long-running-reader hazard).
+
+### Prometheus — TSDB storage (head block, WAL, sealed blocks)
+**URL**: https://prometheus.io/docs/prometheus/latest/storage/
+**Powers**: L53 time-windowed log/event store
+**Key insight**: A mutable in-memory head block absorbs recent samples; older windows are compacted into immutable on-disk blocks; retention drops whole oldest blocks. Time-window partitioning makes range queries and retention cheap.
+
+---
+
 ## Adding a blog
 
 1. Add an entry under the relevant category.

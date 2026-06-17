@@ -4,6 +4,261 @@ _Entries follow the template at `Notes/TEMPLATE.md`. Append-only. **Newest entry
 
 ---
 
+## [2026-06-11] Jack: typing, statements & the OS library · pp.192–202 · Ch.9 §9.2.3–§9.2.7
+
+- Four variable kinds (static / field / local / parameter) and what scope buys each
+- Weak typing **by underspecification** — char↔int, int→pointer, object↔Array casts are all legal
+- Five statements, *no* operator precedence, two-stage object construction, the 8-class OS library
+
+### History — "why does this exist?"
+Language specs normally pin everything down — Java's JLS defines exactly what `2+3*4` means. Jack's spec (Nisan & Schocken, 2005) deliberately leaves holes: no operator precedence, undefined results for type conversions. The audience isn't the application programmer; it's the *compiler writer you become in chapters 10–11* — every hole in the spec is a feature you don't have to implement. C pulled the same lever in 1972: undefined behavior wasn't sloppiness, it was implementer freedom. Jack uses the lever for simplicity; C's descendants ended up using it for optimization.
+
+### Intuition — "this is like…"
+A Jack variable of object type is just a 16-bit word holding an address. The type annotation is a compile-time courtesy that the compiler barely enforces — at runtime, *everything* is a 16-bit word, and every assignment is a one-word copy. This is C's worldview with the pointer syntax filed off: `let a = 5000; let a[100] = 77;` is pointer arithmetic wearing array clothing.
+
+### Mechanics
+
+#### 1. The four variable kinds
+
+| Kind | Declared | One copy per… | Lifetime | Scope | VM segment (ch.11 preview) |
+|---|---|---|---|---|---|
+| **static** | `static int x;` in class | class | whole program run | the class | `static` |
+| **field** | `field int x;` in class | object instance | until `deAlloc` | the class — **except functions** | `this` |
+| **local** | `var int x;` in subroutine | call | call → return (stack) | the subroutine | `local` |
+| **parameter** | in the signature | call | call → return (stack) | the subroutine | `argument` |
+
+Why are fields invisible inside functions? Not a visibility *rule* — a mechanical impossibility. A function has no `this`; there is no object whose fields you could possibly mean. Methods get `this` passed in secretly; functions don't.
+
+#### 2. Declaration ≠ construction
+
+Primitives (`int` = 16-bit 2's complement, −32768…32767 · `char` = Unicode · `boolean`) get memory at declaration. Object types get **one word holding `null`**:
+
+```text
+var int age;        // memory allocated now, value usable
+var Car c;          // ONE word allocated, holds null — no Car exists yet
+let c = Car.new("Jaguar","007");   // NOW the object exists on the heap
+let f = e;          // copies the reference word — both alias one object
+```
+
+#### 3. Weak typing: the three legal casts
+
+```text
+// 1. char ↔ int — Unicode value conversion
+let c = 33;                       // c is 'A' (Hack charset)
+
+// 2. int → any reference — the int IS a RAM address
+var Array a;
+let a = 5000;
+let a[100] = 77;                  // writes RAM[5100]. peek/poke without the OS call.
+
+// 3. object ↔ Array — view fields as cells, cells as fields
+var Complex c; var Array a;
+let a = Array.new(2);
+let a[0] = 7; let a[1] = 8;
+let c = a;                        // c == Complex(7,8) — C's struct*↔char* cast
+```
+
+- **Mechanism:** all values share one machine shape (16-bit word), so "conversion" compiles to nothing.
+- **Upside:** a minimal compiler skips type-checking entirely — fewer chapters 10–11 headaches.
+- **Downside:** zero safety net. `let a[100] = 77` with `a = 5000` can silently corrupt the stack, the heap, or the screen memory map.
+
+#### 4. Five statements, three quirks
+
+| Statement | Syntax | Quirk |
+|---|---|---|
+| `let` | `let x = expr;` / `let x[i] = expr;` | only way to assign — no `x = expr` |
+| `if` | `if (expr) { } else { }` | braces **mandatory** even for one statement |
+| `while` | `while (expr) { }` | braces mandatory; no `for` — desugar it yourself |
+| `do` | `do f(x);` | calls for effect, **discards return value** |
+| `return` | `return expr;` / `return;` | constructors must `return this` |
+
+#### 5. No operator precedence
+
+`2+3*4` may evaluate to **20 or 14** depending on the compiler; only `2+(3*4)` is guaranteed 14.
+
+- **Mechanism:** precedence needs precedence-climbing (Pratt) parsing; without it, chapter 10's expression parser compiles flat left-to-right.
+- **Upside:** the expression grammar collapses to `term (op term)*` — trivially parseable.
+- **Downside:** the cost moves to the programmer's parentheses, forever.
+
+#### 6. Subroutine call forms
+
+| Caller location | Method | Function / Constructor |
+|---|---|---|
+| inside the class | `g(5, 7)` — implicit `this` | `Foo.p(2)` — full name required |
+| outside the class | `b.q()` — via object variable | `Bar.h(3)` — full name |
+
+The asymmetry leaks the implementation: a method call secretly pushes the object as argument 0; a function call has no object to push, hence the class-name prefix.
+
+#### 7. Object lifecycle — two-stage and manual
+
+```mermaid
+sequenceDiagram
+    participant P as Program
+    participant K as Constructor (compiled)
+    participant OS as Memory (OS)
+    P->>K: let c = Circle.new(x, y, 50)
+    K->>OS: alloc(size for all fields)
+    OS-->>K: base address of free block
+    K->>K: this = base · init fields
+    K-->>P: return this  →  stored in c
+    Note over P,OS: …object lives on the heap…
+    P->>OS: do c.dispose() → Memory.deAlloc(this)
+```
+
+There is **no garbage collector**. Forget `dispose()` → the block leaks until reboot. Dispose twice or use-after-dispose → heap corruption. The contract is exactly `malloc`/`free` — Jack just refuses to hide the seam behind syntax.
+
+#### 8. The operating system in 8 classes
+
+| Class | Provides | Worth noticing |
+|---|---|---|
+| `Math` | abs, **multiply, divide**, min, max, sqrt | the Hack ALU **has no multiply instruction** — multiplication is software (ch.12: shift-and-add) |
+| `String` | new(maxLen), charAt, appendChar, intValue, setInt | strings are heap objects with fixed max capacity |
+| `Array` | new(size), dispose | untyped cells — the universal escape hatch |
+| `Output` | printChar/String/Int, moveCursor | 23 rows × 64 columns text grid |
+| `Screen` | drawPixel/Line/Rectangle/Circle, setColor | pokes bits into memory-mapped RAM 16384–24575 (ch.4–5 link) |
+| `Keyboard` | keyPressed, readChar, readLine, readInt | polls memory-mapped word 24576 |
+| `Memory` | **peek, poke**, alloc, deAlloc | raw RAM access + the heap allocator |
+| `Sys` | init, halt, error, wait | `Sys.init` calls all inits, then `Main.main` |
+
+### If you were the compiler…
+You must compile `let c = a;` where `a` is `Array` and `c` is `Complex`. What do you emit? **Nothing special** — `push a, pop c`, one word copied. The type annotations exist for the human reader; the generated VM code is type-free. This is also why the spec can leave conversions "undefined": there's nothing to define — every value already has the same machine shape. Typing in Jack is documentation the compiler is allowed to read.
+
+### Cross-language view
+
+| | Jack | C | Go | Java |
+|---|---|---|---|---|
+| Typing | weak, by underspecification | weak-ish, casts legal | strong static | strong static |
+| Heap reclaim | manual `deAlloc` | manual `free` | GC | GC |
+| Operator precedence | none — parenthesize | full table | full table | full table |
+| Object variable holds | 16-bit address word | pointer (explicit) | value or explicit pointer | reference |
+
+Stdlib note: Java's `Object` came with `finalize()` for cleanup-before-GC and deprecated it after 20 years of misuse — manual disposal hooks and GC coexist badly. Jack avoids the question by having no GC at all.
+
+### Where this shows up in real systems
+- `Memory.peek/poke` is embedded firmware's daily bread: writing a GPIO register at a fixed address, or `mmap`-ing `/dev/mem` on Linux. The "int assigned to a reference is an address" cast is exactly how device drivers name hardware.
+- Two-stage construction is C++'s `new` verbatim: `operator new` allocates raw bytes, then the constructor runs with `this` pointing at them. Jack shows the seam C++ hides.
+- `Math.multiply` as a library function mirrors soft-float on FPU-less microcontrollers (ARM Cortex-M0): the toolchain links `__aeabi_fmul` software routines because the silicon lacks the instruction — same gap, same fix.
+
+### Diagnostic questions
+1. Why can't a function use field variables? *(wrong: "access control" → mechanical: functions receive no `this`, so there's no object to read fields from)*
+2. What does `var Car c;` allocate? *(wrong: "a Car object" → one 16-bit reference word holding null; the object exists only after `Car.new`)*
+3. What is `2+3*4` in Jack? *(wrong: "14" → unspecified; a left-to-right compiler gives 20)*
+4. What happens to an object whose `dispose()` is never called? *(wrong: "GC reclaims it eventually" → nothing ever reclaims it; the heap block leaks until reboot)*
+5. Why does `Math.multiply` exist when `*` is in the language? *(wrong: "convenience wrapper" → the ALU has no multiply; the compiler translates `*` into a call to this software routine)*
+
+---
+
+## [2026-06-10] Jack: abstract data types & objects · pp.180–191 · Ch.9 §9.1
+
+- Jack as a minimal object-based language — 3 primitives, classes-as-ADTs, no inheritance
+- The `Fraction` class: constructor vs method vs function, and API-as-contract
+- Linked lists + `dispose()`: heap objects are pointers, and there is **no garbage collector**
+
+### History — "why does this exist?"
+Up to chapter 8 everything in Nand2Tetris was low-level: gates, machine code, a stack VM. Humans are not meant to hand-write VM push/pop sequences for real programs — that's the same reason C displaced assembly. **Jack** (Nisan & Schocken) is a deliberately stripped Java/C#: object-based but with *no inheritance*, untyped arrays, and three primitive types. It does not exist to be a production language — it exists so that *you* can write its entire compiler in chapters 10–11 and its OS in chapter 12. Simplicity is the whole feature.
+
+### Intuition — "this is like…"
+Jack is to Java what **SQLite is to Postgres**: a teaching-tractable subset small enough that one person can implement the whole stack end-to-end, yet complete enough to ship Tetris. Execution always begins at `Main.main` — the identical convention to a C `main()` or Go `func main()`. If you've written any OO code, you already know 90% of Jack; the other 10% is what's *missing*.
+
+### Mechanics
+Program = a set of classes, one per file, each compiled independently. Inside a class the order is **fixed and load-bearing**:
+
+```
+class Name {
+  field / static declarations   // MUST come before subroutines
+  subroutine declarations        // constructor | method | function
+}
+```
+
+The three subroutine kinds are the heart of Jack's object model:
+
+| Kind | Bound to | `this`? | Java analog | Allocates? |
+|---|---|---|---|---|
+| `constructor` | the class | returns new `this` | constructor | **yes** (heap) |
+| `method` | an object instance | implicit `this` arg | instance method | no |
+| `function` | the class itself | no `this` | `static` method | no |
+
+**Worked example — a Fraction ADT.** The API is read two ways: the *implementer* sees a contract to fulfill; the *caller* sees a black-box server. Same text, two roles — encapsulation in one page.
+
+```jack
+// caller's view — knows nothing about reduce() or gcd()
+let a = Fraction.new(2,3);
+let b = Fraction.new(1,5);
+let c = a.plus(b);     // c = 13/15
+do c.print();
+```
+
+```jack
+// implementer's view — the contract made real
+constructor Fraction new(int a, int b) {
+  let numerator = a; let denominator = b;
+  do reduce();             // normalize on construction
+  return this;             // a constructor MUST return this
+}
+function int gcd(int a, int b) {          // class-level: no object
+  var int r;
+  while (~(b = 0)) {                       // Euclid's algorithm
+    let r = a - (b * (a / b));             // r = a mod b
+    let a = b; let b = r;
+  }
+  return a;
+}
+```
+
+`gcd` is a `function` (pure — no object needed) while `plus`/`print` are `method`s (they read `this.numerator`). Getting that distinction wrong is the #1 beginner Jack bug.
+
+**Low-level teach moment — objects are bare pointers, you free them by hand.** Jack has *no garbage collector*. A linked-list node is a heap allocation; the list `(2,3,5)` is built by chaining constructors:
+
+```jack
+let v = List.new(5, null);
+let v = List.new(2, List.new(3, v));   // v -> 2 -> 3 -> 5 -> null
+do v.dispose();                          // you MUST free, or leak
+```
+
+```mermaid
+graph LR
+  v["v"] --> A["data:2 | next"]
+  A --> B["data:3 | next"]
+  B --> C["data:5 | next"]
+  C --> N["null"]
+```
+
+`dispose()` walks the tail recursively and calls the OS routine `Memory.deAlloc(this)` on each node — exactly C's `free()`. Forget it and you've leaked; this is why chapter 12's `Memory` class matters.
+
+```jack
+method void dispose() {
+  if (~(next = null)) { do next.dispose(); }  // free the tail first
+  do Memory.deAlloc(this);                      // then self
+  return;
+}
+```
+
+### If you were the compiler… *(conditional)*
+*Why must field declarations precede subroutines?* Because the Jack compiler is **single-pass**. It builds the class-level symbol table (field offsets, static slots) as it reads the top of the class, then compiles each subroutine body against that already-complete table. If a method body referenced a field declared *below* it, a single-pass compiler wouldn't yet have an offset for it. Fields-first removes the need for a second pass — the same trade-off C made with forward declarations.
+
+### Cross-language view *(conditional)*
+| | Jack | Python | Rust |
+|---|---|---|---|
+| ADT | `class Fraction { field … }` | `@dataclass` | `struct Fraction { … }` |
+| static op | `function int gcd(...)` | `@staticmethod` | `impl` assoc fn (no `self`) |
+| add | `method plus(other)` | `__add__` | `impl Add` |
+| free | `Memory.deAlloc(this)` | GC (refcount) | `drop` / ownership |
+
+"What the stdlib does": Jack's `Array.new` and `Memory.deAlloc` aren't language primitives — they're calls into the **Jack OS** you write in chapter 12, backed by a heap free-list. Python's allocator and Rust's `Box` hide the same machinery.
+
+### Where this shows up in real systems
+- **Manual memory management**: Jack's `new`/`deAlloc` is C's `malloc`/`free`, and explains why Rust's ownership model and Java's GC were invented — to remove exactly the `dispose()` discipline shown here.
+- **API-as-contract**: the dual reading of the Fraction API is the same idea as a Go `interface` or Rust `trait` — consumers bind to the signature, not the implementation.
+- **Single-pass compilers**: Jack's fields-before-methods rule mirrors C's "declare before use" and early Pascal — constraints that exist purely to keep the compiler one-pass.
+
+### Diagnostic questions
+1. Why does a `constructor` end with `return this` but a `void method` returns nothing? — If you think the constructor returns the class, you've confused the allocation (a heap pointer) with the type.
+2. Should `gcd` be a `function` or a `method`? — "method" means you wrongly believe it needs object state; it's pure, so `function`.
+3. What happens to the `(2,3,5)` list if you skip `v.dispose()`? — "nothing" ignores that there's no GC: it's a leak until the program exits.
+4. Why can a Jack array hold mixed types (int, object) when `int` is a primitive? — "it can't" misses that `Array` cells are untyped 16-bit words; the type lives in your head, not the cell.
+
+---
+
 ## [2026-06-07] VM function call protocol · pp.167–179 · Ch.8 §8.1.2 → §8.4
 
 - The global stack: frames, saved-pointer blocks, and why LIFO call chains map onto it
