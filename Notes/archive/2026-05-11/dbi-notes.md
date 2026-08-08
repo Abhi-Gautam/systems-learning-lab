@@ -1,4 +1,0 @@
-# DBI - Database Internals
-## Notes
-
----
