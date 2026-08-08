@@ -11,6 +11,10 @@
 .env.*
 !.env.example
 
+# Copyrighted/local reference material
+books/*.pdf
+references/papers/*.pdf
+
 # Python
 __pycache__/
 *.py[cod]
@@ -32,3 +36,8 @@ temp/
 .agents/skills/
 AGENTS.md
 CLAUDE.md
+
+# Standalone local lab repositories (not part of the public tree)
+labs/cs-from-silicone/
+labs/db-from-scratch/
+labs/hack-rs/
