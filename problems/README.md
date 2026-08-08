@@ -1,4 +1,4 @@
-# Problems/
+# problems/
 
 Interview problem catalog for `/design-today`. Two files:
 
@@ -46,7 +46,7 @@ Interview problem catalog for `/design-today`. Two files:
 
 1. Append a row to `hld.json` or `lld.json` with at least the seeded fields (if you want it active immediately) or just the queued stub.
 2. Pick the next available ID (don't reuse — IDs are immutable across the catalog's lifetime).
-3. If `status: seeded`, append the ID to the appropriate queue in `Schedule/design_state.json`.
+3. If `status: seeded`, append the ID to the appropriate queue in `schedule/design_state.json`.
 
 ## Promoting from queued to seeded
 
@@ -55,7 +55,7 @@ When the active queue drops to ≤3 unsolved seeded problems, the scheduler will
 1. Pick a queued problem (typically based on upcoming interview loop or thematic gap).
 2. Fill in the missing fields: `ask`, `sources`, `deep_dive_targets`, `follow_ups`, `trap_for_juniors`.
 3. Change `status` to `seeded`.
-4. Append the ID to the appropriate queue in `Schedule/design_state.json`.
+4. Append the ID to the appropriate queue in `schedule/design_state.json`.
 
 ## ID assignments
 

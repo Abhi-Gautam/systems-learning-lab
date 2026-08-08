@@ -16,7 +16,7 @@ Commands:
   override --problem ID          → force a specific problem on next 'today'
   company --tag TAG              → filter next pick to problems tagged for company
 
-State at Schedule/design_state.json. Problems at Problems/{hld,lld}.json.
+State at schedule/design_state.json. Problems at problems/{hld,lld}.json.
 
 Convention follows tools/scheduler.py (book scheduler): pure functions where
 possible, single state load/save at command boundary.
@@ -32,8 +32,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PROBLEMS_DIR = ROOT / "Problems"
-SCHEDULE_DIR = ROOT / "Schedule"
+PROBLEMS_DIR = ROOT / "problems"
+SCHEDULE_DIR = ROOT / "schedule"
 STATE_PATH = SCHEDULE_DIR / "design_state.json"
 LOG_PATH = SCHEDULE_DIR / "log.md"
 
@@ -63,7 +63,7 @@ REVISIT_INTERVALS = {
 
 
 def load_catalog(kind: str) -> dict:
-    """Read Problems/{hld,lld}.json."""
+    """Read problems/{hld,lld}.json."""
     p = PROBLEMS_DIR / f"{kind}.json"
     return json.loads(p.read_text())
 

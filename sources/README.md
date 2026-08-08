@@ -1,4 +1,4 @@
-# Sources/
+# sources/
 
 Reference indexes for `/design-today`. Two files:
 
@@ -7,7 +7,7 @@ Reference indexes for `/design-today`. Two files:
 
 ## How sources are used by /design-today
 
-Each problem in `Problems/{hld,lld}.json` has a `sources` array pinning the canonical references for that problem. When the skill composes a note, it:
+Each problem in `problems/{hld,lld}.json` has a `sources` array pinning the canonical references for that problem. When the skill composes a note, it:
 
 1. Reads the problem's `sources` array (papers + blogs + book chapters).
 2. In Deep-dive subsection 2 ("Walk it concretely") — cites the paper section that introduces the mechanism.

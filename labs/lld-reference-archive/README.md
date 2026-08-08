@@ -1,6 +1,6 @@
 ## LLD lab projects
 
-One Go module per LLD design problem from `Notes/lld-notes.md`. Each project hosts the **Code skeleton** that used to live inline in the note, so notes stay prose-and-diagrams and the code stays runnable.
+One Go module per LLD design problem from `notes/lld-notes.md`. Each project hosts the **Code skeleton** that used to live inline in the note, so notes stay prose-and-diagrams and the code stays runnable.
 
 | Slug | Note | Pattern spine |
 |---|---|---|
