@@ -1,10 +1,9 @@
 # Labs
 
-This public tree contains the low-level-design practice material that belongs to the learning system:
-
 | Path | Purpose |
 |---|---|
-| `lld-projects/` | Active implementation assignments |
-| `lld-reference-archive/` | Reference designs kept separate from active attempts |
+| `cs-from-silicone/` | Bottom-up silicon/runtime labs (machine code → OS → concurrency) |
+| `db-from-scratch/` | Byte-backed storage/index labs (heap, B-tree leaf, hash index) |
+| `lld-projects/` | Active low-level-design implementation assignments |
 
-Some larger systems labs are developed as standalone local repositories. They are intentionally ignored here rather than exposed as inaccessible private submodules.
+`lld-reference-archive/` is local-only (gitignored) — reference designs kept off the public tree.

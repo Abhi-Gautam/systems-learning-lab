@@ -34,10 +34,11 @@ tmp/
 temp/
 .claude/
 .agents/skills/
-AGENTS.md
-CLAUDE.md
 
-# Standalone local lab repositories (not part of the public tree)
-labs/cs-from-silicone/
-labs/db-from-scratch/
+# Agent instruction files (repo root only; labs keep theirs)
+/AGENTS.md
+/CLAUDE.md
+
+# Local-only / baggage (not part of the public tree)
 labs/hack-rs/
+labs/lld-reference-archive/

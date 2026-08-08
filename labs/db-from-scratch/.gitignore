@@ -1,0 +1,5 @@
+external/postgres
+external/duckdb
+
+# Rust build artifacts
+core/target/
