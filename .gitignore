@@ -42,3 +42,13 @@ temp/
 # Local-only / baggage (not part of the public tree)
 labs/hack-rs/
 labs/lld-reference-archive/
+
+*.i
+*.s
+*.o
+*.a
+*.so
+*.so.*
+*.out
+*.dSYM/
+a.out
