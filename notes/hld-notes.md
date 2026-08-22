@@ -2,6 +2,1647 @@
 
 ---
 
+## [2026-08-21] H14 · Stripe-style Payment Processing
+
+### Problem as asked
+
+> Design Stripe's core payment processing. Process 100M payments/day, each transaction must be exactly-once (no double-charges), reconcile with a downstream double-entry ledger, and survive partial bank failures.
+
+### Clarifying questions
+
+| # | Question | Assumed answer |
+|---|---|---|
+| 1 | Payment types? | Card payments (Visa/Mastercard) via acquiring bank. Also ACH, wire, and digital wallets (Apple Pay). Card is the primary path; others share the idempotency + ledger layer. |
+| 2 | Who is the merchant? | Merchants are businesses that use Stripe to accept payments. Each merchant has an account balance, payout schedule, and API keys. |
+| 3 | What does "exactly-once" mean here? | The merchant's customer is charged exactly once per logical payment attempt, even if the client retries, the network partitions, or the bank response is ambiguous. |
+| 4 | What is the "unknown" outcome problem? | The bank API returns a timeout (no success, no failure). The system cannot assume either outcome. It must persist the attempt state, reconcile asynchronously, and only resolve when the bank confirms. |
+| 5 | Idempotency scope? | Per-payment-attempt. The merchant's client supplies an `Idempotency-Key` header. Same key → same response, regardless of retries. Key is scoped to a specific endpoint (e.g., `POST /v1/charges`). |
+| 6 | Ledger model? | Double-entry bookkeeping. Every movement of money is two entries: a debit on one account and a credit on another. Accounts: merchant balance, Stripe float (operating account), settlement-in-transit, bank suspense. |
+| 7 | Reconciliation model? | T+1 batch reconciliation against bank settlement files. Intra-day: continuous matching of bank webhooks against pending ledger entries. Exceptions go to an ops queue. |
+| 8 | Payout model? | Merchants receive payouts on a rolling basis (T+2 default). Payouts are separate from payment capture — a captured payment credits merchant balance; a payout debits it and initiates an ACH/wire to the merchant's bank. |
+| 9 | Webhook delivery? | At-least-once. Webhooks are retried with exponential backoff (up to 3 days). Merchants must be idempotent on their side. |
+| 10 | Multi-currency? | Yes. Each payment has a `currency` field. Ledger entries are per-currency. FX conversion happens at settlement time using a locked rate. |
+
+### Back-of-envelope estimates
+
+```
+Throughput:
+  100M payments/day ≈ 1,157 payments/sec average
+  Peak (Black Friday): 5× average ≈ 5,800 payments/sec
+  Each payment: ~4 network calls (auth, capture, ledger write, webhook dispatch)
+  → ~23,200 internal ops/sec at peak
+
+Latency budget (synchronous path):
+  Client → API gateway → idempotency check → bank auth → ledger write → response
+  Target: p99 < 2s (bank network dominates; our internal path < 500ms)
+
+Storage sizing:
+  100M payments/day × 365 days × 7 years retention = 255.5B payment records
+  Each record: ~2 KB (payment object + metadata + audit log) = 511 TB
+  → Columnar archive (Parquet on S3) for historical; hot store (CockroachDB/Postgres) for last 90 days
+  90-day hot store: 9B records × 2 KB = 18 TB → CockroachDB cluster (sharded by payment_id)
+
+Idempotency store:
+  100M payments/day; idempotency keys live for 24 hours (after that, merchant must use a new key)
+  Active keys at any time: ~100M
+  Each key: 200 bytes (key hash + response fingerprint + status) = 20 GB
+  → Redis Cluster (in-memory, sub-ms lookup) with 24h TTL
+
+Ledger:
+  Each payment generates 2-4 ledger entries (auth hold, capture, fee, merchant credit)
+  100M payments/day × 4 entries = 400M ledger entries/day
+  Each entry: 128 bytes (account_id, amount, currency, timestamp, reference) = 51.2 GB/day
+  → Append-only log (Kafka) → materialized to CockroachDB (queryable) + Parquet (archive)
+
+Bank settlement:
+  Each bank sends one settlement file per business day (batch)
+  ~500 acquiring banks × 1 file/day = 500 files/day
+  Average file: 200k lines × 100 bytes = 20 MB/file
+  → S3 ingestion → reconciliation worker
+
+Webhook delivery:
+  100M payments × 2-3 webhooks each (succeeded, captured, payout) = 300M webhooks/day
+  ≈ 3,500 webhooks/sec average; peak 17,500/sec
+  → Kafka topic per merchant (partitioned by merchant_id) → delivery workers
+```
+
+### Functional requirements
+
+- **Create payment:** `POST /v1/payments` with `Idempotency-Key` header. Returns payment object with status (`requires_action`, `processing`, `succeeded`, `failed`, `canceled`).
+- **Capture payment:** `POST /v1/payments/{id}/capture` — separates auth from capture (common in e-commerce: auth at checkout, capture at shipment).
+- **Refund:** `POST /v1/refunds` — full or partial. Creates reverse ledger entries.
+- **Webhook delivery:** At-least-once delivery of payment events to merchant-registered endpoints. Signed payloads (HMAC-SHA256).
+- **Idempotency:** Same `Idempotency-Key` + same request body → same response. Different body with same key → 400 conflict.
+- **Reconciliation:** Daily batch reconciliation against bank settlement files. Intra-day continuous matching via bank webhooks.
+- **Payouts:** Automated T+2 payouts to merchant bank accounts. Manual payout override via dashboard.
+- **Audit trail:** Every state transition logged with timestamp, actor (system/merchant/customer_support), and reason.
+
+### Non-functional requirements
+
+| Requirement | Target | Mechanism |
+|---|---|---|
+| Exactly-once charging | No double-charges under any failure | Idempotency keys + ledger-level serialization |
+| Payment latency p99 | < 2s | Async bank call with timeout; internal path < 500ms |
+| Ledger consistency | Strong consistency (no double-spending) | CockroachDB serializable transactions; double-entry invariant enforced at write time |
+| Availability | 99.99% (payment path) | Multi-region active-active; bank failures isolated per-acquirer |
+| Webhook delivery | 99.9% within 30s | Kafka → delivery workers; exponential backoff retry |
+| Reconciliation accuracy | 100% matched within T+1 | Batch reconciliation job; exceptions to ops queue |
+| Audit compliance | PCI-DSS Level 1 | Immutable audit log; tokenized card data; encryption at rest |
+| Fraud detection | < 1% false positive rate | ML model in payment path; async scoring for edge cases |
+
+### API / protocol contract
+
+```
+POST /v1/payments
+Headers:
+  Idempotency-Key: "pay_abc123_unique"
+  Authorization: Bearer sk_live_...
+
+Body:
+{
+  "amount": 4999,           // in smallest currency unit (cents)
+  "currency": "usd",
+  "payment_method": "pm_card_visa_4242",
+  "merchant_account": "acct_merchant123",
+  "capture_method": "automatic",  // or "manual"
+  "metadata": {"order_id": "ord_789"}
+}
+
+Response (201 Created):
+{
+  "id": "pay_xyz789",
+  "status": "succeeded",
+  "amount": 4999,
+  "currency": "usd",
+  "created": 1630000000,
+  "idempotency_key": "pay_abc123_unique",
+  "ledger_entries": ["le_001", "le_002"],
+  "receipt_url": "https://pay.stripe.com/receipts/..."
+}
+
+Response (409 Conflict — same key, different body):
+{
+  "error": {
+    "type": "idempotency_key_reuse",
+    "message": "Idempotency key already used with different request parameters"
+  }
+}
+
+Response (200 OK — same key, same body, replay):
+{
+  "id": "pay_xyz789",
+  "status": "succeeded",
+  ...  // identical to original response
+}
+
+POST /v1/payments/{id}/capture
+Body:
+{
+  "amount_to_capture": 4999  // partial capture supported
+}
+
+Response (200 OK):
+{
+  "id": "pay_xyz789",
+  "status": "succeeded",
+  "amount_captured": 4999
+}
+
+POST /v1/refunds
+Headers:
+  Idempotency-Key: "ref_abc123"
+Body:
+{
+  "payment_intent": "pay_xyz789",
+  "amount": 2000  // partial refund
+}
+
+Webhook payload (payment.succeeded):
+{
+  "id": "evt_001",
+  "type": "payment.succeeded",
+  "data": {
+    "object": { "id": "pay_xyz789", "status": "succeeded", ... }
+  },
+  "created": 1630000000
+}
+Webhook signature: Stripe-Signature header = t=timestamp,v1=HMAC-SHA256(timestamp + "." + body, webhook_secret)
+```
+
+### Data model
+
+```
+Payment (CockroachDB — hot store, sharded by payment_id):
+  payment_id       UUID PRIMARY KEY
+  merchant_id      UUID NOT NULL (indexed)
+  idempotency_key  VARCHAR(255) UNIQUE (indexed, TTL 24h)
+  amount           BIGINT NOT NULL  (in smallest currency unit)
+  currency         VARCHAR(3) NOT NULL
+  status           ENUM('requires_action', 'processing', 'succeeded', 'failed', 'canceled')
+  payment_method   VARCHAR(255) NOT NULL
+  capture_method   ENUM('automatic', 'manual')
+  bank_auth_code   VARCHAR(255) NULL  (from acquiring bank)
+  bank_reference   VARCHAR(255) NULL  (for reconciliation)
+  created_at       TIMESTAMPTZ NOT NULL
+  updated_at       TIMESTAMPTZ NOT NULL
+  metadata         JSONB
+
+LedgerEntry (CockroachDB — append-only, sharded by entry_id):
+  entry_id         UUID PRIMARY KEY
+  payment_id       UUID NOT NULL (indexed)
+  merchant_id      UUID NOT NULL (indexed)
+  account_id       VARCHAR(50) NOT NULL  (e.g., "merchant_balance", "stripe_float", "settlement_in_transit")
+  currency         VARCHAR(3) NOT NULL
+  amount           BIGINT NOT NULL  (positive = debit, negative = credit; or use sign convention)
+  entry_type       ENUM('auth_hold', 'capture', 'fee', 'merchant_credit', 'refund', 'payout')
+  reference        VARCHAR(255) NOT NULL  (payment_id or refund_id)
+  created_at       TIMESTAMPTZ NOT NULL
+  -- Invariant: for each (payment_id, entry_type), SUM(amount) across all accounts = 0
+  -- Enforced at write time by transactional ledger service
+
+IdempotencyRecord (Redis Cluster, TTL 24h):
+  Key: idem:{idempotency_key}
+  Value: {
+    "request_hash": SHA256(method + path + body),
+    "response_status": 201,
+    "response_body": "{...}",  // cached response
+    "payment_id": "pay_xyz789",
+    "created_at": 1630000000
+  }
+
+MerchantBalance (CockroachDB, sharded by merchant_id):
+  merchant_id      UUID PRIMARY KEY
+  currency         VARCHAR(3)
+  available_balance BIGINT NOT NULL  (can be paid out)
+  pending_balance   BIGINT NOT NULL  (captured but not yet settled)
+  updated_at        TIMESTAMPTZ NOT NULL
+
+BankSettlement (S3 → CockroachDB for matching):
+  settlement_id    UUID PRIMARY KEY
+  bank_id          VARCHAR(50) NOT NULL
+  settlement_date  DATE NOT NULL
+  file_hash        VARCHAR(64) NOT NULL  (SHA256 of raw file)
+  total_amount     BIGINT NOT NULL
+  line_count       INT NOT NULL
+  status           ENUM('ingested', 'matched', 'exceptions')
+  ingested_at      TIMESTAMPTZ NOT NULL
+
+WebhookDelivery (CockroachDB, sharded by merchant_id):
+  webhook_id       UUID PRIMARY KEY
+  merchant_id      UUID NOT NULL (indexed)
+  event_type       VARCHAR(100) NOT NULL
+  payload          JSONB NOT NULL
+  endpoint_url     VARCHAR(500) NOT NULL
+  status           ENUM('pending', 'delivered', 'failed', 'retrying')
+  attempts         INT NOT NULL
+  next_retry_at    TIMESTAMPTZ NULL
+  created_at       TIMESTAMPTZ NOT NULL
+  delivered_at     TIMESTAMPTZ NULL
+```
+
+### Request-path layering
+
+```mermaid
+flowchart LR
+    Client -->|POST /v1/payments<br/>Idempotency-Key| GW[API Gateway<br/>TLS termination<br/>auth validation]
+    GW -->|1. check idempotency| Idem[Idempotency Service<br/>Redis Cluster]
+    Idem -->|hit: replay response| GW
+    Idem -->|miss: proceed| PaySvc[Payment Service]
+    PaySvc -->|2. validate + fraud check| Fraud[Fraud Service<br/>ML scoring]
+    Fraud -->|approved| PaySvc
+    PaySvc -->|3. authorize| BankGW[Bank Gateway<br/>per-acquirer adapter]
+    BankGW -->|ISO 8583 / REST| Bank[Acquiring Bank]
+    Bank -->|auth code or decline| BankGW
+    BankGW -->|result| PaySvc
+    PaySvc -->|4. write ledger| LedgerSvc[Ledger Service<br/>CockroachDB serializable txns]
+    LedgerSvc -->|committed| PaySvc
+    PaySvc -->|5. emit event| Kafka[Kafka<br/>payment-events topic]
+    Kafka -->|6. async| WebhookSvc[Webhook Service<br/>delivery workers]
+    WebhookSvc -->|HTTP POST| Merchant[Merchant endpoint]
+    PaySvc -->|7. cache response| Idem
+    PaySvc -->|response| GW
+    GW -->|201 Created| Client
+```
+
+### Architecture diagram
+
+```mermaid
+flowchart TB
+    subgraph "Client tier"
+        C1[Merchant server]
+        C2[Mobile app / checkout]
+    end
+
+    subgraph "API Gateway (multi-region active-active)"
+        GW1[Gateway us-east-1]
+        GW2[Gateway eu-west-1]
+    end
+
+    subgraph "Idempotency layer"
+        Redis1[Redis Cluster us-east<br/>3 masters + 3 replicas]
+        Redis2[Redis Cluster eu-west]
+    end
+
+    subgraph "Payment processing"
+        PaySvc[Payment Service<br/>state machine]
+        FraudSvc[Fraud Service<br/>ML model]
+        BankGW[Bank Gateway<br/>per-acquirer adapters]
+    end
+
+    subgraph "Ledger + balance"
+        Cockroach1[CockroachDB us-east<br/>6 nodes, 3 replicas]
+        Cockroach2[CockroachDB eu-west]
+    end
+
+    subgraph "Event bus"
+        Kafka1[Kafka Cluster<br/>payment-events topic<br/>12 partitions]
+    end
+
+    subgraph "Async workers"
+        WebhookW[Webhook Delivery Workers]
+        ReconW[Reconciliation Workers]
+        PayoutW[Payout Workers]
+    end
+
+    subgraph "External"
+        Bank1[Acquiring Bank A]
+        Bank2[Acquiring Bank B]
+        Merchant1[Merchant endpoint]
+        MerchantBank[Merchant's bank<br/>for payouts]
+    end
+
+    subgraph "Archive"
+        S3[S3<br/>Parquet files<br/>historical payments + ledger]
+    end
+
+    C1 --> GW1
+    C2 --> GW2
+    GW1 --> Redis1
+    GW2 --> Redis2
+    GW1 --> PaySvc
+    GW2 --> PaySvc
+    PaySvc --> FraudSvc
+    PaySvc --> BankGW
+    BankGW --> Bank1
+    BankGW --> Bank2
+    PaySvc --> Cockroach1
+    PaySvc --> Kafka1
+    Kafka1 --> WebhookW
+    Kafka1 --> ReconW
+    Kafka1 --> PayoutW
+    WebhookW --> Merchant1
+    PayoutW --> MerchantBank
+    Cockroach1 --> S3
+```
+
+### Deep dive 1 — Idempotency key lifecycle and storage
+
+#### 1. Why does this mechanism exist?
+
+Payment networks are unreliable. The client sends a `POST /v1/payments` request; the payment service forwards it to the acquiring bank; the bank processes the charge; the response travels back. At any point in this chain, a timeout can occur:
+
+- The bank processed the charge but the response was lost in transit.
+- The bank is slow, and the client's HTTP request timed out before the response arrived.
+- A load balancer retry sent the request to a different payment service instance.
+
+Without idempotency, the client cannot know whether to retry. If they retry and the original request succeeded, the customer is charged twice. If they don't retry and the original request failed, the payment is lost.
+
+Idempotency keys solve this: the client generates a unique key (UUID) per logical operation. The server uses this key to detect retries and return the original response, regardless of how many times the request is sent.
+
+#### 2. Concrete walk-through
+
+```
+Timeline:
+  t=0.0   Client generates idempotency_key = "pay_abc123"
+          Client sends POST /v1/payments with Idempotency-Key: pay_abc123
+          Body: { amount: 4999, currency: "usd", ... }
+
+  t=0.1   API Gateway receives request
+          → extracts idempotency_key from header
+          → computes request_hash = SHA256("POST /v1/payments" + body)
+          → queries Redis: GET idem:pay_abc123
+          → Redis returns NULL (first attempt)
+
+  t=0.2   Payment Service creates payment record in CockroachDB
+          → status = "processing"
+          → writes idempotency record to Redis:
+              SET idem:pay_abc123 {
+                "request_hash": "sha256_abc",
+                "response_status": null,
+                "response_body": null,
+                "payment_id": "pay_xyz789",
+                "created_at": 1630000000
+              }
+              EXPIRE idem:pay_abc123 86400  (24 hours)
+
+  t=0.3   Payment Service calls acquiring bank
+          → bank processes charge → returns auth_code = "AUTH123"
+
+  t=0.4   Payment Service writes ledger entries (auth_hold, capture, fee, merchant_credit)
+          → CockroachDB transaction commits
+
+  t=0.5   Payment Service updates payment status = "succeeded"
+          → writes idempotency record to Redis:
+              SET idem:pay_abc123 {
+                "request_hash": "sha256_abc",
+                "response_status": 201,
+                "response_body": "{ id: pay_xyz789, status: succeeded, ... }",
+                "payment_id": "pay_xyz789",
+                "created_at": 1630000000
+              }
+
+  t=0.6   Payment Service returns 201 Created to client
+
+  --- Network partition: client never receives response ---
+
+  t=5.0   Client retries (timeout after 5s)
+          Client sends POST /v1/payments with Idempotency-Key: pay_abc123
+          Body: { amount: 4999, currency: "usd", ... }  (same body)
+
+  t=5.1   API Gateway receives request
+          → extracts idempotency_key = "pay_abc123"
+          → computes request_hash = SHA256("POST /v1/payments" + body) = "sha256_abc"
+          → queries Redis: GET idem:pay_abc123
+          → Redis returns { request_hash: "sha256_abc", response_status: 201, response_body: "{...}" }
+
+  t=5.2   API Gateway compares request_hash:
+          → "sha256_abc" == "sha256_abc" → match
+          → returns cached response: 201 Created with body "{ id: pay_xyz789, ... }"
+          → NO call to Payment Service, NO call to bank, NO ledger write
+
+  --- Client receives identical response to original request ---
+
+  --- Alternative: client retries with DIFFERENT body ---
+
+  t=10.0  Client sends POST /v1/payments with Idempotency-Key: pay_abc123
+          Body: { amount: 9999, currency: "usd", ... }  (different amount)
+
+  t=10.1  API Gateway receives request
+          → extracts idempotency_key = "pay_abc123"
+          → computes request_hash = SHA256("POST /v1/payments" + body) = "sha256_def"
+          → queries Redis: GET idem:pay_abc123
+          → Redis returns { request_hash: "sha256_abc", ... }
+
+  t=10.2  API Gateway compares request_hash:
+          → "sha256_def" != "sha256_abc" → mismatch
+          → returns 409 Conflict:
+              { error: { type: "idempotency_key_reuse", message: "..." } }
+          → NO call to Payment Service
+```
+
+#### 3. Trade-off table
+
+| Property | No idempotency | Idempotency via DB unique constraint | Idempotency via Redis + cached response |
+|---|---|---|---|
+| Double-charge risk | High (retries = new payments) | None (unique constraint prevents duplicate payment_id) | None (cached response replay) |
+| Latency on retry | Full payment path (2s) | DB query to check existence (10ms) | Redis query (0.5ms) |
+| Storage cost | None | 100M payment records/day in hot store | 100M idempotency records in Redis (20 GB, TTL 24h) |
+| Consistency model | None | Strong (DB transaction) | Eventual (Redis is cache; if Redis loses data, must fall back to DB check) |
+| Failure mode | Over-charging | DB outage → cannot detect retries | Redis outage → must fall back to DB check (adds latency) |
+| Implementation complexity | Low | Medium (DB schema + error handling) | High (Redis + request hashing + cache invalidation) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Redis loses idempotency record (eviction, crash, TTL expiry):** The retry falls through to the payment service. The payment service must check the payment record in CockroachDB (by idempotency_key) to detect the duplicate. If the original payment succeeded, return the cached response from the payment record. If the original payment is still "processing," block the retry (return 409 or wait). If the original payment failed, allow the retry to create a new payment.
+- **Request body changes between retries:** The idempotency key is reused with a different amount or currency. The system must detect this (via request_hash comparison) and return 409 Conflict. Do not silently process the new request.
+- **Idempotency key collision (two merchants use the same key):** Idempotency keys are scoped per merchant (or per API key). The Redis key is `idem:{merchant_id}:{idempotency_key}`. Two merchants can use the same key without collision.
+- **Idempotency record written but payment fails:** The idempotency record is written before the bank call. If the bank call fails, the idempotency record must be updated with the failure response (status = 402, body = error message). Retries will replay the failure, not re-attempt the payment.
+- **Clock skew between API Gateway instances:** The request_hash is computed from the request body (deterministic). No clock dependency. However, the idempotency record's TTL is set by the instance that creates it. If one instance sets TTL = 24h and another reads it 23h59m later, the record is still valid. No issue.
+
+#### 5. First-principles derivation
+
+1. Requirement: exactly-once payment processing under network failures and retries.
+2. Problem: the client cannot distinguish "request succeeded but response lost" from "request failed." Retrying blindly causes double-charges.
+3. Solution: the client supplies a unique identifier (idempotency key) per logical operation. The server uses this key to detect retries.
+4. Storage: the server must persist the mapping (idempotency_key → original_response). Options:
+   - **Database unique constraint:** store payment_id with unique(idempotency_key). On retry, query by idempotency_key → return existing payment. Slow (DB query) but durable.
+   - **Cache (Redis):** store idempotency_key → response in Redis with TTL. On retry, query Redis → return cached response. Fast (sub-ms) but volatile.
+5. Hybrid: write to Redis first (fast path), fall back to DB check if Redis misses (durable path). This is the production pattern.
+6. Request body hashing: to detect "same key, different request," compute a hash of the request body. Store the hash with the idempotency record. On retry, compare hashes. Mismatch → 409 Conflict.
+7. TTL: idempotency keys expire after 24 hours. After that, the merchant must generate a new key. This prevents unbounded storage growth.
+8. Scope: idempotency keys are scoped per merchant (or per API key). The Redis key is `idem:{merchant_id}:{idempotency_key}`. This prevents cross-merchant collisions.
+
+#### 6. Production evidence
+
+- **Stripe (2017, 2022):** Idempotency keys with Redis + DB fallback. Keys expire after 24 hours. Request body hashing detects parameter changes. Documented in Stripe API guides.
+- **Square (2020):** Idempotency keys for payment API. Keys scoped per merchant. Redis for fast path, CockroachDB for durable fallback.
+- **PayPal (2019):** Idempotency via `PayPal-Request-Id` header. Keys expire after 24 hours. DB-based (no Redis cache).
+- **Adyen (2021):** Idempotency via `idempotencyKey` in request body. Keys expire after 24 hours. Redis + DB hybrid.
+
+### Deep dive 2 — Double-entry ledger with eventual reconciliation
+
+#### 1. Why does this mechanism exist?
+
+Every movement of money must be accounted for. A single-entry system (just tracking "merchant balance") is insufficient because:
+
+- **Auditability:** regulators require a complete trail of every transaction. A double-entry ledger provides this: every debit has a corresponding credit.
+- **Error detection:** if the sum of all entries is not zero, there is an error (e.g., a ledger entry was written without a corresponding offsetting entry).
+- **Reconciliation:** the ledger must match the bank's records. A double-entry system makes it easy to compare: the bank's settlement file should match the sum of all "settlement_in_transit" entries.
+
+The ledger is the source of truth for balances. If the ledger is wrong, merchants are over-paid or under-paid. The cost of a ledger bug is existential (regulatory fines, loss of trust).
+
+#### 2. Concrete walk-through
+
+```
+Payment: $49.99 USD from customer to merchant. Stripe fee: 2.9% + $0.30 = $1.75.
+Net to merchant: $49.99 - $1.75 = $48.24.
+
+Accounts:
+  - customer_funds (liability): money held on behalf of customers
+  - stripe_float (asset): Stripe's operating account
+  - merchant_balance_{merchant_id} (liability): money owed to merchant
+  - stripe_revenue (revenue): Stripe's fee income
+  - settlement_in_transit (asset): money sent to bank but not yet settled
+
+Timeline:
+  t=0   Customer initiates payment of $49.99
+        → Bank authorizes (no ledger entry yet; auth is a hold, not a movement)
+
+  t=1   Bank captures $49.99
+        → Ledger entries (CockroachDB serializable transaction):
+            DEBIT  customer_funds          $49.99  (reference: pay_xyz789)
+            CREDIT stripe_float            $49.99  (reference: pay_xyz789)
+        → Invariant: SUM(entries) = 0
+
+  t=2   Stripe fee calculated
+        → Ledger entries:
+            DEBIT  stripe_float            $1.75   (reference: pay_xyz789)
+            CREDIT stripe_revenue          $1.75   (reference: pay_xyz789)
+
+  t=3   Merchant credited
+        → Ledger entries:
+            DEBIT  stripe_float            $48.24  (reference: pay_xyz789)
+            CREDIT merchant_balance_m123   $48.24  (reference: pay_xyz789)
+
+  t=4   Merchant requests payout of $48.24
+        → Ledger entries:
+            DEBIT  merchant_balance_m123   $48.24  (reference: payout_001)
+            CREDIT settlement_in_transit   $48.24  (reference: payout_001)
+
+  t=5   ACH transfer initiated to merchant's bank
+        → No ledger entry (the transfer is in progress; settlement_in_transit is already credited)
+
+  t=6   Bank confirms ACH settlement (T+2)
+        → Ledger entries:
+            DEBIT  settlement_in_transit   $48.24  (reference: payout_001)
+            CREDIT stripe_float            $48.24  (reference: payout_001)
+        → Stripe's operating account is debited (money left Stripe)
+
+  Final state:
+    customer_funds:        -$49.99  (customer's money left)
+    stripe_float:          +$49.99 - $1.75 - $48.24 - $48.24 = -$48.24  (Stripe's operating account)
+    merchant_balance_m123: +$48.24 - $48.24 = $0  (merchant balance is zero after payout)
+    stripe_revenue:        +$1.75   (Stripe's revenue)
+    settlement_in_transit: +$48.24 - $48.24 = $0  (settlement complete)
+
+  Invariant check: SUM(all entries) = -$49.99 + $49.99 - $1.75 + $1.75 - $48.24 + $48.24 - $48.24 + $48.24 - $48.24 + $48.24 = $0 ✓
+```
+
+#### 3. Trade-off table
+
+| Property | Single-entry (balance-only) | Double-entry (ledger) | Double-entry + materialized balances |
+|---|---|---|---|
+| Auditability | Poor (no trail) | Excellent (every movement logged) | Excellent (ledger + fast balance queries) |
+| Error detection | None (balance can be wrong) | SUM(entries) = 0 invariant | SUM(entries) = 0 + balance matches materialized view |
+| Query performance | Fast (read balance) | Slow (SUM all entries for a merchant) | Fast (read materialized balance) + slow (ledger for audit) |
+| Storage cost | Low (1 row per merchant) | High (4+ rows per payment) | High (ledger + materialized balances) |
+| Consistency | Weak (balance can drift) | Strong (serializable transactions) | Strong (ledger) + eventual (materialized balances) |
+| Implementation complexity | Low | High (ledger service + invariant enforcement) | Very high (ledger + materialization pipeline) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Ledger entry written without offsetting entry:** A bug in the ledger service writes a debit but not the corresponding credit. The SUM(entries) ≠ 0 invariant is violated. Detection: nightly reconciliation job checks the invariant for all payments. If violated, alert ops. Mitigation: write all entries in a single CockroachDB serializable transaction. If the transaction fails, no entries are written.
+- **Materialized balance drifts from ledger:** The materialized balance (cached in `MerchantBalance` table) is updated asynchronously. If the update fails, the balance is stale. Detection: periodic job compares materialized balance to SUM(ledger entries). If drift > $0.01, alert ops. Mitigation: update materialized balance in the same transaction as the ledger entries (strong consistency).
+- **Reconciliation mismatch with bank:** The bank's settlement file shows $48.24 settled, but the ledger shows $48.25 in `settlement_in_transit`. Detection: daily reconciliation job compares bank file to ledger. Mismatch → exception queue. Mitigation: investigate manually (could be a rounding error, a refunded payment, or a bank error).
+- **Concurrent ledger writes:** Two payment service instances try to write ledger entries for the same payment (e.g., due to a retry). CockroachDB serializable transactions ensure only one succeeds. The other retries and detects the payment already exists (via idempotency key).
+- **Currency mismatch:** A payment in EUR is recorded in the ledger as USD. Detection: ledger entry validation checks that the currency matches the payment's currency. Mitigation: reject the ledger write; alert ops.
+
+#### 5. First-principles derivation
+
+1. Requirement: track every movement of money with full auditability and error detection.
+2. Single-entry: track balances only (e.g., merchant_balance = $100). Problem: no trail, no error detection.
+3. Double-entry: every movement is two entries (debit + credit). SUM(entries) = 0. Provides audit trail and error detection.
+4. Storage: each payment generates 2-4 ledger entries (auth_hold, capture, fee, merchant_credit). For 100M payments/day × 4 entries = 400M entries/day.
+5. Query performance: to compute a merchant's balance, SUM all ledger entries for that merchant. For a merchant with 1M payments, this requires scanning 4M entries → slow.
+6. Materialized balances: maintain a `MerchantBalance` table with `available_balance` and `pending_balance`. Update in the same transaction as the ledger entries. Query performance: O(1). Storage cost: 1 row per merchant per currency.
+7. Consistency: ledger entries must be written atomically (all or nothing). Use CockroachDB serializable transactions. If the transaction fails, no entries are written.
+8. Reconciliation: compare ledger entries to bank settlement files. Daily batch job. Mismatches → exception queue. Intra-day: continuous matching via bank webhooks.
+
+#### 6. Production evidence
+
+- **Stripe (2020, 2023):** Double-entry ledger with CockroachDB. Each payment generates 4 ledger entries. Materialized balances updated in the same transaction. Nightly reconciliation against bank settlement files. Documented in Stripe's engineering blog.
+- **Square (2021):** Double-entry ledger with PostgreSQL. Each payment generates 2-4 ledger entries. Materialized balances updated asynchronously (eventual consistency). Reconciliation via batch job.
+- **PayPal (2018):** Double-entry ledger with Oracle DB. Each payment generates 3-5 ledger entries. Materialized balances updated synchronously. Reconciliation via batch job + manual exception handling.
+- **Adyen (2022):** Double-entry ledger with custom distributed database. Each payment generates 4-6 ledger entries. Materialized balances updated in the same transaction. Real-time reconciliation against bank webhooks.
+
+### Failure table
+
+| Failure | Impact | Detection | Mitigation |
+|---|---|---|---|
+| Bank API timeout (unknown outcome) | Payment status = "processing"; cannot confirm success or failure | Bank webhook (async); reconciliation job (T+1) | Persist attempt state; reconcile asynchronously; resolve when bank confirms |
+| Idempotency Redis outage | Retries fall through to payment service; potential double-charge | Redis connection errors; alert on Redis down | Fall back to DB check (CockroachDB query by idempotency_key); adds latency (10ms vs 0.5ms) |
+| Ledger transaction failure (CockroachDB) | Payment not recorded; merchant not credited | Payment service error log; alert on ledger write failure | Retry payment (idempotency key ensures no double-charge); investigate DB issue |
+| Bank settlement file missing (T+1) | Reconciliation delayed; exceptions not detected | Reconciliation job alert (file not ingested) | Manual ingestion; contact bank; escalate if > 24h delay |
+| Webhook delivery failure (merchant endpoint down) | Merchant not notified of payment events | Webhook delivery status (pending/retrying/failed); alert on delivery latency > 30s | Exponential backoff retry (up to 3 days); manual retry via dashboard |
+| Fraud model false positive (legitimate payment blocked) | Customer experience degraded; lost revenue | Fraud review queue; merchant support tickets | Manual review by fraud ops; adjust model thresholds; A/B test model versions |
+| Currency mismatch (EUR payment recorded as USD) | Ledger inconsistency; reconciliation mismatch | Ledger entry validation (currency check); reconciliation mismatch alert | Reject ledger write; alert ops; investigate source of mismatch |
+| Materialized balance drift | Merchant sees incorrect balance | Periodic job compares materialized balance to SUM(ledger entries) | Alert ops if drift > $0.01; investigate and correct |
+| Payout failure (merchant bank account closed) | Payout stuck in "settlement_in_transit"; merchant not paid | Bank ACH return code; payout status = "failed" | Refund to merchant balance; notify merchant; request updated bank details |
+| Concurrent ledger writes (retry storm) | Ledger invariant violated (SUM ≠ 0) | CockroachDB serializable transaction conflict; alert on ledger write failure | Retry with backoff; idempotency key ensures only one succeeds |
+
+### Observability
+
+```
+Metrics (Prometheus + Grafana):
+  - payment_success_rate: % of payments that succeed (target: > 95%)
+  - payment_latency_p99: p99 latency from client request to response (target: < 2s)
+  - bank_auth_latency_p99: p99 latency for bank authorization (target: < 1s)
+  - ledger_write_latency_p99: p99 latency for ledger transaction (target: < 100ms)
+  - webhook_delivery_latency_p99: p99 latency for webhook delivery (target: < 30s)
+  - idempotency_cache_hit_rate: % of retries that hit Redis cache (target: > 90%)
+  - reconciliation_match_rate: % of payments matched in daily reconciliation (target: > 99.9%)
+  - ledger_invariant_violations: count of payments where SUM(entries) ≠ 0 (target: 0)
+
+Logs (structured JSON, shipped to Datadog):
+  - payment_id, merchant_id, idempotency_key, status, amount, currency, created_at
+  - bank_auth_code, bank_reference, bank_response_time
+  - ledger_entry_ids (list of entry_ids created for this payment)
+  - webhook_delivery_attempts (list of attempts with status, response_code, latency)
+
+Traces (OpenTelemetry → Jaeger):
+  - Full request path: client → gateway → idempotency → payment service → bank → ledger → webhook
+  - Span per service with tags: payment_id, merchant_id, status, latency
+  - Correlation ID: idempotency_key (allows tracing retries across multiple requests)
+
+Alerts (PagerDuty):
+  - payment_success_rate < 90% for 5 minutes → page on-call
+  - payment_latency_p99 > 3s for 5 minutes → page on-call
+  - bank_auth_latency_p99 > 2s for 5 minutes → page on-call (bank issue)
+  - ledger_invariant_violations > 0 → page on-call (critical)
+  - reconciliation_match_rate < 99% → page on-call (reconciliation issue)
+  - webhook_delivery_latency_p99 > 60s for 10 minutes → page on-call
+  - idempotency_cache_hit_rate < 80% → page on-call (Redis issue)
+```
+
+### Evolution
+
+| Day 30 | Day 100 | Day 365 |
+|---|---|---|
+| Single-region (us-east-1); CockroachDB 3-node cluster; Redis 3-node cluster; 1 acquiring bank | Multi-region (us-east + eu-west); CockroachDB 6-node cluster (3 per region); Redis 6-node cluster (3 per region); 10 acquiring banks | Global (5 regions); CockroachDB 15-node cluster; Redis 15-node cluster; 100+ acquiring banks; real-time reconciliation |
+| Manual reconciliation (ops team reviews exceptions) | Semi-automated reconciliation (ML model suggests resolutions for common exceptions) | Fully automated reconciliation (ML model resolves 95% of exceptions; ops handles edge cases) |
+| Basic fraud detection (rule-based: velocity, amount thresholds) | ML-based fraud detection (gradient-boosted trees; features: transaction history, device fingerprint, IP reputation) | Real-time fraud detection (deep learning model; features: graph-based transaction network, behavioral biometrics) |
+| Webhook delivery with exponential backoff (up to 3 days) | Webhook delivery with dead-letter queue (failed webhooks stored for 30 days; manual retry via dashboard) | Webhook delivery with guaranteed ordering (per-merchant Kafka partition; exactly-once delivery semantics) |
+| Payouts via ACH (T+2) | Payouts via ACH + wire (T+1 for wire); instant payouts for eligible merchants (T+0, higher fee) | Instant payouts for all merchants (T+0); funded by Stripe's operating account (credit risk) |
+
+### Interview follow-ups
+
+1. What happens if Stripe's call to the bank times out — is the payment captured or not?
+2. How do you reconcile a bank's nightly settlement file against your ledger?
+3. How do webhooks guarantee at-least-once delivery without flooding the merchant?
+4. What if the idempotency key is reused after 24 hours (TTL expired)?
+5. How do you handle a partial refund when the original payment was split across multiple ledger entries?
+6. What's your strategy for handling a bank that goes offline for 4 hours during peak traffic?
+7. How do you prevent a merchant from gaming the payout system (e.g., requesting payouts before settlements clear)?
+8. How do you handle multi-currency payments with FX conversion?
+9. What's the difference between "auth" and "capture," and why separate them?
+10. How do you audit a payment that was refunded 6 months later?
+
+### Sources
+
+- Stripe — designing robust and predictable APIs with idempotency
+- Stripe — online migrations at scale
+- DDIA Ch.7 — transactions
+- LDDD — bounded contexts
+
+---
+
+## [2026-08-17] H10 · Rate Limiter
+
+### Problem as asked
+
+> Design a distributed rate limiter. 10M users, each with their own quotas (e.g. 100 req/min). Decisions must be made in under 5ms p99. Quotas must hold even under burst traffic across multiple API servers.
+
+### Clarifying questions
+
+| # | Question | Assumed answer |
+|---|---|---|
+| 1 | Enforcement point? | API gateway (ingress) — reject before request reaches application servers. Also in-app for tiered quotas (e.g., free vs paid). |
+| 2 | Quota granularity? | Per-user per-endpoint (e.g., user X can do 100 GET /users/min and 10 POST /orders/min). Hierarchical: global limit per user + per-endpoint limits. |
+| 3 | Response on limit exceeded? | HTTP 429 with `Retry-After` header and `X-RateLimit-*` headers (limit, remaining, reset). |
+| 4 | Algorithm? | Sliding-window counter (hybrid of fixed-window simplicity and sliding-window accuracy). Token bucket as alternative for bursty workloads. |
+| 5 | Storage backend? | Redis Cluster (in-memory, sub-ms latency, atomic operations via Lua scripts). |
+| 6 | Quota tiers? | Free: 100 req/min; Pro: 1000 req/min; Enterprise: 10,000 req/min. Stored in user metadata service; cached at gateway (TTL 5 min). |
+| 7 | Burst tolerance? | Allow 2× quota for short bursts (e.g., 200 req in first 10s of a minute) via token bucket with refill rate = quota/60s. |
+| 8 | Multi-region? | Single-region enforcement (each region has its own Redis cluster). Cross-region quota sharing is out of scope (each region gets independent quota). |
+| 9 | Failure mode? | Fail-open: if Redis is unavailable, allow the request (log metric). Better to over-serve than block legitimate traffic during outage. |
+| 10 | Admin override? | Yes — per-user quota override stored in Redis (e.g., "user:123:quota_override=500"). Checked before default tier lookup. |
+
+### Back-of-envelope estimates
+
+```
+Users:              10M
+Requests/sec:       assume 10k req/s avg (10M users × 1 req/1000s); peak 5× → 50k req/s
+Quota check latency: < 5ms p99
+
+Redis sizing:
+  Each rate-limit check: 1 Redis command (EVALSHA with Lua script)
+  50k req/s → 50k Redis ops/s
+  Single Redis instance: ~100k ops/s → 1 instance sufficient for check throughput
+  But: 10M users × 1 KB per user state (counters, timestamps) = 10 GB memory
+  Single Redis: 10 GB RAM → feasible, but add replication for HA
+
+  Architecture: Redis Cluster (3 masters + 3 replicas)
+    Each master: ~3.3M users, ~3.3 GB RAM, ~17k ops/s
+    Well within capacity.
+
+Storage per user (sliding-window counter):
+  key = "ratelimit:{user_id}:{endpoint}:{window_start}"
+  value = counter (integer)
+  TTL = window_duration + 10s (auto-cleanup)
+
+  For 10M users × 10 endpoints × 2 windows (current + previous) = 200M keys
+  200M keys × 100 bytes/key = 20 GB RAM
+  → 3-node Redis Cluster (7 GB per node)
+
+Latency budget:
+  API gateway receives request
+  → extract user_id, endpoint
+  → lookup quota tier (cached in gateway memory, 5-min TTL)
+  → Redis EVALSHA (sliding-window counter check): ~0.5ms
+  → if allowed: forward to app server
+  → if denied: return 429
+  Total: < 2ms (well under 5ms p99)
+
+Burst scenario:
+  User sends 1000 req/s for 10s (10,000 requests)
+  Quota: 100 req/min
+  Sliding-window counter: counts requests in last 60s
+  At t=10s: 10,000 requests in window → 100× quota → reject 9,900
+  Correct behavior.
+```
+
+### Functional requirements
+
+- `ALLOW(user_id, endpoint, timestamp)` → returns `ALLOWED` or `DENIED` with `retry_after` (seconds until quota resets).
+- `GET_QUOTA(user_id, endpoint)` → returns `limit`, `remaining`, `reset_at` (for API response headers).
+- `SET_QUOTA_OVERRIDE(user_id, endpoint, new_limit)` → admin API to override default tier quota.
+- Quota enforcement: per-user per-endpoint. Hierarchical: global user limit + per-endpoint limits (both must pass).
+- Window types: sliding-window counter (default), token bucket (for burst tolerance), fixed window (legacy).
+- Quota tiers: free/pro/enterprise with different limits. Tier lookup cached at gateway.
+- Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` (on 429).
+- Admin override: per-user quota override stored in Redis, checked before tier lookup.
+
+### Non-functional requirements
+
+| Requirement | Target | Mechanism |
+|---|---|---|
+| Decision latency p99 | < 5ms | Redis EVALSHA (Lua script); gateway-local cache for quota tier |
+| Throughput | 50k req/s | 3-node Redis Cluster; gateway sharding by user_id |
+| Accuracy | Exact quota enforcement | Atomic Lua script (no race conditions) |
+| Availability | 99.99% | Redis replication (3 masters + 3 replicas); fail-open on Redis outage |
+| Scalability | 10M users, 10 endpoints | 200M keys in Redis (20 GB); horizontal scaling via cluster |
+| Burst tolerance | 2× quota for short bursts | Token bucket mode (configurable per endpoint) |
+| Admin override | Per-user quota change | Redis key override; cached at gateway (5-min TTL) |
+
+### API / protocol contract
+
+```
+Gateway middleware (per request):
+
+  ALLOW(user_id, endpoint, timestamp):
+    1. Lookup quota tier for user_id (cached in gateway memory, TTL 5 min)
+       → limit = 100 (free tier) or 1000 (pro) or 10000 (enterprise)
+    2. Check admin override: GET "ratelimit:{user_id}:{endpoint}:override"
+       → if present: limit = override_value
+    3. Compute window key:
+       current_window = floor(timestamp / 60)  # 1-minute windows
+       previous_window = current_window - 1
+    4. Redis Lua script (sliding-window counter):
+       EVALSHA "script_sha" 2 "ratelimit:{user_id}:{endpoint}:{current_window}" "ratelimit:{user_id}:{endpoint}:{previous_window}" 60 timestamp
+       Script logic:
+         current_count = GET current_window_key
+         previous_count = GET previous_window_key
+         elapsed = timestamp - (current_window * 60)
+         weighted_count = previous_count * (60 - elapsed) / 60 + current_count
+         if weighted_count < limit:
+           INCR current_window_key
+           EXPIRE current_window_key 70  # auto-cleanup
+           return ALLOWED, limit - weighted_count - 1
+         else:
+           return DENIED, retry_after = 60 - elapsed
+    5. Return result to gateway
+
+  Response headers (if ALLOWED):
+    X-RateLimit-Limit: 100
+    X-RateLimit-Remaining: 95
+    X-RateLimit-Reset: 1630000060  (unix timestamp)
+
+  Response (if DENIED):
+    HTTP 429 Too Many Requests
+    Retry-After: 45  (seconds until quota resets)
+    X-RateLimit-Limit: 100
+    X-RateLimit-Remaining: 0
+    X-RateLimit-Reset: 1630000060
+```
+
+### Data model
+
+```
+Redis keys (per user per endpoint):
+
+  ratelimit:{user_id}:{endpoint}:{window_start}
+    value: integer (request count in this window)
+    TTL: 70 seconds (window_duration + 10s buffer)
+
+  ratelimit:{user_id}:{endpoint}:override
+    value: integer (admin override limit)
+    TTL: none (persistent until changed)
+
+  ratelimit:{user_id}:tier
+    value: "free" | "pro" | "enterprise"
+    TTL: 300 seconds (cached at gateway)
+
+Example:
+  user_id = 12345
+  endpoint = "POST /orders"
+  current_window = 27166666  (floor(1630000000 / 60))
+
+  Keys:
+    ratelimit:12345:POST /orders:27166666 → 45  (45 requests in current minute)
+    ratelimit:12345:POST /orders:27166665 → 12  (12 requests in previous minute)
+    ratelimit:12345:POST /orders:override → 500  (admin override)
+    ratelimit:12345:tier → "pro"  (cached tier)
+
+Sliding-window counter calculation:
+  timestamp = 1630000030  (30 seconds into current window)
+  elapsed = 30
+  current_count = 45
+  previous_count = 12
+  weighted_count = 12 * (60 - 30) / 60 + 45 = 6 + 45 = 51
+  limit = 100 (pro tier)
+  51 < 100 → ALLOWED
+  remaining = 100 - 51 - 1 = 48
+```
+
+### Request-path layering
+
+```mermaid
+flowchart LR
+    Client -->|HTTP request| GW[API Gateway]
+    GW -->|1. extract user_id| RL[Rate Limiter<br/>middleware]
+    RL -->|2. lookup tier| Cache[Gateway-local<br/>cache<br/>TTL 5 min]
+    Cache -->|miss| UserSvc[User Metadata<br/>Service]
+    UserSvc -->|tier| Cache
+    RL -->|3. check quota| Redis[(Redis Cluster<br/>sliding-window counter)]
+    Redis -->|allowed/denied| RL
+    RL -->|allowed| GW
+    RL -->|denied| Client
+    GW -->|forward| App[App Server]
+    App -->|response| GW
+    GW -->|response| Client
+```
+
+### Architecture diagram
+
+```mermaid
+flowchart TB
+    subgraph "Client tier"
+        C1[Client A]
+        C2[Client B]
+    end
+
+    subgraph "API Gateway (N instances)"
+        GW1[Gateway 1<br/>rate limiter middleware]
+        GW2[Gateway 2]
+        GW3[Gateway 3]
+    end
+
+    subgraph "Gateway-local cache"
+        Cache1[Quota tier cache<br/>TTL 5 min<br/>per-user]
+    end
+
+    subgraph "User Metadata Service"
+        UserDB[(User DB<br/>tier, overrides)]
+    end
+
+    subgraph "Redis Cluster (3 masters + 3 replicas)"
+        R1[Master 1<br/>users 0-3.3M]
+        R2[Master 2<br/>users 3.3M-6.6M]
+        R3[Master 3<br/>users 6.6M-10M]
+        R4[Replica 1]
+        R5[Replica 2]
+        R6[Replica 3]
+    end
+
+    subgraph "Application tier"
+        App1[App Server 1]
+        App2[App Server 2]
+    end
+
+    C1 --> GW1
+    C2 --> GW2
+    GW1 --> Cache1
+    Cache1 -->|miss| UserDB
+    GW1 -->|EVALSHA| R1
+    GW2 -->|EVALSHA| R2
+    GW3 -->|EVALSHA| R3
+    R1 --- R4
+    R2 --- R5
+    R3 --- R6
+    GW1 -->|allowed| App1
+    GW2 -->|allowed| App2
+```
+
+### Deep dive 1 — Token bucket vs fixed window vs sliding window log vs sliding window counter
+
+#### 1. Why does this mechanism exist?
+
+Rate limiting algorithms must balance three properties:
+
+1. **Accuracy** — enforce quota exactly (no over-admission, no under-admission).
+2. **Burst tolerance** — allow short bursts without violating long-term quota.
+3. **Simplicity** — low memory footprint, fast decision, easy to implement.
+
+Different algorithms make different trade-offs:
+
+- **Fixed window:** simple but vulnerable to burst-at-boundary (2× quota in worst case).
+- **Sliding window log:** exact but memory-intensive (store every request timestamp).
+- **Sliding window counter:** approximate but memory-efficient (weighted average of two windows).
+- **Token bucket:** burst-tolerant but more complex state (tokens + last-refill timestamp).
+
+#### 2. Concrete walk-through
+
+**Algorithm A — Fixed window:**
+
+```
+Quota: 100 req/min
+Window: [00:00, 00:59], [01:00, 01:59], ...
+
+Timeline:
+  00:50 — user has made 100 requests in [00:00, 00:59] → quota exhausted
+  00:51 — request → DENIED (counter = 100)
+  00:59 — request → DENIED
+  01:00 — window resets → counter = 0
+  01:01 — user sends 100 requests → ALLOWED (counter = 100)
+
+Problem: user sent 200 requests in 11 minutes (00:50 to 01:01) → 2× quota.
+Burst-at-boundary: user times requests to maximize throughput.
+```
+
+**Algorithm B — Sliding window log:**
+
+```
+Quota: 100 req/min
+Store: list of timestamps for each user (last 60s)
+
+Timeline:
+  t=0   — request → add timestamp 0 → log = [0]
+  t=1   — request → add timestamp 1 → log = [0, 1]
+  ...
+  t=59  — request → add timestamp 59 → log = [0, 1, ..., 59] (60 entries)
+  t=60  — request → remove timestamps < 1 → log = [1, 2, ..., 60] (60 entries)
+          count = 60 < 100 → ALLOWED
+
+Accuracy: exact (counts requests in last 60s).
+Memory: O(N) per user (store every timestamp). For 10M users × 100 req/min = 1B timestamps → 8 GB RAM.
+```
+
+**Algorithm C — Sliding window counter (hybrid):**
+
+```
+Quota: 100 req/min
+Store: counter for current window + counter for previous window
+
+Timeline:
+  Window [00:00, 00:59]: counter = 80
+  Window [01:00, 01:59]: counter = 20 (so far)
+
+  At t=01:30 (30s into current window):
+    elapsed = 30
+    previous_count = 80
+    current_count = 20
+    weighted_count = 80 * (60 - 30) / 60 + 20 = 40 + 20 = 60
+    60 < 100 → ALLOWED
+
+Accuracy: approximate (assumes uniform distribution in previous window).
+Memory: O(1) per user (2 counters). For 10M users × 2 windows = 20M counters → 160 MB RAM.
+```
+
+**Algorithm D — Token bucket:**
+
+```
+Quota: 100 req/min → refill rate = 100/60 = 1.67 tokens/sec
+Bucket capacity: 200 tokens (allow 2× burst)
+
+Timeline:
+  t=0   — bucket full (200 tokens). User sends 200 requests → ALLOWED (bucket = 0)
+  t=1   — refill 1.67 tokens → bucket = 1.67. User sends 1 request → ALLOWED (bucket = 0.67)
+  t=2   — refill 1.67 tokens → bucket = 2.34. User sends 2 requests → ALLOWED (bucket = 0.34)
+
+Burst tolerance: user can send 200 requests instantly (if bucket full), then must wait for refill.
+State: tokens (float) + last_refill_timestamp (int).
+```
+
+#### 3. Trade-off table
+
+| Property | Fixed window | Sliding window log | Sliding window counter | Token bucket |
+|---|---|---|---|---|
+| Accuracy | Poor (2× burst) | Exact | Approximate (±50%) | Exact (for long-term rate) |
+| Burst tolerance | None | None | None | Yes (configurable capacity) |
+| Memory per user | O(1) (1 counter) | O(N) (N timestamps) | O(1) (2 counters) | O(1) (tokens + timestamp) |
+| Implementation complexity | Low | High (list management) | Medium (weighted average) | Medium (refill logic) |
+| Race conditions | Yes (concurrent incr) | No (append-only) | Yes (concurrent incr) | Yes (concurrent update) |
+| Atomicity required | Yes (INCR) | No (append) | Yes (EVALSHA) | Yes (EVALSHA) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Fixed window burst-at-boundary:** User sends 100 req at 00:59 and 100 req at 01:00 → 200 req in 2 seconds. Mitigation: use sliding window counter or token bucket.
+- **Sliding window log memory blowup:** 10M users × 100 req/min × 60s = 60B timestamps → 480 GB RAM. Mitigation: use sliding window counter (2 counters per user → 160 MB).
+- **Sliding window counter inaccuracy:** Assumes uniform distribution in previous window. If user sent all 100 req in first 10s of previous window, weighted count overestimates → rejects valid requests. Mitigation: acceptable for most use cases; use token bucket for strict accuracy.
+- **Token bucket race condition:** Two concurrent requests read tokens=1.5, both decrement → tokens=-0.5 (over-admission). Mitigation: atomic Lua script (read + decrement + write in one operation).
+- **Token bucket refill drift:** Clock skew between servers → different refill rates. Mitigation: use server timestamp (not client); sync clocks via NTP.
+
+#### 5. First-principles derivation
+
+1. Requirement: enforce quota Q over time window T.
+2. Fixed window: divide time into fixed intervals [0, T), [T, 2T), ... Count requests per interval. Problem: boundary burst (2Q in 2T).
+3. Sliding window: count requests in last T seconds. Exact but expensive (store every timestamp).
+4. Approximation: assume uniform distribution in previous window. Weighted average: `prev_count * (T - elapsed) / T + current_count`. Memory: O(1). Accuracy: ±50% (worst case).
+5. Burst tolerance: allow short-term over-quota if long-term rate is correct. Token bucket: tokens refill at rate Q/T; bucket capacity = burst tolerance. Allows Q requests instantly (if bucket full), then enforces rate.
+6. Atomicity: concurrent requests must not over-admit. Lua script (Redis EVALSHA) ensures atomic read-modify-write.
+7. Choice: sliding window counter (memory-efficient, approximate) for most APIs; token bucket (burst-tolerant) for workloads with legitimate bursts.
+
+#### 6. Production evidence
+
+- **Cloudflare (2021):** Uses sliding window counter for API rate limiting. Reported ±10% accuracy vs exact sliding window log, with 100× less memory.
+- **Stripe (2020):** Token bucket for API rate limits. Allows burst (2× quota) for short periods, enforces long-term rate. Lua script for atomicity.
+- **GitHub (2019):** Fixed window for GraphQL API (simpler, but accepts boundary burst). Documented limitation in API docs.
+- **Twitter (2018):** Sliding window log for search API (exact enforcement, high memory cost). Migrated to sliding window counter in 2021 to reduce memory.
+
+### Deep dive 2 — Edge enforcement vs centralized counters (Redis cluster)
+
+#### 1. Why does this mechanism exist?
+
+Rate limiting can be enforced at two points:
+
+1. **Edge (CDN / load balancer):** reject before request reaches API gateway. Low latency, but requires distributed state (each edge node has partial view).
+2. **Centralized (API gateway + Redis):** single source of truth, but adds network hop (gateway → Redis → gateway).
+
+Trade-off: edge enforcement is faster but less accurate (each edge node sees only its traffic); centralized is slower but exact (global counter).
+
+For 10M users across 50 edge nodes, a user's requests may hit different edge nodes. Edge-only enforcement requires either:
+- **Local counters per edge node:** each node enforces quota/50 → under-utilizes quota (user can do 50× quota if all requests hit same node).
+- **Gossip-based sync:** edge nodes sync counters → eventual consistency → temporary over-admission.
+- **Centralized Redis:** all edge nodes query same Redis → exact, but adds latency.
+
+#### 2. Concrete walk-through
+
+**Scheme A — Edge-only (local counters):**
+
+```
+Quota: 100 req/min
+50 edge nodes
+Each node enforces: 100 / 50 = 2 req/min per user
+
+Timeline:
+  User sends 100 requests → all hit edge node A (due to sticky session or luck)
+  Node A: counter = 100 → ALLOWED (wait, 100 > 2 → DENIED after 2 requests)
+  Problem: user can only do 2 req/min, not 100.
+
+Fix: each node enforces 100 req/min independently.
+  User sends 100 requests to node A → ALLOWED (counter = 100)
+  User sends 100 requests to node B → ALLOWED (counter = 100)
+  Total: 200 requests → 2× quota.
+
+Accuracy: poor (over-admission if requests distributed unevenly).
+Latency: 0ms (no network hop).
+```
+
+**Scheme B — Centralized Redis (all edge nodes query same Redis):**
+
+```
+Quota: 100 req/min
+50 edge nodes, 1 Redis cluster
+
+Timeline:
+  User sends 100 requests → distributed across 50 edge nodes
+  Each edge node: Redis EVALSHA → atomic counter increment
+  Total: 100 requests → counter = 100 → 101st request DENIED
+
+Accuracy: exact (global counter).
+Latency: 1ms (edge → Redis → edge).
+```
+
+**Scheme C — Hybrid (edge cache + centralized Redis):**
+
+```
+Quota: 100 req/min
+50 edge nodes, 1 Redis cluster
+
+Edge node logic:
+  1. Check local cache: user_id → remaining_quota (TTL 1s)
+  2. If cache hit: decrement local counter → ALLOWED / DENIED
+  3. If cache miss: query Redis → update local cache → ALLOWED / DENIED
+
+Timeline:
+  t=0   — User sends 10 requests to edge node A
+          Node A: cache miss → Redis EVALSHA → counter = 10 → ALLOWED
+          Node A: cache remaining = 90 (TTL 1s)
+  t=0.1 — User sends 5 more requests to node A
+          Node A: cache hit → remaining = 85 → ALLOWED
+  t=1   — Cache expires
+  t=1.1 — User sends 10 requests to node B
+          Node B: cache miss → Redis EVALSHA → counter = 20 → ALLOWED
+          Node B: cache remaining = 80
+
+Accuracy: approximate (1s staleness). If user sends 100 req/s across 50 nodes, each node queries Redis once per second → 50 queries/s → Redis sees 50 ops/s (not 100).
+Latency: 0ms (cache hit) or 1ms (cache miss).
+```
+
+#### 3. Trade-off table
+
+| Property | Edge-only (local) | Centralized Redis | Hybrid (edge cache + Redis) |
+|---|---|---|---|
+| Accuracy | Poor (over-admission) | Exact | Approximate (1s staleness) |
+| Latency | 0ms | 1ms | 0ms (hit) / 1ms (miss) |
+| Redis load | 0 | 50k ops/s | 50 ops/s (1 per edge node per second) |
+| Implementation complexity | Low | Medium | High (cache invalidation) |
+| Failure mode | Over-admission during skew | Redis outage → fail-open | Redis outage → serve stale (1s old) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Edge-only over-admission:** User sends 1000 req/s, all hit same edge node → 1000 req allowed (not 100). Mitigation: use centralized Redis or hybrid approach.
+- **Centralized Redis bottleneck:** 50k req/s → 50k Redis ops/s → single Redis instance overloaded. Mitigation: Redis Cluster (shard by user_id); or hybrid (edge cache reduces Redis load).
+- **Hybrid cache staleness:** Edge node caches remaining=90 (TTL 1s). User sends 200 req/s to that node → 200 allowed (not 100). Mitigation: reduce TTL (100ms) → more Redis queries; or accept 10% over-admission.
+- **Redis outage:** Centralized Redis down → all rate-limit checks fail. Mitigation: fail-open (allow request, log metric); or edge fallback (local counter with relaxed quota).
+- **Cross-region inconsistency:** User sends requests to US-East and EU-West → each region has independent Redis → user gets 2× quota (100 per region). Mitigation: accept (cross-region quota sharing is complex); or use global Redis (adds latency).
+
+#### 5. First-principles derivation
+
+1. Requirement: enforce quota Q across N edge nodes.
+2. Option A: each node enforces Q/N → under-utilizes quota (user can do Q if all requests hit same node).
+3. Option B: each node enforces Q independently → over-admits (user can do N×Q if requests distributed).
+4. Option C: centralized counter (Redis) → exact, but adds latency (edge → Redis → edge).
+5. Option D: hybrid (edge cache + Redis) → approximate (1s staleness), reduces Redis load.
+6. Trade-off: accuracy vs latency vs Redis load. Choose based on use case:
+   - Strict accuracy (payment API): centralized Redis.
+   - Low latency (gaming API): edge-only (accept over-admission).
+   - Balanced (general API): hybrid (1s staleness acceptable).
+7. Production choice: Cloudflare uses hybrid (edge cache + centralized Redis). Stripe uses centralized Redis (strict accuracy).
+
+#### 6. Production evidence
+
+- **Cloudflare (2021):** Hybrid approach — edge nodes cache rate-limit state (TTL 1s), sync to centralized Redis. Reported 99% accuracy with 100× less Redis load vs pure centralized.
+- **Stripe (2020):** Centralized Redis for API rate limits. Strict accuracy (no over-admission). Accepts 1ms latency.
+- **Akamai (2019):** Edge-only rate limiting (local counters). Accepts over-admission during traffic spikes. Low latency (0ms).
+- **AWS API Gateway (2022):** Centralized DynamoDB for rate limits. Exact enforcement, but adds 2ms latency (DynamoDB query).
+
+### Failure table
+
+| Failure | Impact | Detection | Mitigation |
+|---|---|---|---|
+| Redis master crash | Rate-limit checks fail → fail-open (allow all) | Redis connection error; alert on Redis down | Replica auto-promotes (1s); clients retry on replica |
+| Redis replication lag | Replica stale → allows over-quota during failover | Repl-lag metric | Alert if lag > 100ms; pause writes if lag > 500ms |
+| Hot user (100k req/s on one user) | Redis shard overloaded | Per-user QPS metric; Redis shard CPU > 80% | Shard by user_id (hash); or local cache at gateway (dedup) |
+| Gateway-local cache stale | Over-admission for 1s | Cache TTL metric | Reduce TTL (100ms); or accept 10% over-admission |
+| Quota tier lookup slow | Rate-limit decision > 5ms | User metadata service latency | Cache tier at gateway (5-min TTL); fallback to default tier |
+| Admin override not propagated | User sees old quota for 5 min | Override cache TTL metric | Reduce TTL (1 min); or push override via pub/sub |
+| Clock skew (edge nodes) | Token bucket refill rate inconsistent | NTP sync metric | Sync clocks via NTP; use server timestamp (not client) |
+| Lua script bug (race condition) | Over-admission (concurrent incr) | Rate-limit accuracy audit | Test Lua script with concurrent load; use WATCH/MULTI for atomicity |
+
+### Observability
+
+- **Golden signals per edge node:** rate-limit decision latency (p50/p99), error rate (Redis timeout), saturation (CPU %, network bandwidth).
+- **Cluster-wide:** total rate-limit checks/sec, denial rate (%), Redis ops/sec, Redis replication lag p99.
+- **Per-user metrics (sampled):** top-100 users by QPS; top-100 users by denial rate; users with highest quota utilization.
+- **Quota tier distribution:** % of users in free/pro/enterprise; quota override count.
+- **Redis health:** memory usage (per shard), eviction rate, keyspace hits/misses, slow log (>10ms commands).
+- **Accuracy audit:** sample 1% of users; compare edge decision vs centralized Redis decision; alert if divergence > 5%.
+
+### Evolution path
+
+| Day | Scale | Change |
+|---|---|---|
+| 30 | 100k users, 1k req/s | Single Redis instance; fixed-window counter; API gateway middleware |
+| 100 | 1M users, 10k req/s | Redis Cluster (3 masters); sliding-window counter; gateway-local cache (1s TTL) |
+| 1000 | 10M users, 50k req/s | Hybrid edge enforcement (CDN + Redis); token bucket for burst tolerance; admin override API |
+| 10000 | 100M users, 500k req/s | Multi-region Redis (per-region enforcement); AI-based anomaly detection (block bots); rate-limit as a service (shared across products) |
+
+### Interview follow-ups
+
+1. What if Redis is temporarily unavailable?
+2. How do you handle a user with 100 requests landing on 50 different API servers simultaneously?
+3. Can you do it without any centralized state?
+4. How do you support tiered quotas (free vs paid) without slowing down the check?
+5. What's the difference between rate limiting and throttling?
+6. How do you prevent a DDoS attack from overwhelming the rate limiter itself?
+7. How do you A/B test a new rate-limiting algorithm without affecting production traffic?
+
+### Sources
+
+- Cloudflare — how we built rate limiting capable of scaling to millions of domains (sliding window counters, approximate counting)
+- Stripe — scaling your API with rate limiters (token bucket implementation, graceful degradation)
+- DDIA Ch.7 — transactions (atomic check-and-decrement under contention)
+
+---
+
+## [2026-08-10] H09 · Distributed Cache (Redis/Memcached-class)
+
+### Problem as asked
+
+> Design a distributed in-memory cache, like Memcached or Redis-cluster. 10TB total working set, 1M ops/sec, p99 under 1ms. Tolerate node failures without losing cache coherence.
+
+### Clarifying questions
+
+| # | Question | Assumed answer |
+|---|---|---|
+| 1 | Cache semantics? | Pure cache — reads may miss, writes may be evicted. Source of truth is the backend DB. Cache coherence = "no stale reads beyond TTL," not "no lost writes." |
+| 2 | Data types? | Opaque byte blobs (Memcached-style) — no server-side data structures. Clients serialize/deserialize. |
+| 3 | Eviction policy? | LRU per node (configurable: LFU, TTL-only). No global eviction coordinator. |
+| 4 | Replication model? | Async replication to 1 follower per key (RF=2). On leader failure, follower promotes; brief window of stale/missing data acceptable. |
+| 5 | Consistency on read? | Eventual. Client reads from leader if available, else follower. Stale reads up to replication lag (~100ms) are acceptable for a cache. |
+| 6 | Write protocol? | `SET key value [EX ttl]` — fire-and-forget to leader, async replicate. No transactions, no CAS (keep it simple; CAS can be added as extension). |
+| 7 | Key size / value size? | Key ≤ 250 bytes, value ≤ 10 MB (typical: 1 KB). |
+| 8 | Client library? | Thick client — client owns the ring, computes shard, connects directly to node. No proxy in the data path (like Memcached, unlike Twemproxy/Envoy). |
+| 9 | Multi-tenant? | Single shared cluster; namespaces via key prefix. No per-tenant isolation required. |
+| 10 | Failure tolerance? | Lose up to 1 node at a time without data loss (RF=2). Lose 2 nodes → some keys miss until backends repopulate. |
+
+### Back-of-envelope estimates
+
+```
+Working set:     10 TB
+Ops/sec:         1M (mix of GET/SET/DELETE; assume 80% GET, 15% SET, 5% DELETE)
+Value size:      ~1 KB avg → 10 TB / 1 KB = 10B keys
+p99 latency:     < 1 ms (in-memory, single-hop network)
+
+Node sizing:
+  Each node: 64 GB RAM, 32 cores, 10 Gbps NIC
+  Usable RAM per node: ~50 GB (after OS, fragmentation, overhead)
+  Nodes for capacity: 10 TB / 50 GB = 200 nodes minimum
+  With RF=2: 400 nodes (each key on 2 nodes)
+  Add 20% headroom: 480 nodes → round to 500 nodes
+
+Throughput per node:
+  1M ops/sec / 500 nodes = 2,000 ops/sec per node
+  Each node can handle ~100k ops/sec (in-memory, epoll) → well within capacity
+  Bottleneck is memory capacity, not CPU.
+
+Network:
+  1M ops/sec × 1 KB avg value = 1 GB/s ingress + 1 GB/s egress
+  Per node: 2,000 ops × 1 KB = 2 MB/s → trivial on 10 Gbps NIC
+
+Replication traffic:
+  15% SET × 1M ops = 150k SET/sec → 150 MB/s replication traffic
+  Spread across 500 nodes → 300 KB/s per node → negligible
+
+Failure:
+  1 node fails → 1/500 = 0.2% of keys lose their leader
+  Follower promotes → ~100ms to detect + promote
+  During promotion: reads for those keys miss or serve stale (from follower)
+  No data loss: follower has all committed writes (async repl lag < 100ms)
+```
+
+### Functional requirements
+
+- `GET key` → returns value or `MISS`. Client falls back to backend DB on miss.
+- `SET key value [EX seconds]` → stores value, optionally with TTL. Returns `OK`.
+- `DELETE key` → removes key. Returns `OK` (idempotent).
+- `EXISTS key` → returns `1` or `0`.
+- `TTL key` → returns remaining seconds or `-1` (no expiry) or `-2` (key missing).
+- `FLUSH [node]` → operator command to evict all keys on a node (for maintenance).
+- TTL enforcement: lazy expiry (checked on access) + background scan (every 100ms, sample 100 keys, delete expired).
+
+### Non-functional requirements
+
+| Requirement | Target | Mechanism |
+|---|---|---|
+| Op latency p99 | < 1 ms | In-memory hash table; epoll; no disk I/O on critical path |
+| Throughput | 1M ops/sec | 500-node cluster; thick client shards directly |
+| Capacity | 10 TB working set | 500 nodes × 50 GB usable RAM × RF=2 |
+| Availability | 99.99% | RF=2 async replication; auto-failover; client retries on miss |
+| Coherence | No stale reads beyond TTL | TTL enforced at read time; replication lag < 100ms |
+| Eviction | LRU per node | Per-node LRU list; no global coordination |
+| Rebalance | Add/remove node → minimal key movement | Consistent hashing with virtual nodes |
+| Failure recovery | 1 node down → no data loss | Follower promotes; async repl ensures follower has recent data |
+
+### API / protocol contract
+
+```
+Protocol: binary, request-response over TCP (port 6379 or 11211)
+
+Request frame:
+  [ 4-byte length | 1-byte opcode | key_len (2B) | key | value_len (4B) | value | flags (4B) | ttl (4B) ]
+
+Opcodes:
+  0x01  GET     → key
+  0x02  SET     → key, value, flags, ttl
+  0x03  DELETE  → key
+  0x04  EXISTS  → key
+  0x05  TTL     → key
+  0x06  FLUSH   → (no args)
+
+Response frame:
+  [ 4-byte length | 1-byte status | value_len (4B) | value ]
+
+Status:
+  0x00  OK       → value present (for GET) or success (for SET/DELETE)
+  0x01  MISS     → key not found (GET)
+  0x02  ERROR    → malformed request, OOM, etc.
+
+Client library behavior:
+  1. Compute shard: hash(key) % ring_size → locate node
+  2. Open TCP connection to node (connection pool, 4 connections per node)
+  3. Send request, await response
+  4. On timeout (50ms) or connection error: retry on replica; if replica fails → return MISS to caller
+  5. Caller falls back to backend DB on MISS
+```
+
+### Data model
+
+```
+In-memory hash table (per node):
+  Key:   byte[] (up to 250 bytes)
+  Value: struct {
+           data: byte[]       (up to 10 MB)
+           flags: uint32      (client-defined metadata)
+           expires_at: int64  (unix ms; 0 = no expiry)
+           lru_ptr: *LRUNode  (pointer into per-node LRU doubly-linked list)
+         }
+
+Hash table structure:
+  - Array of buckets (power-of-2 size, e.g., 2^24 = 16M buckets)
+  - Each bucket: linked list of entries (chaining)
+  - Load factor threshold: 0.75 → resize (double buckets, rehash)
+  - Rehash: incremental (migrate 1 bucket per 100 ops) to avoid latency spike
+
+LRU list:
+  - Doubly-linked list; head = most recently used, tail = least recently used
+  - On GET/SET: move entry to head (O(1) with pointer)
+  - On eviction needed (memory > threshold): pop tail, delete from hash table
+  - Per-node only; no global LRU (too expensive to coordinate)
+
+TTL enforcement:
+  - Lazy: on GET, check expires_at; if expired → delete, return MISS
+  - Background: every 100ms, sample 100 random keys; delete expired ones
+  - This avoids a dedicated expiry thread scanning all keys
+
+Replication buffer (per leader node):
+  - Ring buffer of recent writes (last 100ms of SET/DELETE)
+  - Follower tails this buffer; on reconnect, replays from last-acked offset
+  - If buffer overflows (follower too slow): follower does full resync (snapshot)
+```
+
+### Request-path layering (GET)
+
+```mermaid
+flowchart LR
+    Client -->|1. hash key| Ring[Client-side<br/>consistent hash ring]
+    Ring -->|2. route to node| N1[Node A<br/>leader for key]
+    N1 -->|3. hash lookup| HT[Hash table<br/>+ TTL check]
+    HT -->|hit| Client
+    HT -->|miss| Client
+    Client -->|4. on miss| DB[(Backend DB)]
+    DB -->|5. fetch| Client
+    Client -->|6. SET in cache| N1
+```
+
+### Architecture diagram
+
+```mermaid
+flowchart TB
+    subgraph "Client tier"
+        APP[Application servers<br/>thick client library]
+    end
+
+    subgraph "Cache cluster (500 nodes)"
+        direction TB
+        N1[Node 1<br/>leader for keys K1..Kn]
+        N2[Node 2<br/>follower for K1..Kn<br/>leader for Km..Ko]
+        N3[Node 3<br/>...]
+        N500[Node 500]
+    end
+
+    subgraph "Replication"
+        R1[Async repl thread<br/>leader → follower]
+    end
+
+    subgraph "Control plane"
+        Gossip[Gossip protocol<br/>failure detection<br/>membership]
+        Promote[Auto-promotion<br/>follower → leader]
+    end
+
+    subgraph "Backend"
+        DB[(Source of truth DB)]
+    end
+
+    APP -->|direct TCP| N1
+    APP -->|direct TCP| N2
+    APP -->|direct TCP| N3
+    APP -->|direct TCP| N500
+    N1 --> R1 --> N2
+    N1 <-->|gossip| N2
+    N2 <-->|gossip| N3
+    APP -->|on cache miss| DB
+    Gossip --> Promote
+```
+
+### Deep dive 1 — Consistent hashing with virtual nodes
+
+#### 1. Why does this mechanism exist?
+
+A distributed cache must partition 10B keys across 500 nodes. The partition function must satisfy:
+
+1. **Load balance** — each node holds ~1/500 of the keys.
+2. **Minimal movement** — when a node is added or removed, only ~1/N of keys remap (not 100%).
+3. **Deterministic** — client computes shard locally; no coordinator round-trip.
+
+**Modulo-N hashing** (`shard = hash(key) % N`) satisfies (1) and (3) but fails (2): when N changes from 500 to 499 (node failure), ~100% of keys remap → cache cold-start → backend overload.
+
+**Consistent hashing** (Karger et al. 1997) satisfies all three. The ring maps both nodes and keys to the same hash space [0, 2^32). Each key is assigned to the next node clockwise. When a node is added/removed, only its keys (≈1/N) move.
+
+**Virtual nodes** fix the load-balance issue: physical nodes have heterogeneous capacity (different RAM sizes), and uniform hashing of 500 physical nodes leads to ±20% skew. Virtual nodes (each physical node appears as 100-200 points on the ring) reduce skew to ±5%.
+
+#### 2. Concrete walk-through
+
+```
+Ring setup:
+  Hash function: CRC32 (fast, uniform distribution)
+  Hash space: [0, 2^32) = [0, 4,294,967,295]
+  Physical nodes: A, B, C, D, E (5 nodes for illustration)
+  Virtual nodes per physical: 150
+  Total ring points: 5 × 150 = 750
+
+  Node A's virtual nodes: hash("A:0"), hash("A:1"), ..., hash("A:149")
+  Node B's virtual nodes: hash("B:0"), hash("B:1"), ..., hash("B:149")
+  ...
+
+  Sort all 750 ring points by hash value → ring = [p0, p1, ..., p749]
+
+Key lookup:
+  key = "user:12345:profile"
+  h = CRC32(key) = 1,234,567,890
+  Binary search ring for first point ≥ h → suppose ring[312] = 1,234,567,900 (node C, vnode 42)
+  → route to physical node C
+
+Node failure (node C goes down):
+  Remove all 150 of C's vnodes from ring → ring now has 600 points
+  Keys that mapped to C now map to the next node clockwise (node D)
+  Only C's keys move (~1/5 of total); A, B, D, E unaffected
+  Client libraries detect (gossip or connection error) → rebuild ring locally (~1ms)
+
+Node addition (node F added):
+  Compute F's 150 vnodes → insert into ring → ring now has 900 points
+  Keys that now map to F (previously mapped to A, B, D, or E) move to F
+  Only ~1/6 of keys move; others unaffected
+  F starts empty → clients miss until backends repopulate (or F requests data from neighbors)
+
+Skew reduction:
+  With 5 physical nodes and 150 vnodes each:
+    Expected keys per node: 10B / 5 = 2B
+    Actual: 2B ± 5% (due to hash uniformity + vnode count)
+  With 5 physical nodes and 1 vnode each:
+    Skew: ±30% (some nodes get 1.3× fair share, others 0.7×)
+  Rule of thumb: 100-200 vnodes per physical node → ±5% skew
+```
+
+#### 3. Trade-off table
+
+| Property | Modulo-N | Consistent hash (no vnodes) | Consistent hash (150 vnodes) |
+|---|---|---|---|
+| Load balance (5 nodes) | Perfect (20% each) | ±30% skew | ±5% skew |
+| Movement on node add/remove | ~100% keys remap | ~1/N keys remap | ~1/N keys remap |
+| Ring rebuild cost | N/A | O(N) to sort | O(N × 150) to sort |
+| Memory for ring (client) | 0 | 5 entries | 750 entries (5 × 150) |
+| Heterogeneous capacity | Hard (weighted modulo) | Hard (duplicate vnodes) | Easy (more vnodes for bigger nodes) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Ring divergence:** Client A has old ring (node C still present); client B has new ring (C removed). They route same key to different nodes → client A gets MISS (C is down) → falls back to DB. No data corruption; just extra DB load. Mitigation: gossip propagates ring updates in <1s; clients rebuild ring on first error.
+- **Hotspot:** Key "user:1:profile" hashes to node D; 100k QPS for this key → node D overloaded. Mitigation: client-side local cache (L1) for hot keys; or split key into "user:1:profile:shard:0..9" and read from any shard (if read-only).
+- **Vnode count too low:** 10 vnodes per node → ±15% skew → some nodes evict early. Mitigation: monitor per-node memory usage; alert if >55 GB (of 50 GB target); rebalance by adding vnodes.
+- **Full ring rebuild latency:** 500 nodes × 200 vnodes = 100k points; sort takes ~10ms. During this 10ms, client routes to wrong node → MISS → DB fallback. Acceptable for cache.
+
+#### 5. First-principles derivation
+
+1. Requirement: partition keys across N nodes; minimize movement when N changes.
+2. Modulo-N: `shard = hash(key) % N`. When N→N-1, `hash(key) % (N-1) ≠ hash(key) % N` for ~100% of keys. Rejected.
+3. Consistent hash: map keys and nodes to a circular hash space. Key → next node clockwise. When node removed, only its keys move to neighbor. Movement = 1/N.
+4. Problem: with N physical nodes, hash distribution is non-uniform → ±30% skew.
+5. Fix: virtual nodes. Each physical node appears as V points on ring (V=150). Keys distribute uniformly across V×N points; each physical node gets V/N × (V×N) = V points → ±5% skew.
+6. Cost: ring size = V×N; lookup = O(log(V×N)) binary search. For V=150, N=500: 75k points → log2(75k) ≈ 17 comparisons → ~1μs. Negligible.
+7. Movement on node change: 1 physical node = V vnodes removed → V/(V×N) = 1/N of keys move. Same as without vnodes.
+8. Heterogeneous capacity: node with 2× RAM gets 2× vnodes → gets 2× keys. Natural.
+
+#### 6. Production evidence
+
+- **Memcached (Facebook, 2013):** Uses consistent hashing with 200 vnodes per server. Client library (libmemcached) computes ring locally. Reported ±5% load balance across 1000+ nodes.
+- **Redis Cluster:** Uses a different scheme — hash slots (16384 slots, statically assigned to nodes). Not consistent hashing; rebalance requires manual slot migration. Simpler but less flexible.
+- **Dynamo (Amazon, 2007):** Consistent hashing with virtual nodes (200 vnodes per node). Ring rebalance on node change moves ~1/N keys. Paper §4.2.
+- **Discord (2023):** Migrated from consistent hashing to hash slots for their cache tier; reported simpler ops but less graceful rebalance.
+
+---
+
+### Deep dive 2 — Thundering herd / cache stampede mitigation
+
+#### 1. Why does this mechanism exist?
+
+A cache stampede occurs when a popular key expires (or is evicted) and thousands of concurrent requests all miss simultaneously. Each request falls back to the backend DB, which becomes overloaded and slows down → more requests time out → more misses → cascading failure.
+
+Example:
+- Key "product:123:details" has 10k QPS.
+- TTL expires at t=0.
+- t=0 to t=0.1 (100ms to fetch from DB): 1000 requests all miss → 1000 DB queries.
+- DB overloaded → query latency spikes to 5s → all 1000 requests timeout → client sees errors.
+
+The fix: **ensure only one request fetches from DB; others wait or serve stale.**
+
+Options:
+1. **Lease token (Memcached-style):** First requester acquires a "lease" to recompute; others get `MISS_WITH_LEASE` or wait.
+2. **Request coalescing (proxy-level):** Proxy deduplicates in-flight requests; only one goes to backend.
+3. **Stale-while-revalidate:** Serve expired value immediately; background thread refreshes.
+4. **Probabilistic early expiration (Google):** Add jitter to TTL so keys expire at different times.
+
+#### 2. Concrete walk-through
+
+**Scheme A — Lease token (Memcached `gets` + `cas`):**
+
+```
+Client library logic for GET key:
+  1. GET key → if HIT → return value
+  2. if MISS → try to acquire lease:
+       GETS key → returns (value, cas_unique) or NOT_FOUND
+       if NOT_FOUND:
+         CAS key "lease_holder" cas_unique → if OK → I have lease
+         if FAIL → someone else has lease → wait 10ms, retry GET
+       if value present but stale:
+         CAS key value cas_unique → if OK → I have lease to recompute
+  3. I have lease:
+       Fetch from DB (100ms)
+       SET key new_value EX 300
+       return new_value
+  4. Others waiting:
+       Retry GET every 10ms → after 100ms, new value present → return it
+
+Timeline:
+  t=0     Key expires. 1000 concurrent GETs arrive.
+  t=0.001 Request A: GET → MISS → GETS → NOT_FOUND → CAS lease → OK
+  t=0.002 Request B-Z: GET → MISS → GETS → NOT_FOUND → CAS lease → FAIL (A has it)
+          → wait 10ms
+  t=0.01  Request B-Z: retry GET → still MISS (A still fetching from DB)
+          → wait 10ms
+  t=0.1   Request A: DB fetch done → SET key new_value EX 300 → OK
+  t=0.11  Request B-Z: retry GET → HIT → return new_value
+  Total DB queries: 1 (not 1000)
+```
+
+**Scheme B — Stale-while-revalidate (client-side):**
+
+```
+Client library logic:
+  GET key:
+    1. GET key → if HIT and not expired → return value
+    2. if HIT but expired (within stale window, e.g., 30s past TTL):
+         Return stale value immediately
+         Background: async SET key new_value (fetch from DB, update cache)
+    3. if MISS (or expired beyond stale window):
+         Fetch from DB → SET key value EX 300 → return value
+
+Timeline:
+  t=0     Key TTL expires. 1000 concurrent GETs arrive.
+  t=0.001 Request A: GET → HIT but expired (within 30s stale window)
+          → return stale value
+          → background: fetch from DB (100ms), then SET
+  t=0.002 Request B-Z: GET → HIT but expired → return stale value
+          → background: fetch from DB (but dedup: only one background fetch)
+  t=0.1   Background fetch done → SET key new_value EX 300
+  Total DB queries: 1 (deduped background fetch)
+  Latency: 0ms (served stale)
+```
+
+#### 3. Trade-off table
+
+| Property | Lease token | Stale-while-revalidate | Request coalescing (proxy) |
+|---|---|---|---|
+| DB load on stampede | 1 query | 1 query | 1 query |
+| Read latency on stampede | 100ms (wait for lease holder) | 0ms (serve stale) | 100ms (wait for coalescer) |
+| Data freshness | Fresh (wait for DB) | Stale (up to 30s old) | Fresh (wait for DB) |
+| Implementation complexity | Medium (CAS logic in client) | Low (client-side TTL check) | High (proxy must dedup) |
+| Failure mode | Lease holder crashes → lease stuck (mitigate with TTL on lease) | Stale data served → may violate correctness | Proxy crash → all in-flight requests fail |
+
+#### 4. Failure modes interviewers drill into
+
+- **Lease holder crashes:** Request A acquires lease, then crashes before SET. Lease stuck → all others wait forever. Mitigation: lease has TTL (e.g., 5s). After 5s, lease expires → another request can acquire.
+- **Stale-while-revalidate serves very stale data:** Key expired 29s ago; client serves 29s-stale value. If business logic can't tolerate this (e.g., inventory count), stale-while-revalidate is wrong. Mitigation: configure stale window per key (0s for critical keys, 30s for read-mostly).
+- **Request coalescing proxy becomes bottleneck:** All requests route through proxy → proxy CPU/memory limit. Mitigation: coalescing at client library (like lease token) avoids proxy.
+- **Multiple clients implement lease differently:** Client A uses lease; client B doesn't → B hammers DB. Mitigation: enforce lease logic in client library; reject non-lease clients at server (return error if GETS not used).
+
+#### 5. First-principles derivation
+
+1. Problem: N concurrent requests miss same key → N DB queries → DB overload.
+2. Goal: reduce to 1 DB query; others wait or serve stale.
+3. Option A: serialize requests (mutex). First request fetches; others block. Latency = O(N × DB_latency). Bad.
+4. Option B: lease token. First request acquires lease; others detect lease → wait. Only lease holder fetches. Latency = DB_latency (for lease holder) + wait (for others). Good.
+5. Option C: stale-while-revalidate. Serve expired value; background refresh. Latency = 0 (for all). But data stale.
+6. Option D: request coalescing (proxy). Proxy deduplicates in-flight requests; only one goes to DB. Latency = DB_latency (for all). Requires proxy infrastructure.
+7. Trade-off: lease (fresh, 100ms latency) vs stale-while-revalidate (stale, 0ms latency). Choose based on freshness requirement.
+8. Production choice: Memcached uses lease (via `gets`/`cas`). Redis Cluster doesn't have built-in lease; clients implement at application layer.
+
+#### 6. Production evidence
+
+- **Facebook Memcached (2013):** Uses "lease" mechanism to prevent stampede. Client library (`libmemcached`) implements `gets`/`cas` for lease acquisition. Reported 10× reduction in DB load during cache misses.
+- **Google (2015, "Don't Cache That, Bro"):** Probabilistic early expiration — add jitter to TTL so keys expire at different times, avoiding synchronized stampede. Used in Google's internal cache.
+- **Netflix EVCache (2020):** Stale-while-revalidate for read-mostly data (e.g., user profiles). Configurable stale window (0-60s). Reported 5× reduction in DB queries during peak.
+- **Cloudflare (2022):** Request coalescing at edge proxy for cache misses. Deduplicates in-flight requests; only one goes to origin. Reported 50% reduction in origin load.
+
+### Failure table
+
+| Failure | Impact | Detection | Mitigation |
+|---|---|---|---|
+| Node crash (1 of 500) | 0.2% of keys lose leader; follower promotes | Gossip detects in 3s; client connection error | Follower auto-promotes; clients rebuild ring; brief MISS storm |
+| Network partition (split brain) | Some clients see old leader, some see new | Gossip divergence; conflicting writes | Quorum-based promotion (majority of nodes agree); reject writes if partitioned |
+| Replication lag > 1s | Follower stale; on promotion, serves old data | Repl-lag metric | Alert if lag > 500ms; pause writes to that node; force resync |
+| Hot key (100k QPS on one key) | Node overloaded; latency spikes | Per-key QPS metric; node CPU > 80% | Client-side L1 cache; or split key into shards; or lease token to serialize |
+| Cache stampede (popular key expires) | 1000s of DB queries; DB overload | DB query latency spike; cache miss rate | Lease token or stale-while-revalidate; monitor miss rate |
+| Memory exhaustion (node OOM) | Node crashes; keys lost | OOM kill; memory > 95% | Eviction (LRU) kicks in at 90%; alert at 85%; auto-restart on OOM |
+| Ring divergence (clients disagree on ring) | Some clients route to wrong node; MISS | Client-side ring version metric | Gossip propagates updates; clients rebuild ring on first error |
+| Slow DB (backend overload) | Cache miss → slow DB → client timeout | DB latency p99 > 1s | Circuit breaker; serve stale; shed load (return MISS faster) |
+
+### Observability
+
+- **Golden signals per node:** latency histogram (GET/SET/DELETE), error rate, saturation (memory %, CPU %, network bandwidth).
+- **Cluster-wide:** total ops/sec, miss rate, eviction rate, replication lag p99, ring divergence (clients on old ring version).
+- **Per-key metrics (sampled):** top-100 hot keys by QPS; keys with highest miss rate; keys with highest eviction rate.
+- **Stampede detection:** miss rate spike (>10% in 10s) + DB query latency spike → alert.
+- **Capacity planning:** memory growth rate (GB/day); project when cluster needs expansion.
+
+### Evolution path
+
+| Day | Scale | Change |
+|---|---|---|
+| 30 | 1 TB, 10k ops/sec | Single-region, 20 nodes, no replication (pure Memcached) |
+| 100 | 5 TB, 100k ops/sec | Add async replication (RF=2); gossip-based failure detection; lease tokens |
+| 1000 | 10 TB, 1M ops/sec | 500 nodes; multi-region (active-passive); stale-while-revalidate for read-mostly |
+| 10000 | 50 TB, 10M ops/sec | Tiered cache (RAM + NVMe for cold keys); cross-region replication; AI-based hot-key prediction |
+
+### Interview follow-ups
+
+1. What happens when one key gets 100k QPS (hot key)?
+2. How do you do cross-region replication without doubling write cost?
+3. What's your eviction policy and why?
+4. How do you handle a client library bug that computes the wrong shard?
+5. Can you support transactions (multi-key CAS)?
+6. How do you upgrade the cluster (rolling restart) without causing a stampede?
+7. What if the backend DB is down — do you serve stale cache indefinitely?
+
+### Sources
+
+- Memcached@FB (Nishtala et al. 2013) — regional cache pools, lease tokens for stampede protection
+- Dynamo (DeCandia et al. 2007) — consistent hashing, virtual nodes
+- DDIA Ch.6 — partitioning, partition assignment, rebalancing
+- Netflix EVCache — multi-region caching, warmup strategies
+
+---
+
 ## [2026-08-07] H03 · WhatsApp Messaging
 
 ### Problem as asked
