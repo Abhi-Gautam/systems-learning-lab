@@ -1,0 +1,2 @@
+#pragma once
+class RandomizedSet{public:RandomizedSet();~RandomizedSet();RandomizedSet(const RandomizedSet&)=delete;RandomizedSet&operator=(const RandomizedSet&)=delete;bool insert(int);bool remove(int);int getRandom();private:struct Entry{int key;int index;Entry*next;Entry(int k,int i,Entry*n=nullptr):key(k),index(i),next(n){}};int*values_;int size_;int cap_;Entry**buckets_;int bucket_count_;int hash(int)const;};

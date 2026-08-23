@@ -1,0 +1,2 @@
+#pragma once
+class BrowserHistory{public:explicit BrowserHistory(const char*homepage);~BrowserHistory();BrowserHistory(const BrowserHistory&)=delete;BrowserHistory&operator=(const BrowserHistory&)=delete;void visit(const char*);const char*back(int);const char*forward(int);private:struct Node{char*url;Node*prev;Node*next;};Node*cur_;static char*copy_text(const char*);static void free_node(Node*);};

@@ -1,0 +1,2 @@
+#include "impl.h"
+IntrusiveList::IntrusiveList():head_(nullptr),tail_(nullptr){} void IntrusiveList::push_front(IntrusiveNode*){/* TODO*/} void IntrusiveList::push_back(IntrusiveNode*){/* TODO*/} void IntrusiveList::remove(IntrusiveNode*){/* TODO*/} IntrusiveNode*IntrusiveList::front()const{return nullptr;} IntrusiveNode*IntrusiveList::back()const{return nullptr;} bool IntrusiveList::empty()const{return true;} void IntrusiveList::clear_links(){/* TODO*/}

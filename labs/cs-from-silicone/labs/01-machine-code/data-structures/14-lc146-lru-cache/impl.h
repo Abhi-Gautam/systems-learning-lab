@@ -1,0 +1,2 @@
+#pragma once
+class LRUCache{public:explicit LRUCache(int capacity);~LRUCache();LRUCache(const LRUCache&)=delete;LRUCache&operator=(const LRUCache&)=delete;int get(int key);void put(int key,int value);private:struct Node{int k,v;Node*prev;Node*next;Node(int a,int b):k(a),v(b),prev(nullptr),next(nullptr){}};struct Entry{int k;Node*node;Entry*next;Entry(int a,Node*n,Entry*e=nullptr):k(a),node(n),next(e){}};Node*head_;Node*tail_;Entry**index_;int buckets_;int size_;int cap_;int hash(int)const;};

@@ -1,0 +1,2 @@
+#pragma once
+class LFUCache{public:explicit LFUCache(int capacity);~LFUCache();LFUCache(const LFUCache&)=delete;LFUCache&operator=(const LFUCache&)=delete;int get(int);void put(int,int);private:struct Node{int k,v,f;Node*prev;Node*next;Node(int a,int b):k(a),v(b),f(1),prev(nullptr),next(nullptr){}};struct KeyEntry{int k;Node*n;KeyEntry*next;KeyEntry(int a,Node*x,KeyEntry*y=nullptr):k(a),n(x),next(y){}};struct FreqList{int f;Node*head;Node*tail;FreqList*next;};KeyEntry**keys_;FreqList**freqs_;int buckets_;int cap_;int size_;int min_freq_;int hash(int)const;};

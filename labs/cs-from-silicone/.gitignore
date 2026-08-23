@@ -1,2 +1,6 @@
 # Rust build artifacts
 core/target/
+
+# Data-structures lab build artifacts
+labs/01-machine-code/data-structures/bin/
+labs/01-machine-code/data-structures/build/

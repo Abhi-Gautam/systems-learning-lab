@@ -1,0 +1,2 @@
+#pragma once
+class FreeListAllocator{public:explicit FreeListAllocator(int bytes);~FreeListAllocator();FreeListAllocator(const FreeListAllocator&)=delete;FreeListAllocator&operator=(const FreeListAllocator&)=delete;void*allocate(int bytes);void deallocate(void*);int bytes_free()const;private:struct Block{int size;bool free;Block*prev;Block*next;};unsigned char*memory_;int capacity_;Block*first_;};
