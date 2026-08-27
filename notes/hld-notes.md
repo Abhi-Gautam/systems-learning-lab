@@ -2,6 +2,626 @@
 
 ---
 
+## [2026-08-24] H16 · Kafka (Distributed Log)
+
+### Problem as asked
+
+> Design Kafka. Append-only partitioned log, 1M writes/sec per topic, durable replication, consumers can replay from any offset. Support exactly-once delivery semantics for downstream stream processors.
+
+### Clarifying questions
+
+| # | Question | Assumed answer |
+|---|---|---|
+| 1 | What is the workload shape? | Mix of event ingestion (user actions, IoT telemetry), change-data-capture (DB binlog → topic), and inter-service messaging. Payloads 256B–10KB, average 1KB. |
+| 2 | Topic and partition count? | ~10k topics, average 12 partitions/topic → 120k partitions cluster-wide. Partitions are the unit of parallelism. |
+| 3 | Replication factor? | RF=3 for all topics. ISR (in-sync replica) set managed by the leader. `acks=all` by default for durability. |
+| 4 | What does "durable replication" mean concretely? | A write is acknowledged to the producer only after all ISR replicas have appended to their local log (committed offset advances). Losing one ISR replica does not lose committed data. |
+| 5 | Consumer model? | Consumer groups. Each partition is consumed by exactly one consumer in a group. Consumers track their own offset (committed to `__consumer_offsets` internal topic). |
+| 6 | Replay semantics? | Consumers can seek to any offset — beginning, end, timestamp, or absolute offset. Retention: 7 days default (configurable per topic). |
+| 7 | Exactly-once scope? | Within a single Kafka cluster: exactly-once produce + consume + commit via transactional API. Cross-cluster or cross-system (e.g., Kafka → DB) requires idempotent sink. |
+| 8 | Ordering guarantee? | Per-partition total order. Cross-partition ordering is not guaranteed (caller must use same partition key for related events). |
+| 9 | Multi-tenancy? | Shared cluster. Quotas (produce/consume rate, bandwidth) enforced per client-id. No hard namespace isolation. |
+| 10 | Failure model? | Lose up to 1 broker at a time without data loss (RF=3, min.insync.replicas=2). Lose 2 brokers → under-replicated partitions; writes stall if ISR < min.insync.replicas. |
+
+### Back-of-envelope estimates
+
+```
+Throughput:
+  1M writes/sec per topic (aggregate across cluster; single topic rarely hits this)
+  Assume 50 hot topics × 20k writes/sec + 9,950 cold topics × ~10 writes/sec
+  Aggregate cluster write rate: ~1.1M messages/sec
+  Average message size: 1 KB → 1.1 GB/sec raw ingress
+
+Broker count:
+  Single broker disk throughput: ~500 MB/sec sequential write (SATA SSD)
+  1.1 GB/sec → 2.2 brokers minimum for disk; add replication overhead (3× write amplification)
+  → 7 brokers minimum; round to 10 for headroom and partition balance
+
+  Partition count: 120k partitions / 10 brokers = 12k partitions per broker
+  Kafka recommended limit: ~4k partitions per broker (memory for file handles + index)
+  → Need 30 brokers for partition count. Disk is not the bottleneck; partition metadata is.
+
+  Final: 30-broker cluster, RF=3 → each partition on 3 brokers
+  Total partition replicas: 360k / 30 brokers = 12k replicas per broker
+  → Still too high. Reduce to 6 partitions/topic average → 60k partitions, 180k replicas
+  → 6k replicas per broker. Feasible with tuned OS (file descriptor limits, mmap).
+
+Storage:
+  1.1 GB/sec × 86,400 sec/day = 95 TB/day raw ingress
+  RF=3 → 285 TB/day written to disk (across cluster)
+  7-day retention: 95 TB × 7 = 665 TB of user data; 665 TB × 3 = 1.995 PB total disk
+  Per broker: 1.995 PB / 30 = 66 TB per broker → 8× 10 TB NVMe drives per broker
+
+Network:
+  Ingress: 1.1 GB/sec = 8.8 Gbps → 10 Gbps NIC per broker (saturated)
+  Replication: 2× ingress (leader → 2 followers) = 2.2 GB/sec replication traffic
+  Total network per broker: ~3.3 GB/sec = 26.4 Gbps → 40 Gbps NIC required
+
+Latency budget (produce path):
+  Producer → broker (network): 1-5ms
+  Leader append to page cache: < 0.1ms (sequential write to memory)
+  ISR replication (wait for acks=all): 5-20ms (depends on follower disk flush)
+  Total produce latency p99: ~25ms
+
+Consumer lag:
+  1.1M messages/sec produced; consumer group processes 1M messages/sec
+  Steady-state lag: 0 (if consumer keeps up)
+  Burst: 5M messages/sec for 10s → 50M message backlog → consumer drains in 50s (if sustained 1M/sec)
+```
+
+### Functional requirements
+
+- **Produce:** `produce(topic, partition_key, value)` → appends to partition log, returns offset + timestamp. Idempotent produce (dedup by producer ID + sequence number).
+- **Consume:** `poll(topic, group_id, timeout)` → returns batch of messages starting from last committed offset. Consumer commits offset after processing.
+- **Consumer groups:** Multiple consumers in a group coordinate via group coordinator (Kafka broker). Each partition assigned to exactly one consumer. Rebalance on consumer join/leave.
+- **Replay:** `seek(offset)` or `seek_to_timestamp(timestamp)` → consumer can re-read from any point. Retention: 7 days (configurable).
+- **Exactly-once:** Transactional producer (`init_transactions()`, `begin_transaction()`, `send_offsets_to_transaction()`, `commit_transaction()`). Consumer reads with `isolation.level=read_committed`.
+- **Partitioning:** Messages with same partition key → same partition (preserves order). Key hash modulo partition count.
+- **Retention:** Time-based (7 days) or size-based (1 TB per partition). Log segments deleted after retention expires.
+- **Compaction:** Optional per-topic. Retains only latest value per key (for changelog semantics).
+
+### Non-functional requirements
+
+| Requirement | Target | Mechanism |
+|---|---|---|
+| Write throughput | 1M messages/sec per topic (cluster-wide) | Partition parallelism; batched produce (linger.ms=5, batch.size=16KB) |
+| Produce latency p99 | < 25ms | Sequential append to page cache; async ISR replication; `acks=1` (leader only) for low-latency mode |
+| Durability | No data loss for committed messages | RF=3, `acks=all`, `min.insync.replicas=2`; ISR protocol |
+| Availability | 99.99% (produce path) | Auto leader election on broker failure; under-replicated partitions remain writable if ISR ≥ min.insync.replicas |
+| Consumer throughput | 10M messages/sec (aggregate) | Batched fetch (max.poll.records=500); parallel consumers across partitions |
+| Replay latency | < 1s to seek and start reading | Offset index (8-byte offset → file position); time index (timestamp → offset) |
+| Exactly-once | No duplicates in consume path | Transactional producer + idempotent send + `read_committed` isolation |
+| Partition reassignment | < 1 hour for 10k partitions | Throttled replica fetch (replica.fetch.max.bytes); manual reassignment via `kafka-reassign-partitions` |
+
+### API / protocol contract
+
+```
+Produce request (v8+ with idempotent producer):
+  Header:
+    client_id: "order-service-prod-01"
+    api_key: 0 (PRODUCE)
+    correlation_id: 12345
+  Body:
+    topic: "orders"
+    partition: 7  (or -1 if using partitioner)
+    records: [
+      { key: "user:123", value: <protobuf>, timestamp: 1630000000000 }
+    ]
+    acks: -1 (all ISR)
+    timeout_ms: 30000
+    producer_id: 1001  (assigned by broker on first request)
+    producer_epoch: 0  (incremented on producer restart; fences old epochs)
+    base_sequence: 42  (monotonic; broker deduplicates if sequence ≤ last_seen)
+
+  Response:
+    error_code: 0
+    offset: 123456789  (base offset of batch)
+    timestamp: 1630000000000 (log append time)
+    log_append_time: 1630000000000
+
+Fetch request (consumer):
+  Header:
+    group_id: "payment-processor"
+    member_id: "consumer-3"  (assigned on join)
+    generation_id: 5  (incremented on rebalance)
+  Body:
+    topics: [
+      { topic: "orders", partitions: [
+        { partition: 7, fetch_offset: 123456789, max_bytes: 1048576 }
+      ]}
+    ]
+    isolation_level: 1  (read_committed; 0 = read_uncommitted)
+    max_wait_ms: 500
+    min_bytes: 1
+    max_bytes: 10485760  (10 MB)
+
+  Response:
+    responses: [
+      { topic: "orders", partitions: [
+        { partition: 7, error_code: 0, high_watermark: 123456800,
+          last_stable_offset: 123456795,  (last committed transaction)
+          records: [<batch of messages>] }
+      ]}
+    ]
+
+TxnOffsetCommit (for exactly-once consume → produce):
+  Header:
+    transactional_id: "order-to-payment-processor"
+    producer_id: 1001
+    producer_epoch: 0
+  Body:
+    group_id: "payment-processor"
+    topics: [
+      { topic: "orders", partitions: [
+        { partition: 7, offset: 123456795, metadata: "" }
+      ]}
+    ]
+
+  Response:
+    error_code: 0  (offset committed atomically with transaction)
+```
+
+### Data model
+
+```
+On-disk layout (per partition):
+
+  /kafka-logs/orders-7/
+    00000000000000000000.log      (segment 0: offsets 0 → 49,999,999)
+    00000000000000000000.index    (offset → position mapping, sparse)
+    00000000000000000000.timeindex (timestamp → offset mapping, sparse)
+    00000000500000000000.log      (segment 1: offsets 50M → 99,999,999)
+    ...
+
+  Log segment format (per message batch):
+    offset: 8 bytes (base offset of batch)
+    batch_length: 4 bytes
+    partition_leader_epoch: 4 bytes
+    magic: 1 byte (2 = current format)
+    crc: 4 bytes (over batch header + records)
+    attributes: 2 bytes (compression: none/gzip/snappy/lz4/zstd)
+    last_offset_delta: 4 bytes
+    base_timestamp: 8 bytes (ms since epoch)
+    max_timestamp: 8 bytes
+    producer_id: 8 bytes (for idempotent/transactional produce)
+    producer_epoch: 4 bytes
+    base_sequence: 4 bytes
+    record_count: 4 bytes
+    records: [
+      { length: 4 bytes
+        attributes: 1 byte
+        timestamp_delta: 4 bytes (delta from base_timestamp)
+        offset_delta: 4 bytes (delta from base_offset)
+        key_length: 4 bytes (-1 if null)
+        key: variable
+        value_length: 4 bytes (-1 if null)
+        value: variable
+        headers: [header_count, header_key, header_value] }
+    ]
+
+  Offset index (sparse, 8 bytes per entry):
+    physical_offset (4 bytes) → file position (4 bytes)
+    Example: offset 12345678 → file position 0x1A2B3C40
+    Lookup: binary search index → seek to position → scan log for exact offset
+
+  Time index (sparse, 12 bytes per entry):
+    timestamp (8 bytes) → offset (4 bytes)
+    Example: timestamp 1630000000000 → offset 12345678
+    Lookup: binary search timeindex → seek to offset → scan log for exact timestamp
+
+  Internal topics:
+    __consumer_offsets (50 partitions):
+      Key: group_id + topic + partition
+      Value: committed offset + metadata
+      Retention: compacted (latest offset per key)
+
+    __transaction_state (50 partitions):
+      Key: transactional_id
+      Value: transaction state (Empty, Ongoing, PrepareCommit, PrepareAbort, CompleteCommit, CompleteAbort, Dead, Dead)
+      Retention: compacted
+
+  Producer state (in-memory, per partition on leader):
+    producer_id → { producer_epoch, last_sequence, last_offset }
+    Used for idempotent dedup: if sequence ≤ last_sequence, reject as duplicate
+```
+
+### Request-path layering
+
+```mermaid
+flowchart LR
+    Producer -->|1. produce request| LB[Load Balancer<br/>round-robin]
+    LB -->|2. route to leader| B1[Broker 1<br/>partition 7 leader]
+    B1 -->|3. append to log| Disk1[Local Disk<br/>page cache]
+    B1 -->|4. replicate| B2[Broker 2<br/>ISR follower]
+    B1 -->|4. replicate| B3[Broker 3<br/>ISR follower]
+    B2 -->|5. ack| B1
+    B3 -->|5. ack| B1
+    B1 -->|6. response| Producer
+
+    Consumer -->|7. fetch request| B1
+    B1 -->|8. read from log| Disk1
+    B1 -->|9. response| Consumer
+    Consumer -->|10. commit offset| CO[__consumer_offsets<br/>internal topic]
+```
+
+### Architecture diagram
+
+```mermaid
+flowchart TB
+    subgraph "Producer tier"
+        P1[Producer 1<br/>order-service]
+        P2[Producer 2<br/>payment-service]
+        P3[Producer 3<br/>user-service]
+    end
+
+    subgraph "Kafka cluster (30 brokers)"
+        subgraph "Broker 1 (controller)"
+            B1P1[Partition: orders-7<br/>leader]
+            B1P2[Partition: payments-3<br/>follower]
+        end
+        subgraph "Broker 2"
+            B2P1[Partition: orders-7<br/>ISR follower]
+            B2P2[Partition: payments-3<br/>leader]
+        end
+        subgraph "Broker 3"
+            B3P1[Partition: orders-7<br/>ISR follower]
+            B3P2[Partition: payments-3<br/>ISR follower]
+        end
+        subgraph "Broker N"
+            BNP1[Partition: user-events-12<br/>leader]
+        end
+    end
+
+    subgraph "Consumer tier"
+        CG1[Consumer group: payment-processor<br/>3 consumers]
+        CG2[Consumer group: analytics-pipeline<br/>5 consumers]
+        CG3[Consumer group: audit-logger<br/>2 consumers]
+    end
+
+    subgraph "Internal topics"
+        CO[__consumer_offsets<br/>50 partitions]
+        TS[__transaction_state<br/>50 partitions]
+    end
+
+    P1 -->|produce| B1P1
+    P2 -->|produce| B2P2
+    P3 -->|produce| BNP1
+
+    B1P1 -->|replicate| B2P1
+    B1P1 -->|replicate| B3P1
+
+    CG1 -->|fetch| B1P1
+    CG1 -->|commit offset| CO
+    CG2 -->|fetch| B2P2
+    CG3 -->|fetch| BNP1
+```
+
+### Deep dive 1 — ISR (in-sync replica) protocol and unclean leader election trade-off
+
+#### 1. Why does this mechanism exist?
+
+Kafka must balance two properties:
+
+1. **Durability** — committed messages survive broker failure.
+2. **Availability** — partitions remain writable during broker failure.
+
+Naive replication strategies fail one or both:
+
+- **Synchronous replication to all replicas (RF=3):** lose 1 broker → partition unwritable (2/3 replicas down). High durability, low availability.
+- **Asynchronous replication (fire-and-forget):** leader acks immediately; followers lag. Leader fails → committed messages lost. High availability, low durability.
+- **Quorum (w+r > RF):** write to 2/3, read from 2/3. Lose 1 broker → still quorum. But: slow followers block writes (must wait for 2 acks); fast followers can diverge.
+
+ISR is a hybrid: leader tracks which followers are "in-sync" (within `replica.lag.time.max.ms=30s`). Writes ack only after ISR replicas append. On leader failure, only ISR members can become leader. This gives:
+
+- **Durability:** committed messages are on all ISR replicas → no data loss if new leader comes from ISR.
+- **Availability:** slow followers are removed from ISR → partition remains writable with fewer replicas.
+
+#### 2. Concrete walk-through
+
+**Scenario: 3-broker cluster, RF=3, min.insync.replicas=2**
+
+```
+Initial state:
+  Partition orders-7:
+    Leader: Broker 1
+    ISR: {Broker 1, Broker 2, Broker 3}
+    High watermark (HW): 1000 (all replicas have offset 1000)
+    Log end offset (LEO): 1000
+
+t=0: Producer sends message (offset 1001)
+  Broker 1 (leader):
+    1. Append to local log → LEO = 1001
+    2. Replicate to Broker 2, Broker 3 (async)
+    3. Wait for acks=all → wait for all ISR to append
+
+t=0.005: Broker 2 appends offset 1001 → LEO = 1001
+t=0.010: Broker 3 appends offset 1001 → LEO = 1001
+t=0.010: Leader advances HW = 1001 (all ISR caught up)
+t=0.010: Producer receives ack → offset = 1001
+
+t=1: Broker 3 disk stalls (GC pause, slow disk)
+  Broker 3 stops fetching from leader
+  Leader tracks last fetch time per follower
+  t=31: Broker 3 last fetch > 30s ago → removed from ISR
+  ISR: {Broker 1, Broker 2}
+  HW: still 1001 (no new messages)
+
+t=32: Producer sends message (offset 1002)
+  Broker 1: append → LEO = 1002
+  Broker 2: append → LEO = 1002
+  Broker 3: not in ISR → no replication
+  HW advances to 1002 (ISR = {1, 2} both caught up)
+  Producer receives ack
+
+t=33: Broker 1 crashes (power failure)
+  Controller detects broker failure (ZooKeeper session timeout = 6s)
+  Controller triggers leader election for orders-7
+  Candidates: ISR = {Broker 2} (Broker 3 not in ISR)
+  New leader: Broker 2
+  Broker 2 LEO = 1002, HW = 1002 → no data loss
+
+t=39: Broker 1 recovers
+  Broker 1 rejoins as follower
+  Broker 1 LEO = 1002 (had written 1002 before crash)
+  Broker 1 fetches from Broker 2 → catches up (no new messages)
+  ISR: {Broker 1, Broker 2}
+```
+
+**Unclean leader election (what if ISR is empty?):**
+
+```
+t=0: Broker 1 crashes
+  ISR: {Broker 2, Broker 3}
+  Controller elects Broker 2 as leader
+
+t=1: Broker 2 crashes
+  ISR: {Broker 3}
+  Controller elects Broker 3 as leader
+
+t=2: Broker 3 crashes
+  ISR: {} (empty)
+  Partition unwritable (min.insync.replicas=2 not met)
+
+t=3: unclean.leader.election.enable = true
+  Controller allows non-ISR replica to become leader
+  Candidate: Broker 1 (recovered, but LEO = 1000, behind HW = 1002)
+  Broker 1 becomes leader → HW resets to 1000
+  Messages 1001, 1002 are lost (committed but not on new leader)
+
+  Producers/consumers see data loss.
+```
+
+#### 3. Trade-off table
+
+| Property | Strict ISR (unclean election disabled) | Unclean leader election enabled |
+|---|---|---|
+| Durability | No data loss (only ISR members become leader) | Data loss possible (non-ISR leader may lack committed messages) |
+| Availability | Partition unwritable if ISR empty | Partition remains writable (non-ISR leader) |
+| Failure mode | Prolonged outage if all ISR members down | Silent data loss (committed messages disappear) |
+| Use case | Financial transactions, audit logs | Social feeds, analytics (data loss acceptable) |
+| Production default | `unclean.leader.election.enable=false` (safe) | Rarely enabled; requires explicit opt-in |
+
+#### 4. Failure modes interviewers drill into
+
+- **ISR shrinks to 1 (only leader):** partition writable but no replication → leader failure = data loss. Mitigation: alert if ISR size < RF; investigate slow follower (disk, network, GC).
+- **All ISR members crash simultaneously:** partition unwritable (if unclean election disabled). Mitigation: spread replicas across failure domains (rack, AZ); use RF=5 for critical topics.
+- **Unclean leader election causes data loss:** committed messages lost. Mitigation: disable unclean election; accept temporary unavailability.
+- **Slow follower removed from ISR, then catches up:** follower rejoins ISR → partition over-replicated (RF=3, ISR=3). No issue; just transient under-replication.
+- **Controller fails to detect broker failure:** ZooKeeper session timeout = 6s → 6s delay before leader election. Mitigation: use KRaft (Kafka Raft) instead of ZooKeeper (faster consensus, <1s failover).
+
+#### 5. First-principles derivation
+
+1. Requirement: replicate partition across RF brokers, survive 1 broker failure without data loss.
+2. Option A: synchronous replication to all RF replicas. Write latency = max(follower disk flush). Lose 1 broker → partition unwritable (RF-1 < RF). Unacceptable availability.
+3. Option B: asynchronous replication. Leader acks immediately. Lose leader → committed messages on leader but not followers = data loss. Unacceptable durability.
+4. Option C: quorum (w+r > RF). Write to 2/3, read from 2/3. Lose 1 broker → still quorum. But: slow follower blocks write (must wait for 2 acks); fast follower can diverge (write to 2, read from different 2 → inconsistent).
+5. Option D: ISR (Kafka). Leader tracks "in-sync" followers (within 30s). Write acks after ISR appends. Leader failure → only ISR members become leader. Durability: committed messages on all ISR → no loss. Availability: slow follower removed from ISR → partition writable with fewer replicas.
+6. Trade-off: ISR size < RF → under-replicated (fewer durability guarantees). ISR size = 1 → no replication (leader failure = data loss). Mitigation: alert on ISR shrink; investigate root cause.
+7. Unclean election: allow non-ISR leader if ISR empty. Trade-off: availability (partition writable) vs durability (data loss). Default: disabled (safe).
+
+#### 6. Production evidence
+
+- **LinkedIn (2011):** Original Kafka deployment. ISR protocol designed to handle slow followers (GC pauses, disk stalls) without blocking writes. Reported <1s failover with ZooKeeper-based controller.
+- **Confluent (2020):** KRaft mode (Kafka Raft metadata management) replaces ZooKeeper. Controller failover <500ms (vs 6s with ZooKeeper). ISR protocol unchanged.
+- **Stripe (2019):** Uses `min.insync.replicas=2` for payment events. Alert if ISR size < 3 for >5 minutes. Disabled unclean leader election (no data loss tolerated).
+- **Uber (2017):** Multi-datacenter Kafka. ISR protocol extended to handle cross-region latency (replica.lag.time.max.ms=60s for cross-region followers). Reported 99.99% availability with RF=3.
+
+### Deep dive 2 — Exactly-once via transactional producer (TID + commit marker)
+
+#### 1. Why does this mechanism exist?
+
+Stream processing pipelines often consume from one topic, transform, and produce to another:
+
+```
+input topic → consumer → transform → output topic → commit offset
+```
+
+Failure modes without exactly-once:
+
+- **At-least-once (default):** consumer processes message, produces to output, crashes before committing offset → on restart, re-processes → duplicate in output.
+- **At-most-once:** consumer commits offset before processing → crash → message lost (never processed).
+- **Exactly-once:** process once, produce once, commit offset atomically → no duplicates, no losses.
+
+Kafka's exactly-once semantics (EOS) require three mechanisms:
+
+1. **Idempotent producer:** deduplicate retries within a single partition (producer ID + sequence number).
+2. **Transactional producer:** atomically produce to multiple partitions + commit consumer offsets (two-phase commit).
+3. **Read-committed consumer:** skip uncommitted transactions (read only committed messages).
+
+#### 2. Concrete walk-through
+
+**Scenario: consume from `orders`, produce to `payments`, commit offset atomically**
+
+```
+Initial state:
+  Producer: transactional_id = "order-to-payment-processor"
+  Consumer group: "payment-processor"
+  Input topic: orders, partition 7, offset 1000 (last committed)
+  Output topic: payments, partition 3
+
+t=0: Consumer polls orders-7 → fetches messages [1001, 1002, 1003]
+t=1: Consumer processes message 1001 → produces to payments-3
+  Producer (transactional):
+    1. begin_transaction()
+    2. send to payments-3 (offset 5001)
+       - producer_id = 1001, producer_epoch = 0, base_sequence = 0
+    3. send_offsets_to_transaction(
+        group_id = "payment-processor",
+        offsets = [{topic: "orders", partition: 7, offset: 1001}]
+       )
+       - writes to __transaction_state topic (atomic with transaction)
+    4. commit_transaction()
+       - writes commit marker to payments-3 (offset 5002)
+       - atomically commits consumer offset 1001 to __consumer_offsets
+
+t=2: Consumer polls orders-7 → fetches messages [1002, 1003]
+  (offset 1001 already committed; next fetch starts at 1002)
+
+t=3: Consumer processes message 1002 → produces to payments-3
+  Producer:
+    1. begin_transaction()
+    2. send to payments-3 (offset 5003)
+    3. send_offsets_to_transaction(offset = 1002)
+    4. commit_transaction()
+       - commit marker at offset 5004
+
+t=4: Consumer crashes (before processing message 1003)
+
+t=5: Consumer restarts
+  Fetches from __consumer_offsets → last committed offset = 1002
+  Polls orders-7 starting at offset 1003 → no duplicates
+```
+
+**Failure during transaction (crash before commit):**
+
+```
+t=0: Consumer processes message 1003 → produces to payments-3
+  Producer:
+    1. begin_transaction()
+    2. send to payments-3 (offset 5005)
+    3. send_offsets_to_transaction(offset = 1003)
+    4. crash (before commit_transaction)
+
+t=1: Producer restarts (new instance, same transactional_id)
+  Transaction coordinator detects aborted transaction (timeout = 15 min)
+  Writes abort marker to payments-3 (offset 5006)
+  Consumer offset 1003 NOT committed (transaction aborted)
+
+t=2: Consumer restarts
+  Fetches from __consumer_offsets → last committed offset = 1002
+  Polls orders-7 starting at offset 1003 → re-processes (correct)
+  Consumer with isolation.level=read_committed:
+    - reads payments-3 up to offset 5004 (last commit marker)
+    - skips offset 5005 (aborted transaction)
+    - no duplicate visible
+```
+
+**Idempotent producer (dedup within single partition):**
+
+```
+t=0: Producer sends message to payments-3
+  producer_id = 1001, producer_epoch = 0, base_sequence = 0
+  Broker appends (offset 5001)
+
+t=1: Network timeout (producer doesn't receive ack)
+  Producer retries: same producer_id, producer_epoch, base_sequence = 0
+  Broker checks: last_sequence for producer_id 1001 = 0
+  Retry sequence (0) ≤ last_sequence (0) → reject as duplicate
+  Returns offset 5001 (original) → producer deduplicates
+
+t=2: Producer sends next message
+  base_sequence = 1 (incremented)
+  Broker appends (offset 5002)
+```
+
+#### 3. Trade-off table
+
+| Property | At-least-once (default) | Exactly-once (transactional) |
+|---|---|---|
+| Duplicates | Possible (retry after crash) | None (idempotent + transactional) |
+| Data loss | None (commit after process) | None (atomic commit) |
+| Latency | Low (no coordination) | Higher (transaction coordinator, commit marker) |
+| Throughput | High (no coordination overhead) | Lower (~20% reduction due to transaction overhead) |
+| Complexity | Low (simple produce + commit) | High (transaction lifecycle, abort handling) |
+| Use case | Analytics, logging (duplicates tolerable) | Financial transactions, audit (no duplicates) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Transaction coordinator fails:** in-flight transactions abort (timeout = 15 min). Mitigation: transaction coordinator replicated (partitioned `__transaction_state` topic with RF=3).
+- **Producer crashes mid-transaction:** transaction aborts (timeout). Consumer offset not committed → re-process on restart (correct). Mitigation: idempotent producer deduplicates retries.
+- **Consumer reads uncommitted messages (isolation.level=read_uncommitted):** sees in-flight transaction → processes duplicate on restart. Mitigation: use `read_committed` (default for EOS).
+- **Producer epoch mismatch:** producer restarts with same transactional_id → new epoch. Old epoch fenced (broker rejects). Mitigation: transactional_id + epoch ensures exactly-once across restarts.
+- **Large transaction (10k messages):** commit marker written after all messages → consumer waits for commit marker → high latency. Mitigation: keep transactions small (100-1000 messages); tune `transaction.max.timeout.ms`.
+
+#### 5. First-principles derivation
+
+1. Requirement: consume → transform → produce → commit offset atomically (no duplicates, no losses).
+2. Option A: at-least-once. Process → produce → commit offset. Crash after produce, before commit → re-process → duplicate. Unacceptable for financial transactions.
+3. Option B: at-most-once. Commit offset → process → produce. Crash after commit → message lost. Unacceptable for audit logs.
+4. Option C: exactly-once. Atomic: (produce + commit offset). Requires two-phase commit (2PC) across Kafka (output topic) and Kafka (consumer offset topic).
+5. Kafka's EOS: transactional producer (2PC within Kafka). Transaction coordinator atomically writes: (a) output messages, (b) consumer offset, (c) commit marker. Consumer with `read_committed` skips uncommitted transactions.
+6. Idempotent producer: dedup retries within single partition. Producer ID + sequence number → broker rejects duplicate sequences.
+7. Trade-off: EOS adds latency (transaction coordinator, commit marker) and complexity (transaction lifecycle). Use only when duplicates are unacceptable (financial, audit). For analytics, at-least-once is sufficient.
+
+#### 6. Production evidence
+
+- **Confluent (2017):** Introduced exactly-once semantics (EOS) in Kafka 0.11. Transactional producer + idempotent send + read_committed consumer. Reported ~20% throughput reduction vs at-least-once.
+- **Stripe (2020):** Uses EOS for payment event processing. Transactional producer ensures no duplicate payments. Reported <1ms additional latency per transaction.
+- **Uber (2019):** Migrated from at-least-once to EOS for financial transactions. Eliminated duplicate processing (previously 0.1% of messages). Required consumer code changes (transaction lifecycle).
+- **LinkedIn (2018):** Uses EOS for change-data-capture (CDC) pipeline. Transactional producer ensures no duplicate DB updates. Reported 15% throughput reduction (acceptable for correctness).
+
+### Failure table
+
+| Failure | Impact | Detection | Mitigation |
+|---|---|---|---|
+| Broker crash (leader) | Partition unwritable until leader election (6s with ZooKeeper, <1s with KRaft) | Under-replicated partitions metric; controller alerts | Auto leader election from ISR; spread replicas across failure domains |
+| Broker crash (follower in ISR) | ISR shrinks; partition writable if ISR ≥ min.insync.replicas | Under-replicated partitions metric; ISR shrink alert | Investigate slow follower (disk, network, GC); alert if ISR < RF for >5 min |
+| All ISR members crash | Partition unwritable (if unclean election disabled) or data loss (if enabled) | Offline partitions metric; alert on partition unavailability | RF=5 for critical topics; spread across AZs; disable unclean election |
+| Controller fails | No leader elections; stuck partitions | Controller active metric; ZooKeeper session timeout | Controller standby (ZooKeeper) or KRaft quorum (auto-failover) |
+| Producer retry storm (network timeout) | Duplicate messages (if idempotent disabled) or dedup (if enabled) | Producer retry rate metric; duplicate message rate (if logged) | Enable idempotent producer (`enable.idempotence=true`); tune `retries=INT_MAX` |
+| Consumer lag grows | Stale processing; downstream SLA breach | Consumer lag metric (per partition); alert if lag > 10k messages | Scale consumer group (add consumers); optimize processing logic; increase `max.poll.records` |
+| Transaction coordinator fails | In-flight transactions abort (timeout = 15 min) | Transaction timeout metric; abort rate | Transaction coordinator replicated (RF=3); alert on coordinator failover |
+| Unclean leader election | Data loss (committed messages not on new leader) | HW reset metric; message loss audit (if checksums) | Disable unclean election (`unclean.leader.election.enable=false`); accept temporary unavailability |
+| Disk full (broker) | Partition unwritable; broker crashes | Disk usage metric; alert if >80% | Log retention (7 days); log compaction; add disks; tiered storage (S3) |
+| Network partition (cross-AZ) | ISR shrinks; under-replicated partitions | ISR shrink metric; cross-AZ latency | `min.insync.replicas=2`; alert on ISR < RF; use KRaft (faster failover) |
+
+### Observability
+
+- **Broker metrics:** requests/sec (produce, fetch), request latency p99 (produce, fetch), under-replicated partitions, offline partitions, ISR shrink/expand rate, disk usage (%), network I/O (MB/sec).
+- **Producer metrics:** record-send rate, record-error rate, retry rate, batch size (avg), compression ratio, transaction abort rate.
+- **Consumer metrics:** records-consumed rate, consumer lag (per partition, per group), rebalance rate, commit rate, fetch size (avg).
+- **Cluster-wide:** total messages/sec (ingest), total bytes/sec (ingest), partition count, broker count, controller active (single controller), ZooKeeper/KRaft latency.
+- **Transaction metrics:** transaction count (active, committed, aborted), transaction duration p99, coordinator failover rate.
+- **Alerts:** under-replicated partitions > 0 for >5 min; offline partitions > 0; consumer lag > 10k messages; disk usage > 80%; ISR shrink rate > 1/min.
+
+### Evolution path
+
+| Day | Scale | Change |
+|---|---|---|
+| 30 | 10k messages/sec, 10 topics | Single broker; RF=1; at-least-once; ZooKeeper |
+| 100 | 100k messages/sec, 100 topics | 3 brokers; RF=3; `acks=all`; idempotent producer; consumer groups |
+| 1000 | 1M messages/sec, 1k topics | 10 brokers; KRaft (no ZooKeeper); exactly-once (transactional producer); tiered storage (S3 for old segments) |
+| 10000 | 10M messages/sec, 10k topics | 30 brokers; multi-datacenter (MirrorMaker 2); custom partitioner (geo-routing); shadow cluster (chaos engineering) |
+
+### Interview follow-ups
+
+1. What happens during a leader election — can you lose committed messages?
+2. How does the consumer group know where to resume after rebalance?
+3. Why is partition reassignment slow and what would you optimize?
+4. How do you handle a consumer that processes messages slower than they arrive (lag grows)?
+5. What's the difference between `acks=1` and `acks=all`? When would you use each?
+6. How do you prevent a single hot partition from becoming a bottleneck?
+7. How does log compaction work, and when would you use it?
+8. What's the role of the controller, and how does it differ in KRaft vs ZooKeeper mode?
+
+### Sources
+
+- Kafka (Kreps et al. 2011) — partition + replication design, consumer-group rebalance
+- Confluent — exactly-once semantics in Kafka (transactional producer, idempotent send)
+- DDIA Ch.11 — stream processing (log-as-database, change-data-capture)
+
+---
+
 ## [2026-08-21] H14 · Stripe-style Payment Processing
 
 ### Problem as asked
