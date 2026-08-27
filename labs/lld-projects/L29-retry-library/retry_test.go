@@ -158,3 +158,53 @@ func TestDoRequestsBackoffBetweenRetries(t *testing.T) {
 		t.Fatalf("got backoff attempts %v, want [1 2]", backoff.attempts)
 	}
 }
+
+func TestFixedBackoffReturnsConstantDelay(t *testing.T) {
+	backoff := FixedBackoff{
+		Delay: 250 * time.Millisecond,
+	}
+
+	for attempt := 1; attempt <= 4; attempt++ {
+		if got := backoff.Next(attempt); got != 250*time.Millisecond {
+			t.Fatalf("attempt %d: got %v, want %v", attempt, got, 250*time.Millisecond)
+		}
+	}
+}
+
+func TestExponentialBackoffDoublesUntilCap(t *testing.T) {
+	backoff := ExponentialBackoff{
+		Base: 100 * time.Millisecond,
+		Max:  500 * time.Millisecond,
+	}
+
+	want := []time.Duration{
+		100 * time.Millisecond,
+		200 * time.Millisecond,
+		400 * time.Millisecond,
+		500 * time.Millisecond,
+		500 * time.Millisecond,
+	}
+
+	for attempt, wantDelay := range want {
+		got := backoff.Next(attempt + 1)
+		if got != wantDelay {
+			t.Fatalf("attempt %d: got %v, want %v", attempt+1, got, wantDelay)
+		}
+	}
+}
+
+func TestJitteredBackoffStaysWithinHalfToFullDelay(t *testing.T) {
+	backoff := JitteredBackoff{
+		Inner: FixedBackoff{
+			Delay: 100 * time.Millisecond,
+		},
+	}
+
+	for attempt := 1; attempt <= 20; attempt++ {
+		got := backoff.Next(attempt)
+
+		if got < 50*time.Millisecond || got >= 100*time.Millisecond {
+			t.Fatalf("attempt %d: got %v, want [50ms, 100ms)", attempt, got)
+		}
+	}
+}

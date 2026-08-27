@@ -3,6 +3,7 @@ package retry
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"time"
 )
 
@@ -65,6 +66,40 @@ type FixedBackoff struct {
 
 func (f FixedBackoff) Next(attempt int) time.Duration {
 	return f.Delay
+}
+
+type ExponentialBackoff struct {
+	Base time.Duration
+	Max  time.Duration
+}
+
+func (e ExponentialBackoff) Next(attempt int) time.Duration {
+	delay := e.Base
+
+	for i := 1; i < attempt; i++ {
+		delay *= 2
+		if delay > e.Max {
+			delay = e.Max
+		}
+	}
+	return delay
+}
+
+type JitteredBackoff struct {
+	Inner Backoff
+}
+
+func (j JitteredBackoff) Next(attempt int) time.Duration {
+	delay := j.Inner.Next(attempt)
+
+	if delay <= 1 {
+		return delay
+	}
+
+	half := delay / 2
+	jitter := rand.Int63n(int64(half))
+
+	return half + time.Duration(jitter)
 }
 
 func Do[T any](ctx context.Context, cfg Config, operation func() (T, error)) (T, error) {
