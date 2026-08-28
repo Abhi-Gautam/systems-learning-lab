@@ -5,6 +5,35 @@ import (
 	"time"
 )
 
+type TokenBucketLimiter struct {
+	core *rateLimiter
+}
+
+// NewTokenBucketLimiter creates a token-bucket rate limiter.
+func NewTokenBucketLimiter(
+	capacity, refillRate float64,
+) *TokenBucketLimiter {
+	return newTokenBucketLimiter(capacity, refillRate, time.Now)
+}
+
+func newTokenBucketLimiter(
+	capacity, refillRate float64,
+	now func() time.Time,
+) *TokenBucketLimiter {
+	return &TokenBucketLimiter{
+		core: newRateLimiter(
+			func(createdAt time.Time) userState {
+				return newTokenBucket(capacity, refillRate, createdAt)
+			},
+			now,
+		),
+	}
+}
+
+func (r *TokenBucketLimiter) Allow(userID string) Decision {
+	return r.core.Allow(userID)
+}
+
 // tokenBucket contains the state and behavior for token-bucket limiting.
 // Its implementation will move here during the architecture cleanup.
 

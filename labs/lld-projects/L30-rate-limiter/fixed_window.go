@@ -2,6 +2,37 @@ package ratelimiter
 
 import "time"
 
+type FixedWindowLimiter struct {
+	core *rateLimiter
+}
+
+// NewFixedWindowLimiter creates a fixed-window rate limiter.
+func NewFixedWindowLimiter(
+	limit int,
+	window time.Duration,
+) *FixedWindowLimiter {
+	return newFixedWindowLimiter(limit, window, time.Now)
+}
+
+func newFixedWindowLimiter(
+	limit int,
+	window time.Duration,
+	now func() time.Time,
+) *FixedWindowLimiter {
+	return &FixedWindowLimiter{
+		core: newRateLimiter(
+			func(createdAt time.Time) userState {
+				return newFixedWindow(limit, window, createdAt)
+			},
+			now,
+		),
+	}
+}
+
+func (r *FixedWindowLimiter) Allow(userID string) Decision {
+	return r.core.Allow(userID)
+}
+
 type fixedWindow struct {
 	limit       int
 	window      time.Duration

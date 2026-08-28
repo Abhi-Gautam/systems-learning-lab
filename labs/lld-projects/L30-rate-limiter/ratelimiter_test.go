@@ -6,8 +6,21 @@ import (
 	"time"
 )
 
+func TestPublicLimitersExposeCommonContract(t *testing.T) {
+	var tokenBucket Limiter = NewTokenBucketLimiter(2, 1)
+	var fixedWindow Limiter = NewFixedWindowLimiter(2, time.Second)
+
+	if tokenBucket == nil {
+		t.Fatal("token-bucket limiter should not be nil")
+	}
+
+	if fixedWindow == nil {
+		t.Fatal("fixed-window limiter should not be nil")
+	}
+}
+
 func TestRateLimiterAllowsRequestUpToCapacity(t *testing.T) {
-	limiter := newTestTokenBucketLimiter(2, 1, time.Now)
+	limiter := newTokenBucketLimiter(2, 1, time.Now)
 	if !limiter.Allow("user-1").Allowed {
 		t.Errorf("expected request to be allowed")
 	}
@@ -22,7 +35,7 @@ func TestRateLimiterAllowsRequestUpToCapacity(t *testing.T) {
 func TestRateLimiterRefillsTokens(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(2, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(2, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -48,7 +61,7 @@ func TestRateLimiterRefillsTokens(t *testing.T) {
 func TestRateLimiterRejectsPartialToken(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(2, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(2, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -76,7 +89,7 @@ func TestRateLimiterRejectsPartialToken(t *testing.T) {
 func TestRateLimiterDoesNotExceedCapacity(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(2, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(2, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -106,7 +119,7 @@ func TestRateLimiterDoesNotExceedCapacity(t *testing.T) {
 func TestRateLimiterTracksUsersIndependently(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(2, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(2, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -138,7 +151,7 @@ func TestRateLimiterTracksUsersIndependently(t *testing.T) {
 func TestRateLimiterAllowsAtMostCapacityConcurrently(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(10, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(10, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -174,7 +187,7 @@ func TestRateLimiterAllowsAtMostCapacityConcurrently(t *testing.T) {
 func TestRateLimiterReturnsRetryAfter(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestTokenBucketLimiter(2, 1, func() time.Time {
+	limiter := newTokenBucketLimiter(2, 1, func() time.Time {
 		return currentTime
 	})
 
@@ -195,7 +208,7 @@ func TestRateLimiterReturnsRetryAfter(t *testing.T) {
 func TestFixedWindowLimiterResetsAtWindowBoundary(t *testing.T) {
 	currentTime := time.Now()
 
-	limiter := newTestFixedWindowLimiter(
+	limiter := newFixedWindowLimiter(
 		2,
 		time.Second,
 		func() time.Time {
@@ -261,29 +274,4 @@ func TestRateLimiterCreatesOneStatePerUser(t *testing.T) {
 	if _, ok := limiter.states["user-1"].(*tokenBucket); !ok {
 		t.Fatalf("user-1 state has type %T, want *tokenBucket", limiter.states["user-1"])
 	}
-}
-
-func newTestTokenBucketLimiter(
-	capacity, refillRate float64,
-	now func() time.Time,
-) *rateLimiter {
-	return newRateLimiter(
-		func(currentTime time.Time) userState {
-			return newTokenBucket(capacity, refillRate, currentTime)
-		},
-		now,
-	)
-}
-
-func newTestFixedWindowLimiter(
-	limit int,
-	window time.Duration,
-	now func() time.Time,
-) *rateLimiter {
-	return newRateLimiter(
-		func(currentTime time.Time) userState {
-			return newFixedWindow(limit, window, currentTime)
-		},
-		now,
-	)
 }
