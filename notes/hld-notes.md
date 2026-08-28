@@ -2,6 +2,611 @@
 
 ---
 
+## [2026-08-28] H17 · DynamoDB-Style KV Store
+
+### Problem as asked
+
+> Design a Dynamo-style distributed key-value store. Always-writable, even during network partition. 100k writes/sec, 1KB values, 99.99% availability single-region.
+
+### Clarifying questions
+
+| # | Question | Assumed answer |
+|---|---|---|
+| 1 | What is the workload shape? | Session store, user profile cache, shopping cart, game state. Payloads 128B–4KB, average 1KB. Mix of reads (80%) and writes (20%). Keys are opaque byte strings up to 2KB. |
+| 2 | Consistency model? | Eventual consistency by default. Optional per-read consistency: `R + W > N` gives strong read (read from enough replicas that at least one has the latest write). Caller chooses R and W per request. |
+| 3 | What does "always-writable" mean? | The system accepts writes even when a subset of nodes is unreachable (network partition or failure). The write succeeds if any `W` nodes (out of N replicas) acknowledge. This is an AP system in CAP terms. |
+| 4 | Replication factor? | N=3 default. Coordinator picks N healthy nodes (sloppy quorum) for each key. Writes go to W=2, reads from R=2 by default. |
+| 5 | Conflict resolution? | Vector clocks on each value. Concurrent writes produce siblings (multiple values with incomparable vector clocks). Read returns all siblings; client or application-level resolver merges them. Last-writer-wins (LWW) is a common resolver. |
+| 6 | Partitioning strategy? | Consistent hashing with virtual nodes. Each physical node owns ~200 virtual tokens on the ring. Keys hashed (MD5) → position on ring → assigned to N clockwise nodes. |
+| 7 | Failure detection? | Gossip protocol. Each node maintains a membership list with heartbeat timestamps. Nodes unreachable for >5s are marked suspect; removed from ring after 30s. |
+| 8 | Anti-entropy? | Merkle trees per partition. Nodes exchange tree hashes; divergent subtrees trigger key-level sync. Runs continuously in background (rate-limited to avoid impacting foreground traffic). |
+| 9 | Single-region scope? | Yes. All nodes in one datacenter (or one cloud region). Cross-region is out of scope for this design. |
+| 10 | Durability? | Write-ahead log (WAL) per node. Data in memory (memtable) + flushed to SSTables on disk. Node crash → replay WAL. Permanent node loss → data rebuilt from replicas via anti-entropy. |
+
+### Back-of-envelope estimates
+
+```
+Throughput:
+  100k writes/sec, 1KB each → 100 MB/sec ingress
+  Read:write = 4:1 → 400k reads/sec → 400 MB/sec egress (reads return 1KB values)
+  Total network: ~500 MB/sec = 4 Gbps aggregate cluster traffic
+
+Node count:
+  Per-node capacity (disk I/O):
+    SSD sequential write: ~500 MB/sec
+    Write amplification (WAL + memtable flush + compaction): ~3×
+    Effective write throughput per node: ~170 MB/sec
+  100 MB/sec ingress / 170 MB/sec per node = 0.6 nodes for disk
+  → Disk is not the bottleneck.
+
+  Per-node capacity (network):
+    10 Gbps NIC = 1.25 GB/sec
+    Per node: ~500 MB/sec (assuming even distribution across 10 nodes)
+    → 10 nodes saturate at 5 GB/sec aggregate → 500 MB/sec per node is fine
+
+  Per-node capacity (request handling):
+    Single request: parse + vector clock update + WAL write + ack
+    Latency budget: <5ms p99
+    Per-node throughput: ~20k ops/sec (conservative, with disk sync)
+    500k total ops / 20k per node = 25 nodes minimum
+
+  Final: 30 nodes for headroom and even partition distribution
+  With N=3 replication: each key on 3 nodes
+  Total replicas: 3 × (total keys) spread across 30 nodes
+
+Storage:
+  Assume 10B keys × 1KB = 10 TB working set
+  10 TB / 30 nodes = 333 GB per node (fits in RAM for hot data)
+  With replication: 30 TB total across cluster
+  Per node: 1 TB on disk (SSD)
+
+  WAL: 100 MB/sec / 30 nodes × 3 (replication) = 10 MB/sec per node
+  WAL retention: 30 seconds → 300 MB per node (small)
+
+Latency budget (write path):
+  Client → coordinator (network): 0.5ms
+  Coordinator → N replica nodes (parallel): 1ms
+  Each replica: WAL fsync (200μs on NVMe) + memtable insert (10μs) + ack
+  Coordinator waits for W=2 acks: 2ms
+  Coordinator → client response: 0.5ms
+  Total write p99: ~4ms
+
+Latency budget (read path):
+  Client → coordinator: 0.5ms
+  Coordinator → R=2 replicas (parallel): 1ms
+  Each replica: memtable + SSTable lookup (100μs) + return value
+  Coordinator reconciles vector clocks (10μs) + response: 0.5ms
+  Total read p99: ~3ms
+
+Anti-entropy overhead:
+  Merkle tree exchange: 1 MB per partition per sync (for 1M keys)
+  Background rate limit: 10 MB/sec per node
+  Full cluster sync cycle: ~10 TB / 10 MB/sec = 1M seconds ≈ 12 days
+  → Too slow. Increase to 50 MB/sec → 2.4 days. Acceptable for eventual consistency.
+```
+
+### Functional requirements
+
+- **Put:** `put(key, value, context)` → writes to W replicas, returns success if W acks. `context` is the vector clock (opaque to client; returned from `get`).
+- **Get:** `get(key, R)` → reads from R replicas, reconciles vector clocks, returns value(s). If siblings exist (concurrent writes), returns all siblings; client resolves.
+- **Delete:** `delete(key)` → writes a tombstone (key + vector clock + tombstone flag). Tombstones garbage-collected after anti-entropy confirms propagation.
+- **Conditional put:** `put_if_absent(key, value)` → compare-and-swap using vector clock. Fails if key exists with a different context.
+- **Batch:** `batch_put([(key, value), ...])` → atomic per-coordinator (not cross-coordinator). All keys go to same coordinator; coordinator sequences writes.
+- **Key existence:** `exists(key)` → read with R=1 (fast, may be stale).
+
+### Non-functional requirements
+
+| Requirement | Target | Mechanism |
+|---|---|---|
+| Write throughput | 100k ops/sec | 30 nodes; consistent hashing distributes keys evenly; virtual nodes (200 per physical node) prevent hotspots |
+| Read throughput | 400k ops/sec | Same partitioning; R=2 reads parallel across replicas |
+| Write latency p99 | < 5ms | WAL fsync on NVMe (200μs); parallel replication; W=2 acks |
+| Read latency p99 | < 3ms | Memtable + SSTable lookup (100μs); R=2 parallel reads; vector clock reconciliation (10μs) |
+| Availability | 99.99% (single-region) | Sloppy quorum: writes succeed if any W healthy nodes acknowledge; node failure → temporary unavailability for keys on that node, but sloppy quorum routes to alternate nodes |
+| Durability | No data loss for acknowledged writes | WAL per node; N=3 replication; W=2 acks → data on ≥2 nodes before ack |
+| Partition tolerance | Always-writable during network partition | AP system: writes succeed if W nodes reachable; reads succeed if R nodes reachable; no coordinator-level consensus |
+| Conflict resolution | Client-controlled | Vector clocks expose concurrency; siblings returned to client; LWW or custom resolver |
+| Anti-entropy | Continuous background sync | Merkle tree exchange; rate-limited to 50 MB/sec per node; full cluster sync in ~2.4 days |
+| Failure detection | < 5s to detect node failure | Gossip protocol; heartbeat every 1s; suspect after 5 missed heartbeats |
+
+### API / protocol contract
+
+```
+Put request:
+  Header:
+    client_id: "cart-service-prod-01"
+    request_id: 987654321  (for dedup at coordinator)
+  Body:
+    key: "user:123:cart"
+    value: <protobuf bytes, 1KB>
+    context: { vector_clock: { "node-A": 5, "node-B": 3 } }  (from previous get; empty for new key)
+    w: 2  (required acks)
+    timeout_ms: 500
+
+  Response (success):
+    status: OK
+    context: { vector_clock: { "node-A": 6, "node-B": 3 } }  (incremented by coordinator)
+
+  Response (conflict — siblings exist):
+    status: CONFLICT
+    siblings: [
+      { value: <v1>, context: { "node-A": 6, "node-B": 3 } },
+      { value: <v2>, context: { "node-A": 5, "node-B": 4 } }
+    ]
+    → Client merges siblings, sends new put with merged context
+
+Get request:
+  Header:
+    client_id: "cart-service-prod-01"
+    request_id: 987654322
+  Body:
+    key: "user:123:cart"
+    r: 2  (required replicas to read from)
+    timeout_ms: 500
+
+  Response (single value):
+    status: OK
+    value: <protobuf bytes>
+    context: { vector_clock: { "node-A": 6, "node-B": 3 } }
+
+  Response (siblings — concurrent writes):
+    status: OK
+    siblings: [
+      { value: <v1>, context: { "node-A": 6, "node-B": 3 } },
+      { value: <v2>, context: { "node-A": 5, "node-B": 4 } }
+    ]
+    → Client resolves (LWW or custom merge)
+
+  Response (key not found):
+    status: NOT_FOUND
+
+Delete request:
+  Header:
+    client_id: "cart-service-prod-01"
+    request_id: 987654323
+  Body:
+    key: "user:123:cart"
+    context: { vector_clock: { "node-A": 6, "node-B": 3 } }  (from previous get)
+    w: 2
+    timeout_ms: 500
+
+  Response:
+    status: OK
+    context: { vector_clock: { "node-A": 7, "node-B": 3 } }  (tombstone written)
+```
+
+### Data model
+
+```
+On-disk layout (per node):
+
+  /data/node-A/
+    wal/
+      000001.wal   (write-ahead log; sequential append; fsync per write)
+      000002.wal
+    memtable/
+      active.mem   (in-memory sorted map: key → {value, vector_clock, timestamp})
+    sstable/
+      000001.sst   (immutable; sorted key-value pairs + bloom filter + index)
+      000002.sst
+      manifest.json (list of active SSTables + generation numbers)
+
+  WAL entry format (per write):
+    sequence_number: 8 bytes (monotonic per node)
+    operation: 1 byte (PUT=1, DELETE=2)
+    key_length: 4 bytes
+    key: variable
+    value_length: 4 bytes (0 for DELETE)
+    value: variable
+    vector_clock_length: 4 bytes
+    vector_clock: variable (serialized as {node_id: counter, ...})
+    crc32: 4 bytes
+
+  Memtable entry (in-memory):
+    key: byte[]
+    value: byte[] (or tombstone marker)
+    vector_clock: Map<NodeId, Counter>
+    timestamp: int64 (microseconds since epoch; for LWW tie-breaking)
+
+  SSTable format (on disk):
+    Data blocks (sorted by key):
+      [key_length, key, value_length, value, vector_clock_length, vector_clock] × N
+    Index block (sparse):
+      [key, offset_in_data_blocks] × M (one entry per 100 keys)
+    Bloom filter (per SSTable):
+      10 bits per key; false positive rate < 1%
+    Footer:
+      index_offset: 8 bytes
+      bloom_filter_offset: 8 bytes
+      metadata: { key_count, min_key, max_key, creation_time }
+
+  Internal metadata (per node):
+    ring_state:
+      virtual_nodes: [
+        { token: 0x1A2B3C, physical_node: "node-A" },
+        { token: 0x4D5E6F, physical_node: "node-B" },
+        ...
+      ]
+    membership:
+      nodes: [
+        { node_id: "node-A", status: ALIVE, last_heartbeat: 1630000000000 },
+        { node_id: "node-B", status: SUSPECT, last_heartbeat: 1629999995000 },
+      ]
+    hint_queue:
+      pending_hints: [
+        { target_node: "node-B", key: "user:123:cart", value: <bytes>, context: {...}, timestamp: 1630000000000 }
+      ]
+      → Hints are writes that couldn't reach the intended replica (node was down)
+      → Stored locally; replayed when target node recovers
+```
+
+### Request-path layering
+
+```mermaid
+flowchart LR
+    Client -->|1. put/get request| LB[Load Balancer<br/>round-robin]
+    LB -->|2. route to any node| Coord[Coordinator<br/>node-A]
+    Coord -->|3. hash key → ring position| Ring[Consistent Hash Ring]
+    Ring -->|4. find N clockwise nodes| PrefList[Preference List<br/>node-B, node-C, node-D]
+    Coord -->|5. parallel write to W=2| NodeB[node-B<br/>primary]
+    Coord -->|5. parallel write to W=2| NodeC[node-C<br/>primary]
+    NodeB -->|6. WAL fsync + ack| Coord
+    NodeC -->|6. WAL fsync + ack| Coord
+    Coord -->|7. response| Client
+
+    Note: if node-B is down, coordinator uses sloppy quorum:<br/>
+    writes to node-E (next healthy node on ring) + hint to node-B
+```
+
+### Architecture diagram
+
+```mermaid
+flowchart TB
+    subgraph "Client tier"
+        C1[Cart Service]
+        C2[Session Service]
+        C3[Profile Service]
+    end
+
+    subgraph "Dynamo cluster (30 nodes)"
+        subgraph "Node A (coordinator for request)"
+            A_Ring[Consistent Hash Ring]
+            A_WAL[WAL]
+            A_Mem[Memtable]
+            A_SST[SSTables]
+        end
+        subgraph "Node B"
+            B_WAL[WAL]
+            B_Mem[Memtable]
+            B_SST[SSTables]
+        end
+        subgraph "Node C"
+            C_WAL[WAL]
+            C_Mem[Memtable]
+            C_SST[SSTables]
+        end
+        subgraph "Node D (hinted handoff target)"
+            D_WAL[WAL]
+            D_Mem[Memtable]
+            D_Hint[Hint Queue<br/>for node-B]
+        end
+    end
+
+    subgraph "Background processes"
+        Gossip[Gossip Protocol<br/>membership + heartbeats]
+        AE[Anti-Entropy<br/>Merkle tree sync]
+        HH[Hinted Handoff<br/>replay pending hints]
+    end
+
+    C1 -->|put/get| A_Ring
+    A_Ring -->|preference list| B_WAL
+    A_Ring -->|preference list| C_WAL
+    A_Ring -.->|node-B down; write to D + hint| D_WAL
+
+    Gossip -.->|exchange membership| A_Ring
+    AE -.->|sync divergent keys| B_SST
+    HH -.->|replay hints when B recovers| B_WAL
+```
+
+### Deep dive 1 — Sloppy quorum + hinted handoff (the AP mechanism)
+
+#### 1. Why does this mechanism exist?
+
+Dynamo must be **always-writable**, even during network partitions or node failures. Strict quorum (write to W out of N specific replicas) fails this requirement: if one of the N replicas is down, the write blocks until it recovers.
+
+**Sloppy quorum** relaxes the replica assignment: instead of writing to the N specific nodes assigned by the hash ring, the coordinator writes to the first W *healthy* nodes it can reach (walking clockwise around the ring). If the intended replica is down, the coordinator writes to the next available node and leaves a **hint** for later delivery.
+
+This gives:
+- **Availability:** writes succeed as long as any W nodes are reachable (not just the N assigned replicas).
+- **Durability:** data is still replicated to W nodes; hints ensure it eventually reaches the intended replicas.
+
+Trade-off: temporary divergence. The hint node holds data not yet on the intended replica. Anti-entropy (Merkle sync) reconciles divergence after the hint is delivered.
+
+#### 2. Concrete walk-through
+
+**Scenario: 5-node cluster, N=3, W=2, R=2. Key `user:123:cart` hashes to position 0x5000 on the ring.**
+
+```
+Ring (clockwise):
+  0x1000 → node-A
+  0x3000 → node-B  (intended replica #1 for key 0x5000)
+  0x5000 → node-C  (intended replica #2)
+  0x7000 → node-D  (intended replica #3)
+  0x9000 → node-E
+
+Preference list for key 0x5000: [node-B, node-C, node-D]
+
+t=0: Client sends put("user:123:cart", value_v1)
+  Coordinator: node-A
+  1. Hash key → 0x5000
+  2. Walk clockwise from 0x5000: node-C, node-D, node-B (wraps around)
+     Preference list: [node-C, node-D, node-B]
+  3. Check health (from gossip): node-C=ALIVE, node-D=ALIVE, node-B=ALIVE
+  4. Send write to first W=2 healthy nodes: node-C, node-D
+  5. node-C: WAL fsync + ack (2ms)
+  6. node-D: WAL fsync + ack (2ms)
+  7. Coordinator receives 2 acks → success
+  8. Response to client: OK, context={node-A:1}
+
+t=10: node-B crashes (power failure)
+
+t=11: Client sends put("user:123:cart", value_v2, context={node-A:1})
+  Coordinator: node-A
+  1. Preference list: [node-C, node-D, node-B]
+  2. Check health: node-C=ALIVE, node-D=ALIVE, node-B=DOWN
+  3. Sloppy quorum: skip node-B, walk to next healthy node → node-E
+     Effective preference list: [node-C, node-D, node-E]
+  4. Send write to W=2: node-C, node-D
+  5. node-C: WAL fsync + ack
+  6. node-D: WAL fsync + ack
+  7. Coordinator also sends hint to node-E:
+     hint = { target: node-B, key: "user:123:cart", value: value_v2, context: {node-A:2} }
+     node-E stores hint locally (not in memtable; separate hint queue)
+  8. Response to client: OK
+
+t=20: node-B recovers
+  1. node-B replays its WAL (empty; it was down during t=11 write)
+  2. node-E's hinted handoff thread wakes up (every 1s)
+  3. node-E checks hint queue: finds hint for node-B
+  4. node-E sends hint to node-B: put("user:123:cart", value_v2, context={node-A:2})
+  5. node-B: WAL fsync + memtable insert + ack
+  6. node-E removes hint from queue
+  7. node-B now has value_v2; consistent with node-C, node-D
+
+t=30: Anti-entropy (Merkle sync) runs
+  1. node-B exchanges Merkle tree with node-C
+  2. Trees match (both have value_v2) → no sync needed
+  3. If trees diverged (e.g., concurrent write during partition), key-level sync resolves
+```
+
+**Failure: hint node (node-E) also crashes before delivering hint**
+
+```
+t=11: Write to node-C, node-D; hint to node-E
+t=15: node-E crashes (hint lost from memory; but hint is in node-E's WAL)
+t=20: node-B recovers
+  1. node-E is still down → no hinted handoff
+  2. node-B is missing value_v2
+t=25: Anti-entropy runs
+  1. node-B exchanges Merkle tree with node-C
+  2. Trees diverge (node-C has value_v2; node-B does not)
+  3. Key-level sync: node-C sends value_v2 to node-B
+  4. node-B now has value_v2
+```
+
+#### 3. Trade-off table
+
+| Property | Strict quorum (W out of N specific replicas) | Sloppy quorum + hinted handoff |
+|---|---|---|
+| Availability (node failure) | Write blocks until intended replica recovers | Write succeeds if any W healthy nodes reachable |
+| Availability (network partition) | Partition isolates N replicas → write fails if partition splits N | Partition isolates some nodes → coordinator routes around partition |
+| Durability | Data on N specific replicas | Data on W nodes (may include hint nodes); hints ensure eventual delivery to N |
+| Consistency | Strong (if R+W > N) | Eventual (hint nodes hold data temporarily; anti-entropy reconciles) |
+| Complexity | Simple (fixed replica set) | Complex (hint queue management, anti-entropy, Merkle trees) |
+| Failure mode | Prolonged unavailability during node failure | Temporary divergence; hint queue growth during long partitions |
+
+#### 4. Failure modes interviewers drill into
+
+- **Hint queue grows unbounded during long partition:** node-B down for hours → hints accumulate on node-E, node-A, etc. Mitigation: rate-limit hint creation (drop hints if queue > 1GB); alert on hint queue size; manual intervention if partition persists.
+- **Hint node crashes before delivering hint:** hint lost from memory. Mitigation: persist hints to WAL (as in walk-through); anti-entropy reconciles divergence even if hints are lost.
+- **Anti-entropy too slow to catch up:** Merkle sync runs at 50 MB/sec; 10 TB cluster takes 2.4 days. Mitigation: increase anti-entropy bandwidth during recovery; prioritize recent writes (Merkle tree weighted by timestamp).
+- **Sloppy quorum causes permanent divergence:** hint never delivered (hint node crashes + anti-entropy bug). Mitigation: periodic full sync (compare all keys, not just Merkle tree); monitoring for divergence rate.
+- **Coordinator fails mid-write:** W acks received but coordinator crashes before responding to client. Mitigation: client retries with idempotency key (request_id); coordinator deduplicates based on request_id in WAL.
+
+#### 5. First-principles derivation
+
+1. Requirement: always-writable KV store, even during node failure or network partition.
+2. Option A: strict quorum (write to W out of N specific replicas). If one replica is down, write blocks. Violates "always-writable."
+3. Option B: single replica (no replication). Write always succeeds, but node failure = data loss. Unacceptable durability.
+4. Option C: sloppy quorum (write to W healthy nodes, walking ring). Write succeeds if any W nodes reachable. Trade-off: data may not be on intended replicas → temporary divergence.
+5. Option D: sloppy quorum + hinted handoff. Write to W healthy nodes; leave hints for intended replicas. Hints replayed when replicas recover. Trade-off: hint queue growth during long partitions.
+6. Option E: sloppy quorum + hinted handoff + anti-entropy. Hints handle short failures; Merkle sync handles long failures (or lost hints). Trade-off: background bandwidth consumption.
+7. Final design: sloppy quorum (W=2, N=3) + hinted handoff (persisted to WAL) + Merkle anti-entropy (rate-limited). Achieves always-writable + eventual consistency + durability.
+
+#### 6. Production evidence
+
+- **Amazon (2007):** Original Dynamo deployment for shopping cart. Sloppy quorum enabled 99.99% availability during node failures. Reported <5s failover with gossip-based failure detection.
+- **Discord (2022):** Migrated from Cassandra to ScyllaDB (Dynamo-inspired). Cited JVM GC pauses causing hint queue growth in Cassandra; ScyllaDB's C++ implementation reduced p99 latency from 20ms to 2ms.
+- **DynamoDB (2012):** Amazon's managed KV store. Uses sloppy quorum + hinted handoff internally. Adaptive capacity (2019) dynamically rebalances partitions to handle hot keys.
+- **Riak (2009):** Open-source Dynamo implementation. Default N=3, W=2, R=2. Vector clocks for conflict resolution. Used in production by Basho Technologies for session storage.
+
+### Deep dive 2 — Vector clocks + sibling reconciliation
+
+#### 1. Why does this mechanism exist?
+
+In an AP system, concurrent writes to the same key can occur during network partitions or high latency. Without a mechanism to detect and resolve conflicts, the system must either:
+
+- **Block concurrent writes** (CP system; violates "always-writable").
+- **Overwrite blindly** (last-writer-wins based on timestamp; risks losing data if clocks are skewed).
+- **Expose conflicts to the client** (vector clocks; client decides how to merge).
+
+**Vector clocks** are a causal ordering mechanism. Each node maintains a counter per node in the cluster. On write, the coordinator increments its own counter. The vector clock is attached to the value. On read, the coordinator compares vector clocks:
+
+- If VC(A) ≤ VC(B) (all counters in A ≤ B, at least one <), then A happened-before B → B is the latest.
+- If VC(A) and VC(B) are incomparable (some counters in A > B, some <), then A and B are concurrent → siblings.
+
+Siblings are returned to the client, which applies a resolver (LWW, custom merge, or manual intervention).
+
+#### 2. Concrete walk-through
+
+**Scenario: two clients concurrently update the same key during a network partition.**
+
+```
+Initial state:
+  Key: "user:123:cart"
+  Value: { items: ["item-A"] }
+  Vector clock: { node-A: 5, node-B: 3 }
+
+t=0: Client 1 (connected to node-A) sends put("user:123:cart", { items: ["item-A", "item-B"] }, context={node-A:5, node-B:3})
+  Coordinator: node-A
+  1. Increment node-A counter: { node-A: 6, node-B: 3 }
+  2. Write to W=2 replicas: node-A, node-C
+  3. Value stored: { items: ["item-A", "item-B"] }, VC={node-A:6, node-B:3}
+
+t=1: Network partition isolates node-A from node-B, node-C
+  (node-A can only talk to node-D, node-E)
+
+t=2: Client 2 (connected to node-B) sends put("user:123:cart", { items: ["item-A", "item-C"] }, context={node-A:5, node-B:3})
+  Coordinator: node-B
+  1. Increment node-B counter: { node-A: 5, node-B: 4 }
+  2. Write to W=2 replicas: node-B, node-C
+     (node-C is reachable from node-B despite partition)
+  3. Value stored: { items: ["item-A", "item-C"] }, VC={node-A:5, node-B:4}
+
+t=3: Partition heals
+  node-A, node-B, node-C can communicate again
+
+t=4: Client 3 sends get("user:123:cart")
+  Coordinator: node-C
+  1. Read from R=2 replicas: node-B, node-C
+  2. node-B returns: { items: ["item-A", "item-C"] }, VC={node-A:5, node-B:4}
+  3. node-C returns:
+     - From t=0 write: { items: ["item-A", "item-B"] }, VC={node-A:6, node-B:3}
+     - From t=2 write: { items: ["item-A", "item-C"] }, VC={node-A:5, node-B:4}
+  4. Coordinator reconciles:
+     - Compare VC({node-A:6, node-B:3}) vs VC({node-A:5, node-B:4})
+     - Incomparable (6>5 but 3<4) → concurrent → siblings
+     - Compare VC({node-A:5, node-B:4}) vs VC({node-A:5, node-B:4})
+     - Equal → same value → deduplicate
+  5. Response to client: siblings=[
+       { value: { items: ["item-A", "item-B"] }, VC={node-A:6, node-B:3} },
+       { value: { items: ["item-A", "item-C"] }, VC={node-A:5, node-B:4} }
+     ]
+
+t=5: Client 3 resolves siblings (application logic: merge carts)
+  Merged value: { items: ["item-A", "item-B", "item-C"] }
+  Merged vector clock: { node-A: 6, node-B: 4 }  (max of each counter)
+  Client sends put("user:123:cart", merged_value, context={node-A:6, node-B:4})
+
+t=6: Coordinator (node-C) processes put
+  1. Increment node-C counter: { node-A: 6, node-B: 4, node-C: 1 }
+  2. Write to W=2 replicas: node-C, node-D
+  3. Siblings replaced by merged value
+```
+
+**Vector clock growth problem:**
+
+```
+After 1M writes, vector clock might look like:
+  { node-A: 500000, node-B: 300000, node-C: 200000 }
+
+Problem: vector clock size = O(number of nodes). With 30 nodes, each VC is 30 counters.
+For 1KB values, VC overhead is ~240 bytes (30 × 8 bytes per counter) → 24% overhead.
+
+Mitigation:
+  1. Prune old entries: if a node hasn't participated in writes to this key for 1000 ops, drop its counter.
+  2. Use dotted version vectors (DVV): only track nodes that have contributed to this key's history.
+  3. For large clusters, use interval tree clocks (ITC): compact representation of causal history.
+
+Dynamo uses pruning: drop counters older than 1000 ops or 1 hour.
+```
+
+#### 3. Trade-off table
+
+| Property | Last-writer-wins (LWW) based on timestamp | Vector clocks + sibling reconciliation |
+|---|---|---|
+| Conflict detection | None (blind overwrite) | Detects concurrent writes (incomparable VCs) |
+| Data loss risk | High (clock skew → newer timestamp loses) | Low (siblings preserved; client resolves) |
+| Client complexity | Simple (no conflict handling) | Complex (client must implement resolver) |
+| Overhead | Minimal (8-byte timestamp) | Moderate (vector clock size = O(nodes)) |
+| Use case | Low-contention data (session store) | High-contention data (collaborative editing, carts) |
+
+#### 4. Failure modes interviewers drill into
+
+- **Vector clock grows unbounded:** 30 nodes → 240 bytes per VC. Mitigation: prune old entries (drop counters not updated in 1000 ops); use DVV or ITC for compact representation.
+- **Client fails to resolve siblings:** siblings returned but client doesn't merge → data stuck in conflict state. Mitigation: default resolver (LWW) if client doesn't resolve within 1 hour; alert on unresolved siblings.
+- **Clock skew causes false concurrency:** node-A and node-B clocks drift → VCs appear concurrent when they're not. Mitigation: NTP sync (clocks within 100ms); vector clocks are logical clocks (not physical) → clock skew doesn't affect VC comparison.
+- **Anti-entropy doesn't reconcile siblings:** Merkle tree sync transfers values but doesn't merge siblings. Mitigation: anti-entropy transfers all siblings; client reconciliation happens on read, not during sync.
+- **Coordinator crashes mid-reconciliation:** client receives partial sibling list. Mitigation: client retries read; coordinator is stateless (no transaction); read is idempotent.
+
+#### 5. First-principles derivation
+
+1. Requirement: detect concurrent writes in an AP system (no central coordinator).
+2. Option A: physical timestamps (LWW). Clock skew → incorrect ordering. Unacceptable for high-contention data.
+3. Option B: logical clocks (Lamport timestamps). Total ordering, but doesn't capture causality (two events with same timestamp are unordered).
+4. Option C: vector clocks. Per-node counters; captures causality (happened-before). Incomparable VCs → concurrent. Trade-off: VC size = O(nodes).
+5. Option D: dotted version vectors (DVV). Only track nodes that contributed to this key's history. Trade-off: complex implementation.
+6. Option E: interval tree clocks (ITC). Compact causal history representation. Trade-off: complex; not widely adopted.
+7. Final design: vector clocks with pruning (drop old entries). Siblings returned to client; client resolves (LWW or custom merge). Achieves conflict detection + client-controlled resolution.
+
+#### 6. Production evidence
+
+- **Amazon (2007):** Original Dynamo used vector clocks for shopping cart. Reported 0.1% of reads returned siblings (concurrent writes). Client-side resolver merged carts (union of items).
+- **Riak (2009):** Default conflict resolution is LWW, but supports vector clocks + sibling reconciliation. Used by Basho Technologies for collaborative editing (siblings merged by application).
+- **Cassandra (2008):** Uses LWW by default (timestamp-based). Optional vector clocks (deprecated in favor of LWW). Cited complexity of client-side reconciliation as reason for LWW default.
+- **CockroachDB (2016):** Uses hybrid logical clocks (HLC) for causal ordering. Combines physical timestamp + logical counter. Achieves serializability without vector clock overhead.
+
+### Failure modes and mitigation
+
+| Failure mode | Impact | Mitigation |
+|---|---|---|
+| Node crash (permanent) | Data on that node lost | N=3 replication; data on 2 other replicas; anti-entropy rebuilds on new node |
+| Network partition (partial) | Some nodes unreachable | Sloppy quorum routes around partition; writes succeed if W nodes reachable |
+| Coordinator crash mid-write | Client doesn't receive ack | Client retries with idempotency key (request_id); coordinator deduplicates |
+| Hint queue grows unbounded | Disk usage spikes | Rate-limit hint creation; alert on queue size; drop hints if >1GB |
+| Anti-entropy too slow | Divergence persists | Increase anti-entropy bandwidth; prioritize recent writes |
+| Vector clock grows unbounded | Overhead increases | Prune old entries (drop counters not updated in 1000 ops) |
+| Client fails to resolve siblings | Data stuck in conflict | Default resolver (LWW) after 1 hour; alert on unresolved siblings |
+| Gossip protocol fails to detect node failure | Dead node remains in ring | Reduce heartbeat interval; use failure detection library (e.g., SWIM) |
+| Hot key (single key receives 10k ops/sec) | Single node becomes bottleneck | Consistent hashing with virtual nodes (200 per physical node); read replicas (R=1 for low-contention reads) |
+| Clock skew (physical timestamps) | LWW loses data | Use vector clocks (logical clocks); NTP sync for physical timestamps |
+
+### Observability
+
+- **Node metrics:** requests/sec (read, write), request latency p99 (read, write), WAL fsync latency, memtable size, SSTable count, disk usage (%), network I/O (MB/sec).
+- **Cluster metrics:** hint queue size (per node), anti-entropy sync rate (MB/sec), gossip round-trip time, membership changes (join, leave, suspect), sibling count (per read).
+- **Client metrics:** conflict rate (siblings per read), retry rate, timeout rate.
+- **Alerts:** hint queue size > 1GB; anti-entropy sync rate < 10 MB/sec; node unreachable > 30s; sibling rate > 1% of reads; disk usage > 80%.
+
+### Evolution path
+
+| Day | Scale | Change |
+|---|---|---|
+| 30 | 10k ops/sec, 1M keys | 5 nodes; N=3, W=2, R=2; gossip + hinted handoff; basic anti-entropy |
+| 100 | 100k ops/sec, 100M keys | 30 nodes; virtual nodes (200 per physical); Merkle tree anti-entropy; vector clock pruning |
+| 1000 | 1M ops/sec, 1B keys | 100 nodes; tiered storage (SSD for hot, HDD for cold); read replicas (R=1 for low-contention); adaptive capacity (hot key mitigation) |
+| 10000 | 10M ops/sec, 10B keys | 300 nodes; multi-region (cross-region replication); conflict-free replicated data types (CRDTs) for automatic merge; custom partitioner (geo-routing) |
+
+### Interview follow-ups
+
+1. What if the hint queue grows unbounded during a long partition?
+2. How do you handle concurrent writes during partition?
+3. Why not Paxos here — wouldn't that give linearizability?
+4. How do you prevent a single hot key from becoming a bottleneck?
+5. What's the difference between vector clocks and Lamport timestamps? When would you use each?
+6. How does anti-entropy work, and why is it rate-limited?
+7. How do you handle a client that never resolves siblings?
+8. What's the role of the coordinator, and how does it differ from a leader in a CP system?
+
+### Sources
+
+- Dynamo (DeCandia et al. 2007) — sloppy quorum §4.5, vector clocks §4.4, Merkle anti-entropy §4.7
+- DDIA Ch.5+6 — leaderless replication, partitioning strategies
+- Discord — Cassandra to ScyllaDB migration (2022) (real ops numbers, JVM GC issues with hint queues)
+- Werner Vogels — 10 lessons from DynamoDB (adaptive capacity, hot-key mitigation)
+
+---
+
 ## [2026-08-24] H16 · Kafka (Distributed Log)
 
 ### Problem as asked
