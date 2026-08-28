@@ -1,6 +1,9 @@
 package ratelimiter
 
 import (
+	"fmt"
+	"runtime"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -273,5 +276,212 @@ func TestRateLimiterCreatesOneStatePerUser(t *testing.T) {
 
 	if _, ok := limiter.states["user-1"].(*tokenBucket); !ok {
 		t.Fatalf("user-1 state has type %T, want *tokenBucket", limiter.states["user-1"])
+	}
+}
+
+type workloadDistribution string
+
+const (
+	hotspotDistribution workloadDistribution = "hotspot"
+	skewedDistribution  workloadDistribution = "skewed"
+	uniformDistribution workloadDistribution = "uniform"
+	uniqueDistribution  workloadDistribution = "unique"
+)
+
+type baselineWorkload struct {
+	requests     int
+	users        int
+	distribution workloadDistribution
+}
+
+func baselineWorkloads() []baselineWorkload {
+	workloads := make([]baselineWorkload, 0, 12)
+
+	for _, requests := range []int{10_000, 100_000, 1_000_000} {
+		workloads = append(workloads,
+			baselineWorkload{
+				requests:     requests,
+				users:        1,
+				distribution: hotspotDistribution,
+			},
+			baselineWorkload{
+				requests:     requests,
+				users:        requests / 100,
+				distribution: skewedDistribution,
+			},
+			baselineWorkload{
+				requests:     requests,
+				users:        requests / 10,
+				distribution: uniformDistribution,
+			},
+			baselineWorkload{
+				requests:     requests,
+				users:        requests,
+				distribution: uniqueDistribution,
+			},
+		)
+	}
+
+	return workloads
+}
+
+func (w baselineWorkload) name() string {
+	requestCount := strconv.Itoa(w.requests)
+	if w.requests >= 1_000_000 {
+		requestCount = "1m"
+	} else if w.requests >= 100_000 {
+		requestCount = "100k"
+	} else if w.requests >= 10_000 {
+		requestCount = "10k"
+	}
+
+	return fmt.Sprintf("%s/%s/%d-users", requestCount, w.distribution, w.users)
+}
+
+func (w baselineWorkload) userIndex(request int) int {
+	switch w.distribution {
+	case hotspotDistribution:
+		return 0
+	case uniqueDistribution:
+		return request
+	case uniformDistribution:
+		return request % w.users
+	case skewedDistribution:
+		hotUsers := w.users / 10
+		if hotUsers == 0 {
+			hotUsers = 1
+		}
+
+		if request%10 < 8 {
+			return request % hotUsers
+		}
+
+		coldUsers := w.users - hotUsers
+		if coldUsers == 0 {
+			return 0
+		}
+		return hotUsers + request%coldUsers
+	default:
+		panic("unknown workload distribution")
+	}
+}
+
+func TestBaselineWorkloadsStayWithinUserRange(t *testing.T) {
+	workloads := baselineWorkloads()
+
+	if len(workloads) != 12 {
+		t.Fatalf("got %d workloads, want 12", len(workloads))
+	}
+
+	for _, workload := range workloads {
+		for _, request := range []int{0, workload.requests / 2, workload.requests - 1} {
+			user := workload.userIndex(request)
+			if user < 0 || user >= workload.users {
+				t.Fatalf(
+					"%s produced user index %d outside [0, %d)",
+					workload.name(),
+					user,
+					workload.users,
+				)
+			}
+		}
+	}
+}
+
+func makeBenchmarkUserIDs(users int) []string {
+	userIDs := make([]string, users)
+	for i := range userIDs {
+		userIDs[i] = "user-" + strconv.Itoa(i)
+	}
+	return userIDs
+}
+
+func newBenchmarkLimiter(algorithm string, requests int) Limiter {
+	switch algorithm {
+	case "token-bucket":
+		return NewTokenBucketLimiter(float64(requests), 1)
+	case "fixed-window":
+		return NewFixedWindowLimiter(requests, time.Hour)
+	default:
+		panic("unknown rate-limiter algorithm")
+	}
+}
+
+func runSerialWorkload(
+	limiter Limiter,
+	workload baselineWorkload,
+	userIDs []string,
+) {
+	for request := 0; request < workload.requests; request++ {
+		limiter.Allow(userIDs[workload.userIndex(request)])
+	}
+}
+
+func runParallelWorkload(
+	limiter Limiter,
+	workload baselineWorkload,
+	userIDs []string,
+) {
+	workers := runtime.GOMAXPROCS(0)
+	if workers > workload.requests {
+		workers = workload.requests
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(workers)
+
+	for worker := 0; worker < workers; worker++ {
+		start := worker * workload.requests / workers
+		end := (worker + 1) * workload.requests / workers
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			for request := start; request < end; request++ {
+				limiter.Allow(userIDs[workload.userIndex(request)])
+			}
+		}(start, end)
+	}
+
+	wg.Wait()
+}
+
+func BenchmarkRateLimiterBaseline(b *testing.B) {
+	for _, algorithm := range []string{"token-bucket", "fixed-window"} {
+		for _, workload := range baselineWorkloads() {
+			userIDs := makeBenchmarkUserIDs(workload.users)
+
+			b.Run(
+				fmt.Sprintf("%s/serial/%s", algorithm, workload.name()),
+				func(b *testing.B) {
+					b.ReportAllocs()
+					b.ReportMetric(float64(workload.requests), "requests/workload")
+
+					for iteration := 0; iteration < b.N; iteration++ {
+						b.StopTimer()
+						limiter := newBenchmarkLimiter(algorithm, workload.requests)
+						b.StartTimer()
+
+						runSerialWorkload(limiter, workload, userIDs)
+					}
+				},
+			)
+
+			b.Run(
+				fmt.Sprintf("%s/parallel/%s", algorithm, workload.name()),
+				func(b *testing.B) {
+					b.ReportAllocs()
+					b.ReportMetric(float64(workload.requests), "requests/workload")
+
+					for iteration := 0; iteration < b.N; iteration++ {
+						b.StopTimer()
+						limiter := newBenchmarkLimiter(algorithm, workload.requests)
+						b.StartTimer()
+
+						runParallelWorkload(limiter, workload, userIDs)
+					}
+				},
+			)
+		}
 	}
 }
