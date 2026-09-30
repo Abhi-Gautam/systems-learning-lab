@@ -43,6 +43,9 @@ temp/
 labs/hack-rs/
 labs/lld-reference-archive/
 
+# Personal learning state; publish only the portable curriculum projection
+/docs/systems-journey/
+
 *.i
 *.s
 *.o

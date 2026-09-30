@@ -1,0 +1,383 @@
+{
+  "schema_version": 1,
+  "title": "Systems and AI infrastructure curriculum",
+  "scope": "Portable prerequisite map, not a personal progress ledger or completion claim. Prerequisites refer to relevant mechanisms, not completion of every advanced topic in a subsystem.",
+  "nodes": [
+    {
+      "id": "S00",
+      "title": "Ownership & invariants",
+      "summary": "Pointers • bytes • state transitions",
+      "prerequisites": [],
+      "topics": [
+        "addresses, object lifetime, layout, aliasing",
+        "state transitions and invariant-preserving updates",
+        "Rust ownership/borrowing introduced through actual bytes and resources"
+      ],
+      "supplementary_reading": [
+        "CSAPP: data representation and machine-level programs",
+        "COD: instructions and memory representation"
+      ]
+    },
+    {
+      "id": "S01",
+      "title": "Executable → running program",
+      "summary": "ABI • ELF • symbols • loading",
+      "prerequisites": [
+        "S00"
+      ],
+      "topics": [
+        "calling convention, stack/register use and compiler output",
+        "translation units, defined/undefined symbols and relocations",
+        "static/shared libraries, entrypoint, dynamic loader and mappings"
+      ],
+      "supplementary_reading": [
+        "COD §2.12–2.13",
+        "CSAPP: machine-level programs and linking"
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "Processes & the kernel boundary",
+      "summary": "exec • fork • FDs • signals",
+      "prerequisites": [
+        "S01"
+      ],
+      "topics": [
+        "user/kernel mode, syscall vs ordinary call",
+        "fork/exec/wait, resource ownership and exit status",
+        "file descriptors, pipes, signals and cleanup"
+      ],
+      "supplementary_reading": [
+        "CSAPP: exceptional control flow and system-level I/O"
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "Virtual memory & allocation",
+      "summary": "mmap • page faults • COW • TLB",
+      "prerequisites": [
+        "S00",
+        "S02"
+      ],
+      "topics": [
+        "virtual vs physical address, page tables and TLB",
+        "demand faults, permissions, mmap and copy-on-write",
+        "allocation/free lists, fragmentation and lifetime"
+      ],
+      "supplementary_reading": [
+        "CSAPP: virtual memory",
+        "COD: memory hierarchy"
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "Concurrency correctness",
+      "summary": "threads • locks • atomics • ownership",
+      "prerequisites": [
+        "S00",
+        "S02",
+        "S03"
+      ],
+      "topics": [
+        "threads/shared memory, races and legal interleavings",
+        "mutex/condition-variable predicate, sleep/wake and futex",
+        "language memory models, acquire/release and Rust Send/Sync",
+        "cancellation, resource lifetimes and structured shutdown"
+      ],
+      "supplementary_reading": [
+        "CSAPP: concurrent programming"
+      ]
+    },
+    {
+      "id": "S05",
+      "title": "Scheduling & parallel execution",
+      "summary": "run queues • worker pools • fairness",
+      "prerequisites": [
+        "S04"
+      ],
+      "topics": [
+        "preemption, context-switch cost, CPU affinity and runnable vs blocked",
+        "parallel work partitioning, queue policy and work stealing",
+        "oversubscription, fairness, throughput and tail latency"
+      ],
+      "supplementary_reading": [
+        "COD: parallelism and performance"
+      ]
+    },
+    {
+      "id": "S06",
+      "title": "Storage, filesystems & recovery",
+      "summary": "page I/O • cache • fsync • WAL",
+      "prerequisites": [
+        "S02",
+        "S03"
+      ],
+      "topics": [
+        "file API, VFS/inodes and page cache",
+        "persistent page I/O, buffer pool, eviction and full tree splits",
+        "WAL ordering, durable reopen, crash recovery and later transaction visibility"
+      ],
+      "supplementary_reading": [
+        "Database Internals: storage structures and recovery",
+        "CSAPP: system-level I/O"
+      ]
+    },
+    {
+      "id": "S07",
+      "title": "Networking & event-driven I/O",
+      "summary": "TCP • framing • epoll • async",
+      "prerequisites": [
+        "S02",
+        "S04"
+      ],
+      "topics": [
+        "socket state, TCP stream framing, partial reads/writes and shutdown",
+        "DNS/TLS and NIC-to-userspace data path",
+        "nonblocking descriptors, readiness/epoll, backpressure and async runtime",
+        "timeouts, retries and request identity"
+      ],
+      "supplementary_reading": [
+        "CSAPP: network and concurrent programming"
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "Measure → explain → optimize",
+      "summary": "perf • cache • contention • SIMD",
+      "prerequisites": [
+        "S03",
+        "S04",
+        "S05"
+      ],
+      "topics": [
+        "Linux perf/stat/record, tracing, CPU vs off-CPU time",
+        "cache locality, coherence/false sharing, bandwidth and NUMA",
+        "allocation, sharding, batching, vectorization and workload validity"
+      ],
+      "supplementary_reading": [
+        "COD: memory hierarchy and performance",
+        "CSAPP: optimizing program performance"
+      ]
+    },
+    {
+      "id": "S09",
+      "title": "Isolation & virtualization",
+      "summary": "namespaces • cgroups • VMs",
+      "prerequisites": [
+        "S02",
+        "S03",
+        "S05",
+        "S07"
+      ],
+      "topics": [
+        "namespaces, cgroups, capabilities and syscall restrictions",
+        "resource isolation vs hostile-code security",
+        "VM privilege/translation/device model and containers vs VMs"
+      ],
+      "supplementary_reading": [
+        "Linux/kernel primary documentation selected for the experiment"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "Accelerator execution & stack",
+      "summary": "GPU machine • runtime • kernels • profiler",
+      "prerequisites": [
+        "S00",
+        "S03",
+        "S04"
+      ],
+      "topics": [
+        "host/device memory and execution groups; SIMT/SIMD-group model as hardware permits",
+        "memory hierarchy, coalescing, synchronization and transfer/computation boundaries",
+        "what driver, runtime, compiler, kernel, profiler and library each own",
+        "CUDA vs Metal/MLX vs AMD stack: transferable principles and non-equivalences"
+      ],
+      "supplementary_reading": [
+        "Primary documentation for the actual accelerator hardware and software stack"
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "Integrated systems capstone",
+      "summary": "contracts • failure tests • measured limits",
+      "prerequisites": [
+        "S04",
+        "S06",
+        "S07",
+        "S08"
+      ],
+      "topics": [
+        "one coherent runtime/storage/networking component",
+        "explicit resource, durability and concurrency contracts",
+        "fault injection, observability, benchmarks and design evolution"
+      ],
+      "supplementary_reading": [
+        "Relevant sections only; no additional mandatory book queue"
+      ]
+    },
+    {
+      "id": "A00",
+      "title": "Tensor & workload foundations",
+      "summary": "dtype • layout • matmul • memory cost",
+      "prerequisites": [
+        "S00"
+      ],
+      "topics": [
+        "tensor shape, stride, dtype and numerical precision",
+        "matrix multiplication, operation count vs bytes moved, CPU baseline",
+        "minimal transformer/autograd vocabulary only as needed to understand execution"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A01",
+      "title": "Transformer inference execution",
+      "summary": "forward pass • KV cache • prefill/decode",
+      "prerequisites": [
+        "A00",
+        "S10"
+      ],
+      "topics": [
+        "trace tokens through embedding, attention, normalization and projection",
+        "KV-cache ownership, sizes, lifetime and layout",
+        "prefill/decode, precision/quantization, fused kernels and memory limits"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A02",
+      "title": "Training & checkpoint execution",
+      "summary": "autograd • optimizer state • restart",
+      "prerequisites": [
+        "A00",
+        "S10",
+        "S04",
+        "S06"
+      ],
+      "topics": [
+        "training forward/backward and optimizer-state resource costs",
+        "data loading, checkpoint format/order and restart correctness",
+        "precision, accumulation and execution/communication overlap at bounded scale"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A03",
+      "title": "Single-device serving",
+      "summary": "batching • admission • latency/throughput",
+      "prerequisites": [
+        "A01",
+        "S04",
+        "S07"
+      ],
+      "topics": [
+        "request lifecycle and continuous batching",
+        "KV capacity, admission, cancellation and backpressure",
+        "latency distributions, throughput, workload mix and cost"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A04",
+      "title": "Distributed accelerator compute",
+      "summary": "placement • collectives • parallelism",
+      "prerequisites": [
+        "A01",
+        "S05",
+        "S07",
+        "S08"
+      ],
+      "topics": [
+        "data/tensor/pipeline/expert parallelism when the workload forces them",
+        "communication collectives, topology and overlap",
+        "placement, stragglers, failure/restart and bandwidth costs"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A05",
+      "title": "GPU cloud & private platform",
+      "summary": "nodes • sharing • upgrades • recovery",
+      "prerequisites": [
+        "S10",
+        "S05",
+        "S07",
+        "S09"
+      ],
+      "topics": [
+        "node provisioning, drivers, device exposure and compatibility",
+        "resource isolation/sharing and scheduler admission",
+        "observability, private-network boundaries, upgrades and recovery"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A06",
+      "title": "Agent sandbox & execution platform",
+      "summary": "workspace • tools • environments • artifacts",
+      "prerequisites": [
+        "S02",
+        "S04",
+        "S06",
+        "S07",
+        "S09"
+      ],
+      "topics": [
+        "sandbox threat model, tool permissions and resource limits",
+        "workspace/artifact ownership, durable jobs and retry-safe effects",
+        "environment lifecycle, verifiers, traces and evaluation data"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    },
+    {
+      "id": "A07",
+      "title": "RL rollout & evaluation infrastructure",
+      "summary": "rollouts • verifiers • data • policy versions",
+      "prerequisites": [
+        "A06",
+        "A01",
+        "S05"
+      ],
+      "topics": [
+        "rollout scheduling, environment/version identity and backpressure",
+        "verifiers, evaluation validity and data provenance",
+        "policy-version boundaries, failures and durable experiment results"
+      ],
+      "supplementary_reading": [
+        "Primary documentation and implementation selected for the active experiment"
+      ]
+    }
+  ],
+  "conditional_prerequisites": [
+    {
+      "node": "A04",
+      "variant": "distributed training",
+      "additional_prerequisites": [
+        "A02"
+      ]
+    },
+    {
+      "node": "A07",
+      "variant": "training integrated with rollouts",
+      "additional_prerequisites": [
+        "A02",
+        "A04"
+      ]
+    }
+  ]
+}
