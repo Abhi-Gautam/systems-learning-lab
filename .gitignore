@@ -36,7 +36,7 @@ temp/
 .agents/skills/
 
 # Agent instruction files (repo root only; labs keep theirs)
-/AGENTS.md
+# /AGENTS.md
 /CLAUDE.md
 
 # Local-only / baggage (not part of the public tree)
