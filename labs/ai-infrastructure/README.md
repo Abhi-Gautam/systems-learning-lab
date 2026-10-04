@@ -42,6 +42,13 @@ implied by this README.
 abstraction and LLD practice inside these systems and this lab instead of
 requiring a separate LLD assignment queue.
 
+## Active experiment
+
+`shopkeeper/` is the first agent experiment: a DuckDB shelf exposed
+over MCP, and a counter whose model may only guide or buy. Hosted
+free-tier inference. It does not replace the layers above, and
+finishing it does not complete A06.
+
 ## Working rule
 
 Choose one concrete question, predict what an experiment will show, run it on

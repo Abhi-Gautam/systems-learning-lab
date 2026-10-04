@@ -43,6 +43,9 @@ temp/
 labs/hack-rs/
 labs/lld-reference-archive/
 
+# Own repo. Lives at labs/ai-infrastructure/shopkeeper/.git
+labs/ai-infrastructure/shopkeeper/
+
 # Personal learning state; publish only the portable curriculum projection
 /docs/systems-journey/
 
