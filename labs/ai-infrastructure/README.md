@@ -42,12 +42,48 @@ implied by this README.
 abstraction and LLD practice inside these systems and this lab instead of
 requiring a separate LLD assignment queue.
 
-## Active experiment
+## Experiments
 
-`shopkeeper/` is the first agent experiment: a DuckDB shelf exposed
-over MCP, and a counter whose model may only guide or buy. Hosted
-free-tier inference. It does not replace the layers above, and
-finishing it does not complete A06.
+Each experiment is its own git repo and GitHub repo, checked out inside this
+folder and ignored by the parent repo (see `.gitignore`). Every experiment repo
+is also added to the same GitHub app installation as `systems-learning-lab`, so
+agents working from here can reach all of them.
+
+| Folder | Repo | Question | State |
+|---|---|---|---|
+| `shopkeeper/` | [Abhi-Gautam/shopkeeper](https://github.com/Abhi-Gautam/shopkeeper) | Evals: make a model-run grocery counter more correct, faster and cheaper, one change at a time on the same shelf and customers | Done; article published |
+
+Shopkeeper does not replace the layers above, and finishing it does not
+complete A06.
+
+## How an experiment is run
+
+This is the loop shopkeeper established. Follow it for the next one.
+
+1. **Align first, in this folder.** Agree on the problem statement and the
+   learning goal (which layer above it teaches, what we predict) before any
+   code. Then create the folder and the repo.
+2. **New repo.** `mkdir <name> && cd <name> && git init`, create
+   `github.com/Abhi-Gautam/<name>`, add it to `.gitignore` here and to the
+   table above, and add it to the GitHub app installation.
+3. **Local setup.** Everything runs locally from a `Makefile` (`make db`,
+   `make run`, ...), Python in `.venv` from `requirements.txt`, local services
+   (e.g. Phoenix on :6006) via `docker compose`. Secrets live in `.env`, never
+   committed; `.env.example` lists every variable with a comment.
+4. **Model access.** Hosted models through OpenAI-compatible endpoints: OpenAI
+   directly, or OpenRouter (one key, many models, e.g. Jev via
+   `JEV_OPENROUTER_KEY`). Use recent models, not old open-weight ones. Make the
+   base URL and model name env vars so a run can switch provider without code.
+5. **Measure the same way every time.** Fixed inputs (shelf, customers), every
+   run traced (Phoenix), every change is one commit, and every result is tied
+   to the commit that produced it.
+6. **Write it up.** The blog post lives in the experiment repo at
+   `docs/public/article.md` with images in `docs/public/assets/`. Frontmatter
+   carries `title`, `description`, `published`, `project`, `repository`, and
+   `sourceCommit`, which is pinned to the commit the reported runs used and
+   updated whenever new runs are added. Plain sentences, the story of each
+   version, ending with where the experiment stands.
+7. **README in plain language**: what it is, what it is for, how to run it.
 
 ## Working rule
 
